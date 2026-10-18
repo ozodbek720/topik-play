@@ -1,13 +1,186 @@
 import { useEffect, useMemo, useState } from 'react'
-import supplementalWords from './supplementalWords.js'
+import advancedWords from './advancedWords.js'
+import grammarPoints from './grammarPoints.js'
 import './App.css'
 
 const MAX_HEARTS = 5
 const HEART_REFILL_INTERVAL = 12 * 60 * 60 * 1000
 const HEARTS_PER_REFILL = 5
 const HEART_EXCHANGE_COST = 30
+const UNVERIFIED_WORD_ID_START = 121
+const UNVERIFIED_WORD_ID_END = 2000
+const ADVANCED_WORDS_MIGRATION_KEY = 'topik-play-advanced-words-v1'
 const GAME_STATE_KEY = 'topik-play-game-state'
 const THEME_STORAGE_KEY = 'topik-play-theme'
+const WORDS_STORAGE_KEY = 'topik-play-words'
+const PROGRESS_STORAGE_KEY = 'topik-play-learning-progress'
+const SETTINGS_STORAGE_KEY = 'topik-play-settings'
+const CUSTOM_GRAMMAR_STORAGE_KEY = 'topik-play-custom-grammar'
+const MISTAKES_STORAGE_KEY = 'topik-play-mistakes'
+
+function getLocalDateKey() {
+  return new Date().toLocaleDateString('sv-SE')
+}
+
+const defaultSettings = {
+  speechEnabled: true,
+  speechRate: 0.85,
+  textSize: 'medium',
+  dailyGoal: 10,
+  dailyCompleted: 0,
+  dailyDate: new Date().toLocaleDateString('sv-SE'),
+}
+
+function loadSettings() {
+  const today = getLocalDateKey()
+  try {
+    const saved = JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) ?? 'null')
+    if (!saved || typeof saved !== 'object') return { ...defaultSettings, dailyDate: today }
+
+    return {
+      speechEnabled: typeof saved.speechEnabled === 'boolean' ? saved.speechEnabled : defaultSettings.speechEnabled,
+      speechRate: Number.isFinite(saved.speechRate) && saved.speechRate >= 0.6 && saved.speechRate <= 1.2
+        ? saved.speechRate
+        : defaultSettings.speechRate,
+      textSize: ['small', 'medium', 'large'].includes(saved.textSize) ? saved.textSize : defaultSettings.textSize,
+      dailyGoal: [5, 10, 15, 20, 30].includes(saved.dailyGoal) ? saved.dailyGoal : defaultSettings.dailyGoal,
+      dailyCompleted: saved.dailyDate === today && Number.isInteger(saved.dailyCompleted) && saved.dailyCompleted >= 0
+        ? saved.dailyCompleted
+        : 0,
+      dailyDate: today,
+    }
+  } catch (error) {
+    console.error('Sozlamalarni o‘qib bo‘lmadi:', error)
+    return { ...defaultSettings, dailyDate: today }
+  }
+}
+
+function loadWords() {
+  try {
+    const savedWords = JSON.parse(localStorage.getItem(WORDS_STORAGE_KEY) ?? 'null')
+    if (Array.isArray(savedWords) && savedWords.every((word) =>
+      word && Number.isFinite(word.id) && typeof word.korean === 'string' && typeof word.meaning === 'string',
+    )) {
+      let wordsToLoad = savedWords
+        .filter((word) => word.id < UNVERIFIED_WORD_ID_START || word.id > UNVERIFIED_WORD_ID_END)
+      if (localStorage.getItem(ADVANCED_WORDS_MIGRATION_KEY) !== '1') {
+        const savedIds = new Set(wordsToLoad.map((word) => word.id))
+        wordsToLoad = [
+          ...wordsToLoad,
+          ...advancedWords.filter((word) => !savedIds.has(word.id)),
+        ]
+        try {
+          localStorage.setItem(ADVANCED_WORDS_MIGRATION_KEY, '1')
+        } catch (error) {
+          console.error('Yangi qiyin so‘zlarni yangilash holatini saqlab bo‘lmadi:', error)
+        }
+      }
+      return wordsToLoad.map((word) => ({
+          ...word,
+          ...(reviewedWordCorrections.get(word.id) ?? {}),
+          example: typeof word.example === 'string' ? word.example : '',
+          category: wordCategories.includes(word.category) ? word.category : 'Boshqa',
+          difficulty: quizDifficulties.some((difficulty) => difficulty.id === word.difficulty) ? word.difficulty : 'easy',
+          level: typeof word.level === 'string' ? word.level : 'A1',
+        }))
+    }
+    if (savedWords !== null) {
+      console.error('Saqlangan lug‘at formati noto‘g‘ri. Boshlang‘ich lug‘at yuklandi.')
+    }
+  } catch (error) {
+    console.error('Saqlangan lug‘atni o‘qib bo‘lmadi:', error)
+  }
+  return categorizedWords
+}
+
+function loadLearningProgress() {
+  const initial = {
+    selectedDifficulty: 'easy',
+    currentIndex: 0,
+    selectedAnswer: null,
+    isAnswered: false,
+    quizMode: 'words',
+    mistakeIndex: 0,
+    grammarIndex: 0,
+    grammarQuizLevel: 'Hammasi',
+    grammarSelectedAnswer: null,
+    grammarAnswered: false,
+    topikIndex: 0,
+    topikListenIndex: 1,
+    topikMode: 'translate',
+    topikSelected: null,
+    topikAnswered: false,
+    topikListenInput: '',
+    topikListenAnswered: false,
+    topikListenCorrect: false,
+  }
+  try {
+    const saved = JSON.parse(localStorage.getItem(PROGRESS_STORAGE_KEY) ?? 'null')
+    if (!saved || typeof saved !== 'object') return initial
+    return {
+      selectedDifficulty: quizDifficulties.some((difficulty) => difficulty.id === saved.selectedDifficulty)
+        ? saved.selectedDifficulty
+        : initial.selectedDifficulty,
+      currentIndex: Number.isInteger(saved.currentIndex) && saved.currentIndex >= 0 ? saved.currentIndex : 0,
+      selectedAnswer: typeof saved.selectedAnswer === 'string' ? saved.selectedAnswer : null,
+      isAnswered: saved.isAnswered === true,
+      quizMode: ['words', 'grammar', 'mistakes'].includes(saved.quizMode) ? saved.quizMode : initial.quizMode,
+      mistakeIndex: Number.isInteger(saved.mistakeIndex) && saved.mistakeIndex >= 0 ? saved.mistakeIndex : 0,
+      grammarIndex: Number.isInteger(saved.grammarIndex) && saved.grammarIndex >= 0 ? saved.grammarIndex : 0,
+      grammarQuizLevel: ['Hammasi', 'Boshlang‘ich', 'O‘rta'].includes(saved.grammarQuizLevel)
+        ? saved.grammarQuizLevel
+        : initial.grammarQuizLevel,
+      grammarSelectedAnswer: typeof saved.grammarSelectedAnswer === 'string' ? saved.grammarSelectedAnswer : null,
+      grammarAnswered: saved.grammarAnswered === true,
+      topikIndex: Number.isInteger(saved.topikIndex) && saved.topikIndex >= 0 ? saved.topikIndex : 0,
+      topikListenIndex: Number.isInteger(saved.topikListenIndex) && saved.topikListenIndex >= 0
+        ? saved.topikListenIndex
+        : 1,
+      topikMode: saved.topikMode === 'listen' ? 'listen' : initial.topikMode,
+      topikSelected: typeof saved.topikSelected === 'string' ? saved.topikSelected : null,
+      topikAnswered: saved.topikAnswered === true,
+      topikListenInput: typeof saved.topikListenInput === 'string' ? saved.topikListenInput : '',
+      topikListenAnswered: saved.topikListenAnswered === true,
+      topikListenCorrect: saved.topikListenCorrect === true,
+    }
+  } catch (error) {
+    console.error('O‘rganish jarayonini o‘qib bo‘lmadi:', error)
+    return initial
+  }
+}
+
+function loadCustomGrammar() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(CUSTOM_GRAMMAR_STORAGE_KEY) ?? '[]')
+    if (Array.isArray(saved) && saved.every((point) =>
+      point && Number.isFinite(point.id) && typeof point.pattern === 'string' &&
+      typeof point.title === 'string' && typeof point.explanation === 'string' &&
+      typeof point.example === 'string' && typeof point.translation === 'string' &&
+      ['Boshlang‘ich', 'O‘rta'].includes(point.level),
+    )) {
+      return saved.map((point) => ({ ...point, custom: true }))
+    }
+    console.error('Saqlangan grammatika formati noto‘g‘ri. Faqat asosiy qoidalar yuklandi.')
+  } catch (error) {
+    console.error('Saqlangan grammatikani o‘qib bo‘lmadi:', error)
+  }
+  return []
+}
+
+function loadMistakes() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(MISTAKES_STORAGE_KEY) ?? '[]')
+    if (Array.isArray(saved) && saved.every((item) =>
+      item && ['word', 'grammar'].includes(item.type) && Number.isFinite(item.id),
+    )) {
+      return saved
+    }
+    console.error('Saqlangan xatolar formati noto‘g‘ri. Xatolar ro‘yxati tozalandi.')
+  } catch (error) {
+    console.error('Xatolar ro‘yxatini o‘qib bo‘lmadi:', error)
+  }
+  return []
+}
 
 const themes = [
   { id: 'sky', name: 'Moviy', primary: '#7dd3fc', strong: '#38bdf8', accent: '#f9a8d4' },
@@ -75,7 +248,7 @@ const initialWords = [
   { id: 18, korean: '병원', meaning: 'shifoxona', example: '병원에 가야 해요.', level: 'A2' },
   { id: 19, korean: '연필', meaning: 'qalam', example: '연필로 써요.', level: 'A1' },
   { id: 20, korean: '컴퓨터', meaning: 'kompyuter', example: '컴퓨터를 사용해요.', level: 'A2' },
-  { id: 21, korean: '강아지', meaning: 'it', example: '강아지가 귀여워요.', level: 'A1' },
+  { id: 21, korean: '강아지', meaning: 'kuchuk', example: '강아지가 귀여워요.', level: 'A1' },
   { id: 22, korean: '고양이', meaning: 'mushuk', example: '고양이가 잠을 자요.', level: 'A1' },
   { id: 23, korean: '아침', meaning: 'ertalab', example: '아침에 일어나요.', level: 'A1' },
   { id: 24, korean: '저녁', meaning: 'kechqurun', example: '저녁에 밥을 먹어요.', level: 'A1' },
@@ -86,7 +259,7 @@ const initialWords = [
   { id: 29, korean: '시험', meaning: 'imtihon', example: '시험이 어려워요.', level: 'A2' },
   { id: 30, korean: '점수', meaning: 'ball', example: '점수가 올랐어요.', level: 'A2' },
   { id: 31, korean: '운동', meaning: 'jismoniy mashq', example: '운동을 좋아해요.', level: 'A1' },
-  { id: 32, korean: '운동장', meaning: 'stadion', example: '운동장에서 축구해요.', level: 'A2' },
+  { id: 32, korean: '운동장', meaning: 'sport maydonchasi', example: '운동장에서 축구해요.', level: 'A2' },
   { id: 33, korean: '음악', meaning: 'musiqa', example: '음악을 듣고 싶어요.', level: 'A1' },
   { id: 34, korean: '영화', meaning: 'film', example: '영화를 봐요.', level: 'A1' },
   { id: 35, korean: '텔레비전', meaning: 'televizor', example: '텔레비전을 봐요.', level: 'A1' },
@@ -98,7 +271,7 @@ const initialWords = [
   { id: 41, korean: '길', meaning: 'yoʻl', example: '길을 잘못 들어갔어요.', level: 'A1' },
   { id: 42, korean: '마을', meaning: 'qishloq', example: '마을이 조용해요.', level: 'A2' },
   { id: 43, korean: '바다', meaning: 'dengiz', example: '바다를 보고 싶어요.', level: 'A1' },
-  { id: 44, korean: '산', meaning: 'togʻ', example: '산을 오르다.', level: 'A1' },
+  { id: 44, korean: '산', meaning: 'togʻ', example: '산에 올라가요.', level: 'A1' },
   { id: 45, korean: '구름', meaning: 'bulut', example: '구름이 많아요.', level: 'A1' },
   { id: 46, korean: '비', meaning: 'yomgʻir', example: '비가 옵니다.', level: 'A1' },
   { id: 47, korean: '눈', meaning: 'qor', example: '눈이 많이 왔어요.', level: 'A1' },
@@ -122,32 +295,32 @@ const initialWords = [
   { id: 65, korean: '사진', meaning: 'rasm', example: '사진을 찍어요.', level: 'A1' },
   { id: 66, korean: '노래', meaning: 'qoʻshiq', example: '노래를 좋아해요.', level: 'A1' },
   { id: 67, korean: '춤', meaning: 'raqs', example: '춤을 추는 것을 좋아해요.', level: 'A1' },
-  { id: 68, korean: '재미', meaning: 'qiziqarli', example: '영화가 재미있어요.', level: 'A1' },
-  { id: 69, korean: '슬픔', meaning: 'g’am', example: '슬픔이 느껴져요.', level: 'A2' },
+  { id: 68, korean: '재미', meaning: 'qiziqarlilik, zavq', example: '영화가 재미있어요.', level: 'A1' },
+  { id: 69, korean: '슬픔', meaning: 'qaygʻu', example: '슬픔이 느껴져요.', level: 'A2' },
   { id: 70, korean: '기분', meaning: 'kayfiyat', example: '오늘 기분이 좋아요.', level: 'A1' },
   { id: 71, korean: '소리', meaning: 'ovoz', example: '소리가 커요.', level: 'A1' },
   { id: 72, korean: '색', meaning: 'rang', example: '좋은 색을 골라요.', level: 'A1' },
-  { id: 73, korean: '빨강', meaning: 'qizil', example: '빨강색이 예뻐요.', level: 'A1' },
-  { id: 74, korean: '파랑', meaning: 'koʻk', example: '파랑색 옷을 입어요.', level: 'A1' },
+  { id: 73, korean: '빨강', meaning: 'qizil', example: '빨간색이 예뻐요.', level: 'A1' },
+  { id: 74, korean: '파랑', meaning: 'koʻk', example: '파란색 옷을 입어요.', level: 'A1' },
   { id: 75, korean: '초록', meaning: 'yashil', example: '초록색 잎이 있어요.', level: 'A1' },
   { id: 76, korean: '하늘', meaning: 'osmon', example: '하늘이 파랗습니다.', level: 'A1' },
   { id: 77, korean: '달', meaning: 'oy', example: '달이 밝아요.', level: 'A1' },
   { id: 78, korean: '별', meaning: 'yulduz', example: '별을 봤어요.', level: 'A1' },
   { id: 79, korean: '모두', meaning: 'hamma', example: '모두 함께 와요.', level: 'A1' },
-  { id: 80, korean: '같다', meaning: 'bir xil', example: '우리가 같아요.', level: 'A1' },
-  { id: 81, korean: '다르다', meaning: 'turlicha', example: '우리 생각은 다르다.', level: 'A2' },
+  { id: 80, korean: '같다', meaning: 'bir xil boʻlmoq, oʻxshash boʻlmoq', example: '우리 생각이 같아요.', level: 'A1' },
+  { id: 81, korean: '다르다', meaning: 'farq qilmoq, boshqacha boʻlmoq', example: '우리 생각은 달라요.', level: 'A2' },
   { id: 82, korean: '크다', meaning: 'katta', example: '집이 커요.', level: 'A1' },
   { id: 83, korean: '작다', meaning: 'kichik', example: '이 책은 작아요.', level: 'A1' },
   { id: 84, korean: '좋다', meaning: 'yaxshi', example: '이 음식이 좋아요.', level: 'A1' },
   { id: 85, korean: '나쁘다', meaning: 'yomon', example: '날씨가 나빠요.', level: 'A1' },
   { id: 86, korean: '쉽다', meaning: 'oson', example: '이 문제는 쉬워요.', level: 'A1' },
-  { id: 87, korean: '어렵다', meaning: 'qiyin', example: '한국어가 어렵다.', level: 'A1' },
-  { id: 88, korean: '배고프다', meaning: 'och qolmoq', example: '배가 고파요.', level: 'A1' },
-  { id: 89, korean: '아프다', meaning: 'ogʻriq', example: '머리가 아파요.', level: 'A1' },
-  { id: 90, korean: '피곤하다', meaning: 'charchamoq', example: '오늘 피곤해요.', level: 'A1' },
+  { id: 87, korean: '어렵다', meaning: 'qiyin', example: '한국어가 어려워요.', level: 'A1' },
+  { id: 88, korean: '배고프다', meaning: 'qorni och boʻlmoq', example: '배가 고파요.', level: 'A1' },
+  { id: 89, korean: '아프다', meaning: 'ogʻrimoq, betob boʻlmoq', example: '머리가 아파요.', level: 'A1' },
+  { id: 90, korean: '피곤하다', meaning: 'charchagan, toliqqan boʻlmoq', example: '오늘 피곤해요.', level: 'A1' },
   { id: 91, korean: '웃다', meaning: 'kulmoq', example: '친구와 웃어요.', level: 'A1' },
-  { id: 92, korean: '울다', meaning: 'yashamoq', example: '슬퍼서 울었어요.', level: 'A1' },
-  { id: 93, korean: '걷다', meaning: 'yurmoq', example: '공원에서 걷어요.', level: 'A1' },
+  { id: 92, korean: '울다', meaning: 'yigʻlamoq', example: '슬퍼서 울었어요.', level: 'A1' },
+  { id: 93, korean: '걷다', meaning: 'yurmoq', example: '공원에서 걸어요.', level: 'A1' },
   { id: 94, korean: '달리다', meaning: 'yugurmoq', example: '아침에 달려요.', level: 'A1' },
   { id: 95, korean: '읽다', meaning: 'oʻqimoq', example: '책을 읽어요.', level: 'A1' },
   { id: 96, korean: '쓰다', meaning: 'yozmoq', example: '일기를 써요.', level: 'A1' },
@@ -176,6 +349,24 @@ const initialWords = [
   { id: 119, korean: '밥', meaning: 'guruch / ovqat', example: '저녁에 밥을 먹어요.', level: 'A1', category: 'Taomlar' },
   { id: 120, korean: '김치', meaning: 'kimchi', example: '김치가 매워요.', level: 'A1', category: 'Taomlar' },
 ]
+
+const reviewedWordCorrections = new Map([
+  [21, { meaning: 'kuchuk' }],
+  [32, { meaning: 'sport maydonchasi' }],
+  [44, { example: '산에 올라가요.' }],
+  [68, { meaning: 'qiziqarlilik, zavq' }],
+  [69, { meaning: 'qaygʻu' }],
+  [73, { example: '빨간색이 예뻐요.' }],
+  [74, { example: '파란색 옷을 입어요.' }],
+  [80, { meaning: 'bir xil boʻlmoq, oʻxshash boʻlmoq', example: '우리 생각이 같아요.' }],
+  [81, { meaning: 'farq qilmoq, boshqacha boʻlmoq', example: '우리 생각은 달라요.' }],
+  [87, { example: '한국어가 어려워요.' }],
+  [88, { meaning: 'qorni och boʻlmoq' }],
+  [89, { meaning: 'ogʻrimoq, betob boʻlmoq' }],
+  [90, { meaning: 'charchagan, toliqqan boʻlmoq' }],
+  [92, { meaning: 'yigʻlamoq' }],
+  [93, { example: '공원에서 걸어요.' }],
+])
 
 const wordCategories = [
   'Hammasi', 'Mevalar', 'Sabzavotlar', 'Sport', 'Kasblar', 'Taomlar',
@@ -214,7 +405,7 @@ const categorizedWords = [
     category: word.category ?? wordCategories.find((category) => initialCategoryIds[category]?.includes(word.id)) ?? 'Boshqa',
     difficulty: word.difficulty ?? (word.level === 'A2' ? 'medium' : 'easy'),
   })),
-  ...supplementalWords,
+  ...advancedWords,
 ]
 
 const topikTranslations = [
@@ -354,42 +545,116 @@ function makeChoices(correctWord, allWords) {
   return shuffleList([...wrongMeanings, correctWord.meaning])
 }
 
+function makeGrammarChoices(correctPoint, allPoints) {
+  const wrongPatterns = shuffleList(
+    [...new Set(allPoints.filter((point) => point.id !== correctPoint.id).map((point) => point.pattern))],
+  ).filter((pattern) => pattern !== correctPoint.pattern).slice(0, 3)
+
+  return shuffleList([...wrongPatterns, correctPoint.pattern])
+}
+
 function App() {
-  const [words, setWords] = useState(categorizedWords)
+  const [words, setWords] = useState(loadWords)
+  const [customGrammar, setCustomGrammar] = useState(loadCustomGrammar)
+  const [mistakes, setMistakes] = useState(loadMistakes)
   const [activeTab, setActiveTab] = useState('quiz')
   const [selectedTheme, setSelectedTheme] = useState(loadTheme)
+  const [settings, setSettings] = useState(loadSettings)
   const [selectedCategory, setSelectedCategory] = useState('Hammasi')
-  const [selectedDifficulty, setSelectedDifficulty] = useState('easy')
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [selectedAnswer, setSelectedAnswer] = useState(null)
-  const [isAnswered, setIsAnswered] = useState(false)
+  const [grammarLevel, setGrammarLevel] = useState('Hammasi')
+  const [grammarSearch, setGrammarSearch] = useState('')
+  const [learningProgress, setLearningProgress] = useState(loadLearningProgress)
+  const [grammarForm, setGrammarForm] = useState({
+    pattern: '',
+    title: '',
+    explanation: '',
+    example: '',
+    translation: '',
+    level: 'Boshlang‘ich',
+  })
+  const [grammarFormError, setGrammarFormError] = useState('')
   const [form, setForm] = useState({ korean: '', meaning: '', example: '', category: 'Boshqa', difficulty: 'easy' })
   const [wordSearch, setWordSearch] = useState('')
   const [editingId, setEditingId] = useState(null)
-  const [topikIndex, setTopikIndex] = useState(0)
-  const [topikSelected, setTopikSelected] = useState(null)
-  const [topikAnswered, setTopikAnswered] = useState(false)
   const [gameState, setGameState] = useState(loadGameState)
   const [clockNow, setClockNow] = useState(0)
+  const [speechMessage, setSpeechMessage] = useState('')
+  const {
+    selectedDifficulty,
+    currentIndex,
+    selectedAnswer,
+    isAnswered,
+    quizMode,
+    mistakeIndex,
+    grammarIndex,
+    grammarQuizLevel,
+    grammarSelectedAnswer,
+    grammarAnswered,
+    topikIndex,
+    topikListenIndex,
+    topikMode,
+    topikSelected,
+    topikAnswered,
+    topikListenInput,
+    topikListenAnswered,
+    topikListenCorrect,
+  } = learningProgress
+  const allGrammar = useMemo(() => [...grammarPoints, ...customGrammar], [customGrammar])
+  const quizGrammar = useMemo(
+    () => allGrammar.filter((point) => grammarQuizLevel === 'Hammasi' || point.level === grammarQuizLevel),
+    [allGrammar, grammarQuizLevel],
+  )
+  const currentGrammarQuestion = quizGrammar[grammarIndex % quizGrammar.length] || null
 
   const quizWords = useMemo(
     () => words.filter((word) => word.difficulty === selectedDifficulty),
     [words, selectedDifficulty],
   )
   const currentWord = quizWords[currentIndex % quizWords.length] || null
-  const currentQuizDifficulty = quizDifficulties.find((difficulty) => difficulty.id === selectedDifficulty) ?? quizDifficulties[0]
-  const options = useMemo(
-    () => (currentWord ? makeChoices(currentWord, quizWords) : []),
-    [currentWord, quizWords],
+  const mistakeQueue = useMemo(
+    () => mistakes.filter((item) => item.type === 'word'
+      ? words.some((word) => word.id === item.id)
+      : allGrammar.some((point) => point.id === item.id)),
+    [mistakes, words, allGrammar],
+  )
+  const currentMistake = mistakeQueue[mistakeIndex % mistakeQueue.length] || null
+  const activeWord = quizMode === 'mistakes'
+    ? currentMistake?.type === 'word' ? words.find((word) => word.id === currentMistake.id) ?? null : null
+    : quizMode === 'words' ? currentWord : null
+  const activeQuizDifficulty = quizDifficulties.find((difficulty) => difficulty.id === activeWord?.difficulty) ?? quizDifficulties[0]
+  const activeWordPool = useMemo(
+    () => (activeWord ? words.filter((word) => word.difficulty === activeWord.difficulty) : []),
+    [words, activeWord],
+  )
+  const activeWordOptions = useMemo(
+    () => (activeWord ? makeChoices(activeWord, activeWordPool) : []),
+    [activeWord, activeWordPool],
+  )
+  const activeGrammarQuestion = quizMode === 'mistakes'
+    ? currentMistake?.type === 'grammar' ? allGrammar.find((point) => point.id === currentMistake.id) ?? null : null
+    : quizMode === 'grammar' ? currentGrammarQuestion : null
+  const activeGrammarOptions = useMemo(
+    () => (activeGrammarQuestion ? makeGrammarChoices(activeGrammarQuestion, allGrammar) : []),
+    [activeGrammarQuestion, allGrammar],
   )
 
-  const currentTopik = topikExamples[topikIndex] || null
+  const activeTopikIndex = topikMode === 'listen' ? topikListenIndex : topikIndex
+  const currentTopik = topikExamples[activeTopikIndex % topikExamples.length] || null
   const theme = themes.find((item) => item.id === selectedTheme) ?? themes[0]
+  const todayCompleted = settings.dailyCompleted
   const filteredWords = words.filter((word) => {
     const matchesCategory = selectedCategory === 'Hammasi' || word.category === selectedCategory
     const query = wordSearch.trim().toLocaleLowerCase()
     const matchesSearch = !query || `${word.korean} ${word.meaning}`.toLocaleLowerCase().includes(query)
     return matchesCategory && matchesSearch
+  })
+  const filteredGrammar = allGrammar.filter((point) => {
+    const matchesLevel = grammarLevel === 'Hammasi' || point.level === grammarLevel
+    const query = grammarSearch.trim().toLocaleLowerCase()
+    const matchesSearch = !query || `${point.pattern} ${point.title} ${point.explanation} ${point.example} ${point.translation}`
+      .toLocaleLowerCase()
+      .includes(query)
+    return matchesLevel && matchesSearch
   })
 
   useEffect(() => {
@@ -402,6 +667,38 @@ function App() {
 
   useEffect(() => {
     try {
+      localStorage.setItem(WORDS_STORAGE_KEY, JSON.stringify(words))
+    } catch (error) {
+      console.error('Lug‘atni qurilmada saqlab bo‘lmadi:', error)
+    }
+  }, [words])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(CUSTOM_GRAMMAR_STORAGE_KEY, JSON.stringify(customGrammar))
+    } catch (error) {
+      console.error('Grammatikani qurilmada saqlab bo‘lmadi:', error)
+    }
+  }, [customGrammar])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(MISTAKES_STORAGE_KEY, JSON.stringify(mistakes))
+    } catch (error) {
+      console.error('Xatolarni qurilmada saqlab bo‘lmadi:', error)
+    }
+  }, [mistakes])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(learningProgress))
+    } catch (error) {
+      console.error('O‘rganish jarayonini qurilmada saqlab bo‘lmadi:', error)
+    }
+  }, [learningProgress])
+
+  useEffect(() => {
+    try {
       localStorage.setItem(THEME_STORAGE_KEY, selectedTheme)
     } catch (error) {
       console.error('Rang sozlamasini qurilmada saqlab bo‘lmadi:', error)
@@ -409,9 +706,29 @@ function App() {
   }, [selectedTheme])
 
   useEffect(() => {
+    try {
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
+    } catch (error) {
+      console.error('Sozlamalarni qurilmada saqlab bo‘lmadi:', error)
+    }
+  }, [settings])
+
+  useEffect(() => {
+    const previousFontSize = document.documentElement.style.fontSize
+    document.documentElement.style.fontSize = { small: '14px', medium: '16px', large: '18px' }[settings.textSize]
+    return () => {
+      document.documentElement.style.fontSize = previousFontSize
+    }
+  }, [settings.textSize])
+
+  useEffect(() => {
     const updateLives = () => {
       const now = Date.now()
+      const today = new Date(now).toLocaleDateString('sv-SE')
       setClockNow(now)
+      setSettings((previous) => previous.dailyDate === today
+        ? previous
+        : { ...previous, dailyDate: today, dailyCompleted: 0 })
       setGameState((previous) => {
         if (now < previous.nextHeartRefillAt) return previous
 
@@ -450,29 +767,159 @@ function App() {
   const refillHours = Math.floor(refillCountdown / (60 * 60 * 1000))
   const refillMinutes = Math.floor((refillCountdown % (60 * 60 * 1000)) / (60 * 1000))
 
+  const recordMistake = (type, id) => {
+    setMistakes((previous) => previous.some((item) => item.type === type && item.id === id)
+      ? previous
+      : [...previous, { type, id }])
+  }
+
+  const clearMistake = (type, id) => {
+    setMistakes((previous) => previous.filter((item) => item.type !== type || item.id !== id))
+  }
+
+  const handleSpeak = (text) => {
+    if (!settings.speechEnabled) return
+    if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+      setSpeechMessage('Brauzeringiz koreyscha ovozli talaffuzni qo‘llab-quvvatlamaydi.')
+      return
+    }
+
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'ko-KR'
+    utterance.rate = settings.speechRate
+    utterance.onend = () => setSpeechMessage('')
+    utterance.onerror = (event) => {
+      if (event.error !== 'canceled' && event.error !== 'interrupted') {
+        setSpeechMessage('Ovozli talaffuzni ijro etib bo‘lmadi. Qurilmadagi ovoz sozlamalarini tekshiring.')
+        console.error('Koreyscha ovozli talaffuz xatosi:', event.error)
+      }
+    }
+    setSpeechMessage('Koreyscha talaffuz ijro etilmoqda…')
+    window.speechSynthesis.speak(utterance)
+  }
+
   const handleNextWord = () => {
+    if (quizMode === 'mistakes') {
+      if (mistakeQueue.length === 0) return
+      const answeredCorrectly = isAnswered && selectedAnswer === activeWord?.meaning
+      if (answeredCorrectly && currentMistake?.type === 'word') {
+        clearMistake('word', currentMistake.id)
+      }
+      setLearningProgress((previous) => ({
+        ...previous,
+        mistakeIndex: answeredCorrectly
+          ? previous.mistakeIndex
+          : (previous.mistakeIndex + 1) % mistakeQueue.length,
+        selectedAnswer: null,
+        isAnswered: false,
+      }))
+      return
+    }
     if (quizWords.length === 0) return
-    setCurrentIndex((prev) => (prev + 1) % quizWords.length)
-    setSelectedAnswer(null)
-    setIsAnswered(false)
+    setLearningProgress((previous) => ({
+      ...previous,
+      currentIndex: (previous.currentIndex + 1) % quizWords.length,
+      selectedAnswer: null,
+      isAnswered: false,
+    }))
   }
 
   const handleDifficultyChange = (difficulty) => {
-    setSelectedDifficulty(difficulty)
-    setCurrentIndex(0)
-    setSelectedAnswer(null)
-    setIsAnswered(false)
+    setLearningProgress((previous) => ({
+      ...previous,
+      selectedDifficulty: difficulty,
+      currentIndex: 0,
+      selectedAnswer: null,
+      isAnswered: false,
+    }))
+  }
+
+  const handleQuizModeChange = (mode) => {
+    setLearningProgress((previous) => ({
+      ...previous,
+      quizMode: mode,
+      currentIndex: 0,
+      selectedAnswer: null,
+      isAnswered: false,
+      grammarIndex: 0,
+      grammarSelectedAnswer: null,
+      grammarAnswered: false,
+      mistakeIndex: 0,
+    }))
+  }
+
+  const handleGrammarQuizLevelChange = (level) => {
+    setLearningProgress((previous) => ({
+      ...previous,
+      grammarQuizLevel: level,
+      grammarIndex: 0,
+      grammarSelectedAnswer: null,
+      grammarAnswered: false,
+    }))
+  }
+
+  const handleNextGrammarQuestion = () => {
+    if (quizMode === 'mistakes') {
+      if (mistakeQueue.length === 0) return
+      const answeredCorrectly = grammarAnswered && grammarSelectedAnswer === activeGrammarQuestion?.pattern
+      if (answeredCorrectly && currentMistake?.type === 'grammar') {
+        clearMistake('grammar', currentMistake.id)
+      }
+      setLearningProgress((previous) => ({
+        ...previous,
+        mistakeIndex: answeredCorrectly
+          ? previous.mistakeIndex
+          : (previous.mistakeIndex + 1) % mistakeQueue.length,
+        grammarSelectedAnswer: null,
+        grammarAnswered: false,
+      }))
+      return
+    }
+    if (quizGrammar.length === 0) return
+    setLearningProgress((previous) => ({
+      ...previous,
+      grammarIndex: (previous.grammarIndex + 1) % quizGrammar.length,
+      grammarSelectedAnswer: null,
+      grammarAnswered: false,
+    }))
   }
 
   const handleAnswer = (choice) => {
-    if (isAnswered || !currentWord || gameState.hearts === 0) return
+    if (isAnswered || !activeWord || gameState.hearts === 0) return
 
-    setSelectedAnswer(choice)
-    setIsAnswered(true)
+    setLearningProgress((previous) => ({ ...previous, selectedAnswer: choice, isAnswered: true }))
 
-    if (choice === currentWord.meaning) {
-      setGameState((previous) => ({ ...previous, score: previous.score + currentQuizDifficulty.points }))
+    if (choice === activeWord.meaning) {
+      const difficulty = quizDifficulties.find((item) => item.id === activeWord.difficulty) ?? quizDifficulties[0]
+      setGameState((previous) => ({ ...previous, score: previous.score + difficulty.points }))
+      const answerDate = getLocalDateKey()
+      setSettings((previous) => ({
+        ...previous,
+        dailyDate: answerDate,
+        dailyCompleted: (previous.dailyDate === answerDate ? previous.dailyCompleted : 0) + 1,
+      }))
+      if (quizMode !== 'mistakes') clearMistake('word', activeWord.id)
     } else {
+      recordMistake('word', activeWord.id)
+      spendHeart()
+    }
+  }
+
+  const handleGrammarAnswer = (choice) => {
+    if (grammarAnswered || !activeGrammarQuestion || gameState.hearts === 0) return
+
+    setLearningProgress((previous) => ({
+      ...previous,
+      grammarSelectedAnswer: choice,
+      grammarAnswered: true,
+    }))
+
+    if (choice === activeGrammarQuestion.pattern) {
+      setGameState((previous) => ({ ...previous, score: previous.score + 2 }))
+      if (quizMode !== 'mistakes') clearMistake('grammar', activeGrammarQuestion.id)
+    } else {
+      recordMistake('grammar', activeGrammarQuestion.id)
       spendHeart()
     }
   }
@@ -480,8 +927,7 @@ function App() {
   const handleTopikAnswer = (choice) => {
     if (topikAnswered || !currentTopik || gameState.hearts === 0) return
 
-    setTopikSelected(choice)
-    setTopikAnswered(true)
+    setLearningProgress((previous) => ({ ...previous, topikSelected: choice, topikAnswered: true }))
     if (choice === currentTopik.answer) {
       setGameState((previous) => ({ ...previous, score: previous.score + 4 }))
     } else {
@@ -489,10 +935,36 @@ function App() {
     }
   }
 
+  const handleTopikListeningSubmit = (event) => {
+    event.preventDefault()
+    if (topikListenAnswered || !currentTopik || gameState.hearts === 0 || !topikListenInput.trim()) return
+
+    const normalizeKorean = (text) => text.normalize('NFC').replace(/[\s\p{P}\p{S}]/gu, '')
+    const isCorrect = normalizeKorean(topikListenInput) === normalizeKorean(currentTopik.korean)
+    setLearningProgress((previous) => ({
+      ...previous,
+      topikListenAnswered: true,
+      topikListenCorrect: isCorrect,
+    }))
+    if (isCorrect) {
+      setGameState((previous) => ({ ...previous, score: previous.score + 4 }))
+    } else {
+      spendHeart()
+    }
+  }
+
   const handleNextTopikQuestion = () => {
-    setTopikIndex((prev) => (prev + 1) % topikExamples.length)
-    setTopikSelected(null)
-    setTopikAnswered(false)
+    setLearningProgress((previous) => ({
+      ...previous,
+      ...(previous.topikMode === 'listen'
+        ? { topikListenIndex: (previous.topikListenIndex + 1) % topikExamples.length }
+        : { topikIndex: (previous.topikIndex + 1) % topikExamples.length }),
+      topikSelected: null,
+      topikAnswered: false,
+      topikListenInput: '',
+      topikListenAnswered: false,
+      topikListenCorrect: false,
+    }))
   }
 
   const handleFormChange = (event) => {
@@ -524,6 +996,49 @@ function App() {
     setEditingId(null)
   }
 
+  const handleGrammarFormChange = (event) => {
+    const { name, value } = event.target
+    setGrammarForm((previous) => ({ ...previous, [name]: value }))
+    setGrammarFormError('')
+  }
+
+  const handleSubmitGrammar = (event) => {
+    event.preventDefault()
+    const grammarDetails = Object.fromEntries(
+      Object.entries(grammarForm).map(([key, value]) => [key, value.trim()]),
+    )
+    if (Object.values(grammarDetails).some((value) => !value)) {
+      setGrammarFormError('Grammatika qo‘shish uchun barcha maydonlarni to‘ldiring.')
+      return
+    }
+    const point = {
+      id: Math.max(Date.now(), ...customGrammar.map((item) => item.id + 1)),
+      ...grammarDetails,
+      custom: true,
+    }
+    setCustomGrammar((previous) => [...previous, point])
+    setGrammarFormError('')
+    setGrammarForm({
+      pattern: '',
+      title: '',
+      explanation: '',
+      example: '',
+      translation: '',
+      level: 'Boshlang‘ich',
+    })
+  }
+
+  const handleDeleteGrammar = (id) => {
+    setCustomGrammar((previous) => previous.filter((point) => point.id !== id))
+    setMistakes((previous) => previous.filter((item) => item.type !== 'grammar' || item.id !== id))
+    setLearningProgress((previous) => ({
+      ...previous,
+      grammarIndex: 0,
+      grammarSelectedAnswer: null,
+      grammarAnswered: false,
+    }))
+  }
+
   const handleEdit = (word) => {
     setForm({
       korean: word.korean,
@@ -538,6 +1053,7 @@ function App() {
 
   const handleDelete = (id) => {
     setWords((prev) => prev.filter((item) => item.id !== id))
+    setMistakes((previous) => previous.filter((item) => item.type !== 'word' || item.id !== id))
     if (editingId === id) {
       setEditingId(null)
       setForm({ korean: '', meaning: '', example: '', category: 'Boshqa', difficulty: 'easy' })
@@ -568,6 +1084,9 @@ function App() {
           <button className={activeTab === 'topik' ? 'active' : ''} onClick={() => setActiveTab('topik')}>
             TOPIK
           </button>
+          <button className={activeTab === 'grammar' ? 'active' : ''} onClick={() => setActiveTab('grammar')}>
+            Grammatika
+          </button>
           <button className={activeTab === 'hearts' ? 'active' : ''} onClick={() => setActiveTab('hearts')}>
             Do‘kon
           </button>
@@ -577,35 +1096,66 @@ function App() {
         </nav>
       </header>
 
-      <section className="stats-grid">
-        <article className="stat-card accent">
-          <span>Ball</span>
-          <strong>{gameState.score}</strong>
-        </article>
-        <article className="stat-card heart-stat">
-          <span>Yuraklar</span>
-          <strong aria-label={`${gameState.hearts} ta yurak`}>{'❤️'.repeat(gameState.hearts)}{'🖤'.repeat(MAX_HEARTS - gameState.hearts)}</strong>
-          <small>{gameState.hearts}/{MAX_HEARTS}</small>
-        </article>
-      </section>
+      {!['words', 'settings', 'grammar'].includes(activeTab) && (
+        <section className="stats-grid">
+          <article className="stat-card accent">
+            <span>Ball</span>
+            <strong>{gameState.score}</strong>
+          </article>
+          <article className="stat-card heart-stat">
+            <span>Yuraklar</span>
+            <strong aria-label={`${gameState.hearts} ta yurak`}>{'❤️'.repeat(gameState.hearts)}{'🖤'.repeat(MAX_HEARTS - gameState.hearts)}</strong>
+            <small>{gameState.hearts}/{MAX_HEARTS}</small>
+          </article>
+        </section>
+      )}
 
       {activeTab === 'quiz' && (
         <main className="panel quiz-panel">
-          <div className="difficulty-tabs" role="group" aria-label="Test qiyinligini tanlang">
-            {quizDifficulties.map((difficulty) => (
-              <button
-                key={difficulty.id}
-                type="button"
-                className={`difficulty-btn ${selectedDifficulty === difficulty.id ? 'active' : ''}`}
-                onClick={() => handleDifficultyChange(difficulty.id)}
-              >
-                <span>{difficulty.label}</span>
-                <small>{difficulty.points} ball · {words.filter((word) => word.difficulty === difficulty.id).length} ta</small>
-              </button>
-            ))}
+          <div className="quiz-mode-tabs" role="group" aria-label="Test turini tanlang">
+            <button
+              type="button"
+              className={quizMode === 'words' ? 'active' : ''}
+              onClick={() => handleQuizModeChange('words')}
+              aria-pressed={quizMode === 'words'}
+            >
+              So‘z testi
+            </button>
+            <button
+              type="button"
+              className={quizMode === 'grammar' ? 'active' : ''}
+              onClick={() => handleQuizModeChange('grammar')}
+              aria-pressed={quizMode === 'grammar'}
+            >
+              Grammatika testi
+            </button>
+            <button
+              type="button"
+              className={quizMode === 'mistakes' ? 'active' : ''}
+              onClick={() => handleQuizModeChange('mistakes')}
+              aria-pressed={quizMode === 'mistakes'}
+            >
+              Xatolarim · {mistakeQueue.length}
+            </button>
           </div>
 
-          {currentWord ? (
+          {quizMode === 'words' && (
+            <div className="difficulty-tabs" role="group" aria-label="Test qiyinligini tanlang">
+              {quizDifficulties.map((difficulty) => (
+                <button
+                  key={difficulty.id}
+                  type="button"
+                  className={`difficulty-btn ${selectedDifficulty === difficulty.id ? 'active' : ''}`}
+                  onClick={() => handleDifficultyChange(difficulty.id)}
+                >
+                  <span>{difficulty.label}</span>
+                  <small>{difficulty.points} ball · {words.filter((word) => word.difficulty === difficulty.id).length} ta</small>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {activeWord ? (
             <>
               <p className="heart-timer">
                 {gameState.hearts === MAX_HEARTS
@@ -613,33 +1163,48 @@ function App() {
                   : `Keyingi 5 ta yurak: ${String(refillHours).padStart(2, '0')}:${String(refillMinutes).padStart(2, '0')} dan so‘ng`}
               </p>
               <div className="progress-row">
-                <span>So‘z {currentIndex + 1}/{quizWords.length}</span>
+                <span>{quizMode === 'mistakes' ? `Xato ${mistakeIndex + 1}/${mistakeQueue.length}` : `So‘z ${currentIndex + 1}/${quizWords.length}`}</span>
                 <button type="button" className="ghost-btn" onClick={handleNextWord}>
-                  Keyingisiga o'tkazib yuborish
+                  {quizMode === 'mistakes' && isAnswered && selectedAnswer === activeWord.meaning
+                    ? 'Keyingisiga o‘tish'
+                    : quizMode === 'mistakes' ? 'O‘tkazib yuborish' : 'Keyingisiga o‘tkazib yuborish'}
                 </button>
               </div>
 
               <div className="question-box">
                 <p className="label">
-                  Koreyscha so‘z · {currentQuizDifficulty.label} · {currentQuizDifficulty.points} ball
+                  {quizMode === 'mistakes' ? 'Xato qilingan so‘z' : `Koreyscha so‘z · ${activeQuizDifficulty.label} · ${activeQuizDifficulty.points} ball`}
                 </p>
-                <h2>{currentWord.korean}</h2>
+                <div className="pronunciation-row">
+                  <h2>{activeWord.korean}</h2>
+                  {settings.speechEnabled && (
+                    <button
+                      type="button"
+                      className="pronunciation-btn"
+                      onClick={() => handleSpeak(activeWord.korean)}
+                      aria-label={`${activeWord.korean} so‘zini talaffuz qilish`}
+                      title="Koreyscha talaffuzni eshitish"
+                    >
+                      🔊 Eshitish
+                    </button>
+                  )}
+                </div>
                 {isAnswered && (
-                  <p className={`result ${selectedAnswer === currentWord.meaning ? 'success' : 'error'}`}>
-                    {selectedAnswer === currentWord.meaning
-                      ? `To'g'ri! Bu so'z - ${currentWord.meaning} (+${currentQuizDifficulty.points} ball)`
-                      : `Noto'g'ri. To'g'ri javob: ${currentWord.meaning} · 1 yurak yo'qotdingiz.`}
+                  <p className={`result ${selectedAnswer === activeWord.meaning ? 'success' : 'error'}`}>
+                    {selectedAnswer === activeWord.meaning
+                      ? `To'g'ri! Bu so'z - ${activeWord.meaning} (+${activeQuizDifficulty.points} ball)`
+                      : `Noto'g'ri. To'g'ri javob: ${activeWord.meaning} · 1 yurak yo'qotdingiz.`}
                   </p>
                 )}
               </div>
 
               <div className="answer-grid">
-                {options.map((option) => (
+                {activeWordOptions.map((option) => (
                   <button
                     key={option}
                     type="button"
                     className={`answer-btn ${selectedAnswer === option ? 'selected' : ''} ${
-                      isAnswered && option === currentWord.meaning ? 'correct' : ''
+                      isAnswered && option === activeWord.meaning ? 'correct' : ''
                     }`}
                     onClick={() => handleAnswer(option)}
                     disabled={isAnswered || gameState.hearts === 0}
@@ -651,18 +1216,104 @@ function App() {
 
               {isAnswered && (
                 <div className="explanation-box">
-                  {currentWord.example && <p><strong>Masalan:</strong> {currentWord.example}</p>}
+                  {activeWord.example && <p><strong>Masalan:</strong> {activeWord.example}</p>}
                   <button type="button" className="primary-btn" onClick={handleNextWord}>
-                    Keyingi so'zga o'tish
+                    {quizMode === 'mistakes' && selectedAnswer === activeWord.meaning
+                      ? 'Xatodan chiqarib keyingisiga o‘tish'
+                      : 'Keyingi so‘zga o‘tish'}
                   </button>
                 </div>
               )}
+              {speechMessage && <p className="speech-status" role="status">{speechMessage}</p>}
               {gameState.hearts === 0 && !isAnswered && (
                 <p className="empty-words">Yuraklaringiz tugadi. Do‘kondan ballga yurak almashtiring yoki yangilanishini kuting.</p>
               )}
             </>
-          ) : (
+          ) : activeGrammarQuestion ? (
+            <>
+              <p className="heart-timer">
+                {gameState.hearts === MAX_HEARTS
+                  ? `Har ${HEART_REFILL_INTERVAL / (60 * 60 * 1000)} soatda 5 ta yurak yangilanadi.`
+                  : `Keyingi 5 ta yurak: ${String(refillHours).padStart(2, '0')}:${String(refillMinutes).padStart(2, '0')} dan so‘ng`}
+              </p>
+              <div className="grammar-levels" role="group" aria-label="Grammatika test darajasi">
+                {['Hammasi', 'Boshlang‘ich', 'O‘rta'].map((level) => (
+                  <button
+                    key={level}
+                    type="button"
+                    className={`category-btn ${grammarQuizLevel === level ? 'active' : ''}`}
+                    onClick={() => handleGrammarQuizLevelChange(level)}
+                    aria-pressed={grammarQuizLevel === level}
+                  >
+                    {level} · {allGrammar.filter((point) => level === 'Hammasi' || point.level === level).length}
+                  </button>
+                ))}
+              </div>
+              <div className="progress-row">
+                <span>{quizMode === 'mistakes' ? `Xato ${mistakeIndex + 1}/${mistakeQueue.length}` : `Grammatika ${grammarIndex + 1}/${quizGrammar.length}`}</span>
+                <button type="button" className="ghost-btn" onClick={handleNextGrammarQuestion}>
+                  {quizMode === 'mistakes' && grammarAnswered && grammarSelectedAnswer === activeGrammarQuestion.pattern
+                    ? 'Keyingisiga o‘tish'
+                    : quizMode === 'mistakes' ? 'O‘tkazib yuborish' : 'Keyingisiga o‘tish'}
+                </button>
+              </div>
+              <div className="question-box">
+                <p className="label">{quizMode === 'mistakes' ? 'Xato qilingan grammatika' : 'Qaysi koreyscha qoida bu ma’noga mos?'}</p>
+                <h2 className="grammar-quiz-title">{activeGrammarQuestion.title}</h2>
+                <p className="grammar-quiz-description">{activeGrammarQuestion.explanation}</p>
+                {grammarAnswered && (
+                  <p className={`result ${grammarSelectedAnswer === activeGrammarQuestion.pattern ? 'success' : 'error'}`}>
+                    {grammarSelectedAnswer === activeGrammarQuestion.pattern
+                      ? 'To‘g‘ri! Siz 2 ball oldingiz.'
+                      : `Noto‘g‘ri. To‘g‘ri javob: ${activeGrammarQuestion.pattern} · 1 yurak yo‘qotdingiz.`}
+                  </p>
+                )}
+              </div>
+              <div className="answer-grid">
+                {activeGrammarOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={`answer-btn ${grammarSelectedAnswer === option ? 'selected' : ''} ${
+                      grammarAnswered && option === activeGrammarQuestion.pattern ? 'correct' : ''
+                    }`}
+                    onClick={() => handleGrammarAnswer(option)}
+                    disabled={grammarAnswered || gameState.hearts === 0}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+              {grammarAnswered && (
+                <div className="explanation-box">
+                  <p><strong>Misol:</strong> <span lang="ko">{activeGrammarQuestion.example}</span></p>
+                  <p>{activeGrammarQuestion.translation}</p>
+                  {settings.speechEnabled && (
+                    <button type="button" className="pronunciation-btn" onClick={() => handleSpeak(activeGrammarQuestion.example)}>
+                      🔊 Misolni eshitish
+                    </button>
+                  )}
+                  <button type="button" className="primary-btn" onClick={handleNextGrammarQuestion}>
+                    {quizMode === 'mistakes' && grammarSelectedAnswer === activeGrammarQuestion.pattern
+                      ? 'Xatodan chiqarib keyingisiga o‘tish'
+                      : 'Keyingi savol'}
+                  </button>
+                </div>
+              )}
+              {speechMessage && <p className="speech-status" role="status">{speechMessage}</p>}
+              {gameState.hearts === 0 && !grammarAnswered && (
+                <p className="empty-words">Yuraklaringiz tugadi. Do‘kondan ballga yurak almashtiring yoki yangilanishini kuting.</p>
+              )}
+            </>
+          ) : quizMode === 'mistakes' ? (
+            <div className="mistakes-empty">
+              <h2>Hozircha xato javoblar yo‘q</h2>
+              <p>Xato topilgan so‘z va grammatikalar shu yerda qayta mashq qilish uchun chiqadi.</p>
+            </div>
+          ) : quizMode === 'words' ? (
             <p className="empty-words">Bu darajada hozircha so‘z yo‘q. Lug‘at bo‘limidan so‘z qo‘shing yoki boshqa darajani tanlang.</p>
+          ) : (
+            <p className="empty-words">Bu darajada grammatika topilmadi.</p>
           )}
         </main>
       )}
@@ -671,50 +1322,272 @@ function App() {
         <main className="panel topik-panel">
           <div className="topik-header">
             <span className="topik-tag">TOPIK I mashq</span>
-            <span className="topik-counter">Savol {topikIndex + 1}/{topikExamples.length}</span>
+            <span className="topik-counter">Savol {activeTopikIndex % topikExamples.length + 1}/{topikExamples.length}</span>
           </div>
 
-          <div className="topik-question-box">
-            <p className="label">{currentTopik.topic}</p>
-            <h3>Quyidagi gapning o‘zbekcha tarjimasini toping</h3>
-            <p className="topik-korean">{currentTopik.korean}</p>
+          <div className="quiz-mode-tabs topik-mode-tabs" role="group" aria-label="TOPIK mashq turini tanlang">
+            <button
+              type="button"
+              className={topikMode === 'translate' ? 'active' : ''}
+              onClick={() => setLearningProgress((previous) => ({ ...previous, topikMode: 'translate' }))}
+              aria-pressed={topikMode === 'translate'}
+            >
+              Tarjima testi
+            </button>
+            <button
+              type="button"
+              className={topikMode === 'listen' ? 'active' : ''}
+              onClick={() => setLearningProgress((previous) => ({ ...previous, topikMode: 'listen' }))}
+              aria-pressed={topikMode === 'listen'}
+            >
+              Eshitib yozish
+            </button>
           </div>
 
-          <div className="answer-grid topik-grid">
-            {currentTopik.options.map((option) => (
+          {topikMode === 'translate' ? (
+            <>
+              <div className="topik-question-box">
+                <p className="label">{currentTopik.topic}</p>
+                <h3>Quyidagi gapning o‘zbekcha tarjimasini toping</h3>
+                <div className="pronunciation-row">
+                  <p className="topik-korean">{currentTopik.korean}</p>
+                  {settings.speechEnabled && (
+                    <button
+                      type="button"
+                      className="pronunciation-btn"
+                      onClick={() => handleSpeak(currentTopik.korean)}
+                      aria-label="TOPIK gapini koreyscha talaffuz qilish"
+                      title="Koreyscha talaffuzni eshitish"
+                    >
+                      🔊 Eshitish
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="answer-grid topik-grid">
+                {currentTopik.options.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={`answer-btn ${topikSelected === option ? 'selected' : ''} ${
+                      topikAnswered && option === currentTopik.answer ? 'correct' : ''
+                    }`}
+                    onClick={() => handleTopikAnswer(option)}
+                    disabled={topikAnswered || gameState.hearts === 0}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+
+              {gameState.hearts === 0 && !topikAnswered && (
+                <p className="empty-words">Yuraklaringiz tugadi. Do‘kondan ballga yurak almashtiring yoki yangilanishini kuting.</p>
+              )}
+
+              {topikAnswered && (
+                <div className="explanation-box">
+                  <p className={`result ${topikSelected === currentTopik.answer ? 'success' : 'error'}`}>
+                    {topikSelected === currentTopik.answer
+                      ? "To'g'ri! Siz 4 ball oldingiz."
+                      : `Noto'g'ri. To'g'ri javob: ${currentTopik.answer} · 1 yurak yo'qotdingiz.`}
+                  </p>
+                  <p>
+                    <strong>Izoh:</strong> {currentTopik.explanation}
+                  </p>
+                  <button type="button" className="primary-btn" onClick={handleNextTopikQuestion}>
+                    Keyingi savol
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="topik-question-box listening-question">
+                <p className="label">{currentTopik.topic} · Eshitib yozish</p>
+                <h3>Koreyscha gapni eshiting va yozing</h3>
+                {settings.speechEnabled ? (
+                  <button
+                    type="button"
+                    className="pronunciation-btn listening-play-btn"
+                    onClick={() => handleSpeak(currentTopik.korean)}
+                  >
+                    🔊 Gapni eshitish
+                  </button>
+                ) : (
+                  <p className="empty-words">Eshitish uchun Sozlamalarda koreyscha talaffuzni yoqing.</p>
+                )}
+                <p className="listening-hint">Maslahat: gapni qayta eshitish uchun tugmani yana bosing.</p>
+              </div>
+              {speechMessage && <p className="speech-status" role="status">{speechMessage}</p>}
+              <form className="listening-form" onSubmit={handleTopikListeningSubmit}>
+                <label htmlFor="topik-listening-answer">Eshitgan koreyscha gapingiz</label>
+                <textarea
+                  id="topik-listening-answer"
+                  value={topikListenInput}
+                  onChange={(event) => setLearningProgress((previous) => ({
+                    ...previous,
+                    topikListenInput: event.target.value,
+                  }))}
+                  placeholder="예: 저는 한국어를 공부해요."
+                  lang="ko"
+                  rows="3"
+                  autoComplete="off"
+                  spellCheck="false"
+                  disabled={topikListenAnswered}
+                  required
+                />
+                {!topikListenAnswered && (
+                  <button type="submit" className="primary-btn" disabled={gameState.hearts === 0 || !settings.speechEnabled}>
+                    Javobni tekshirish
+                  </button>
+                )}
+              </form>
+              {topikListenAnswered && (
+                <div className="explanation-box">
+                  <p className={`result ${topikListenCorrect ? 'success' : 'error'}`}>
+                    {topikListenCorrect
+                      ? 'To‘g‘ri! Siz 4 ball oldingiz.'
+                      : 'Noto‘g‘ri javob. 1 yurak yo‘qotdingiz.'}
+                  </p>
+                  <p><strong>To‘g‘ri matn:</strong> <span lang="ko">{currentTopik.korean}</span></p>
+                  <p>{currentTopik.answer}</p>
+                  <button type="button" className="primary-btn" onClick={handleNextTopikQuestion}>
+                    Keyingi savol
+                  </button>
+                </div>
+              )}
+              {gameState.hearts === 0 && !topikListenAnswered && (
+                <p className="empty-words">Yuraklaringiz tugadi. Do‘kondan ballga yurak almashtiring yoki yangilanishini kuting.</p>
+              )}
+            </>
+          )}
+        </main>
+      )}
+
+      {activeTab === 'grammar' && (
+        <main className="panel grammar-panel">
+          <div className="grammar-header">
+            <div>
+              <p className="eyebrow">Koreys tili qoidalari</p>
+              <h2>Grammatika qoidalari</h2>
+              <p className="settings-description">Qoidani tanlab, qisqa izoh va koreyscha misolni ko‘ring.</p>
+            </div>
+            <span className="topik-counter">{filteredGrammar.length}/{allGrammar.length} qoida</span>
+          </div>
+          <form className="grammar-form" onSubmit={handleSubmitGrammar}>
+            <h3>Yangi grammatika qo‘shish</h3>
+            <div className="grammar-form-grid">
+              <input
+                name="pattern"
+                value={grammarForm.pattern}
+                onChange={handleGrammarFormChange}
+                placeholder="Koreyscha qoida, masalan: (으)면"
+                aria-label="Koreyscha grammatika qoidasi"
+                required
+              />
+              <input
+                name="title"
+                value={grammarForm.title}
+                onChange={handleGrammarFormChange}
+                placeholder="Qoida nomi"
+                aria-label="Grammatika nomi"
+                required
+              />
+              <textarea
+                name="explanation"
+                value={grammarForm.explanation}
+                onChange={handleGrammarFormChange}
+                placeholder="O‘zbekcha izohi"
+                aria-label="Grammatika izohi"
+                rows="2"
+                required
+              />
+              <input
+                name="example"
+                value={grammarForm.example}
+                onChange={handleGrammarFormChange}
+                placeholder="Koreyscha misol"
+                aria-label="Koreyscha misol"
+                required
+              />
+              <input
+                name="translation"
+                value={grammarForm.translation}
+                onChange={handleGrammarFormChange}
+                placeholder="Misolning o‘zbekcha tarjimasi"
+                aria-label="Misol tarjimasi"
+                required
+              />
+              <select name="level" value={grammarForm.level} onChange={handleGrammarFormChange} aria-label="Grammatika darajasi">
+                <option value="Boshlang‘ich">Boshlang‘ich</option>
+                <option value="O‘rta">O‘rta</option>
+              </select>
+            </div>
+            {grammarFormError && <p className="form-error" role="alert">{grammarFormError}</p>}
+            <button type="submit" className="primary-btn">Grammatikani qo‘shish</button>
+          </form>
+          <input
+            className="word-search"
+            type="search"
+            value={grammarSearch}
+            onChange={(event) => setGrammarSearch(event.target.value)}
+            placeholder="Qoida yoki misol bo‘yicha qidirish"
+            aria-label="Grammatika qidirish"
+          />
+          <div className="grammar-levels" role="group" aria-label="Grammatika darajasini tanlang">
+            {['Hammasi', 'Boshlang‘ich', 'O‘rta'].map((level) => (
               <button
-                key={option}
+                key={level}
                 type="button"
-                className={`answer-btn ${topikSelected === option ? 'selected' : ''} ${
-                  topikAnswered && option === currentTopik.answer ? 'correct' : ''
-                }`}
-                onClick={() => handleTopikAnswer(option)}
-                disabled={topikAnswered || gameState.hearts === 0}
+                className={`category-btn ${grammarLevel === level ? 'active' : ''}`}
+                onClick={() => setGrammarLevel(level)}
+                aria-pressed={grammarLevel === level}
               >
-                {option}
+                {level}
               </button>
             ))}
           </div>
-
-          {gameState.hearts === 0 && !topikAnswered && (
-            <p className="empty-words">Yuraklaringiz tugadi. Do‘kondan ballga yurak almashtiring yoki yangilanishini kuting.</p>
-          )}
-
-          {topikAnswered && (
-            <div className="explanation-box">
-              <p className={`result ${topikSelected === currentTopik.answer ? 'success' : 'error'}`}>
-                {topikSelected === currentTopik.answer
-                  ? "To'g'ri! Siz 4 ball oldingiz."
-                  : `Noto'g'ri. To'g'ri javob: ${currentTopik.answer} · 1 yurak yo'qotdingiz.`}
-              </p>
-              <p>
-                <strong>Izoh:</strong> {currentTopik.explanation}
-              </p>
-              <button type="button" className="primary-btn" onClick={handleNextTopikQuestion}>
-                Keyingi savol
-              </button>
-            </div>
-          )}
+          <div className="grammar-list">
+            {filteredGrammar.length > 0 ? filteredGrammar.map((point) => (
+              <details key={point.id} className="grammar-item">
+                <summary>
+                  <span className="grammar-number">{point.id}</span>
+                  <span className="grammar-item-title">
+                    <strong>{point.pattern}</strong>
+                    <span>{point.title}</span>
+                  </span>
+                  <span className="grammar-level">{point.level}</span>
+                </summary>
+                <div className="grammar-content">
+                  <p>{point.explanation}</p>
+                  <p className="grammar-example" lang="ko">{point.example}</p>
+                  <p className="grammar-translation">{point.translation}</p>
+                  {settings.speechEnabled && (
+                    <button
+                      type="button"
+                      className="pronunciation-btn"
+                      onClick={() => handleSpeak(point.example)}
+                      aria-label={`${point.example} misolini talaffuz qilish`}
+                    >
+                      🔊 Misolni eshitish
+                    </button>
+                  )}
+                  {point.custom && (
+                    <button
+                      type="button"
+                      className="ghost-btn danger"
+                      onClick={() => handleDeleteGrammar(point.id)}
+                    >
+                      Grammatikani o‘chirish
+                    </button>
+                  )}
+                </div>
+              </details>
+            )) : (
+              <p className="empty-words">Bu qidiruv bo‘yicha grammatika topilmadi.</p>
+            )}
+          </div>
+          {speechMessage && <p className="speech-status" role="status">{speechMessage}</p>}
         </main>
       )}
 
@@ -773,6 +1646,78 @@ function App() {
             </div>
           </section>
 
+          <section className="settings-section">
+            <p className="eyebrow">Ovoz</p>
+            <h2>Talaffuz sozlamalari</h2>
+            <label className="setting-control setting-toggle">
+              <span>Koreyscha talaffuzni yoqish</span>
+              <input
+                type="checkbox"
+                checked={settings.speechEnabled}
+                onChange={(event) => {
+                  const enabled = event.target.checked
+                  if (!enabled) {
+                    if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+                    setSpeechMessage('')
+                  }
+                  setSettings((previous) => ({ ...previous, speechEnabled: enabled }))
+                }}
+              />
+            </label>
+            <label className="setting-control" htmlFor="speech-rate">
+              <span>Talaffuz tezligi</span>
+              <span className="setting-value">{settings.speechRate.toString()}x</span>
+              <input
+                id="speech-rate"
+                type="range"
+                min="0.6"
+                max="1.2"
+                step="0.05"
+                value={settings.speechRate}
+                disabled={!settings.speechEnabled}
+                onChange={(event) => setSettings((previous) => ({ ...previous, speechRate: Number(event.target.value) }))}
+              />
+              <span className="setting-hint">Sekinroqdan tezroqqacha</span>
+            </label>
+          </section>
+
+          <section className="settings-section">
+            <p className="eyebrow">O‘rganish</p>
+            <h2>O‘qish rejasi</h2>
+            <label className="setting-control setting-select">
+              <span>Matn kattaligi</span>
+              <select
+                value={settings.textSize}
+                onChange={(event) => setSettings((previous) => ({ ...previous, textSize: event.target.value }))}
+              >
+                <option value="small">Kichik</option>
+                <option value="medium">O‘rtacha</option>
+                <option value="large">Katta</option>
+              </select>
+            </label>
+            <label className="setting-control setting-select">
+              <span>Kunlik so‘z maqsadi</span>
+              <select
+                value={settings.dailyGoal}
+                onChange={(event) => setSettings((previous) => ({ ...previous, dailyGoal: Number(event.target.value) }))}
+              >
+                {[5, 10, 15, 20, 30].map((goal) => <option key={goal} value={goal}>{goal} ta so‘z</option>)}
+              </select>
+            </label>
+            <div className="daily-goal">
+              <div className="daily-goal-label">
+                <span>Bugun to‘g‘ri topilgan so‘zlar</span>
+                <strong>{todayCompleted}/{settings.dailyGoal}</strong>
+              </div>
+              <progress value={Math.min(todayCompleted, settings.dailyGoal)} max={settings.dailyGoal} />
+              <p className="settings-description">
+                {todayCompleted >= settings.dailyGoal
+                  ? 'Ajoyib! Bugungi maqsadingizga yetdingiz.'
+                  : `Yana ${settings.dailyGoal - todayCompleted} ta to‘g‘ri javob bilan maqsadga yetasiz.`}
+              </p>
+            </div>
+          </section>
+
           <section className="settings-section author-card">
             <p className="eyebrow">Aloqa</p>
             <h2>Muallif</h2>
@@ -793,6 +1738,7 @@ function App() {
         <main className="panel words-panel">
           <form className="word-form" onSubmit={handleSubmitWord}>
             <h3>{editingId ? 'Soʻzni tahrirlash' : 'Yangi soʻz qoʻshish'}</h3>
+            <p className="storage-note">Lug‘at va o‘rganish jarayoningiz ushbu qurilma brauzerida saqlanadi.</p>
             <div className="form-grid">
               <input name="korean" value={form.korean} onChange={handleFormChange} placeholder="Koreyscha" />
               <input name="meaning" value={form.meaning} onChange={handleFormChange} placeholder="So'zning o'zbekcha tarjimasi" />
@@ -864,6 +1810,17 @@ function App() {
                   <span>{word.meaning} · {word.category} · {quizDifficulties.find((difficulty) => difficulty.id === word.difficulty)?.label ?? quizDifficulties[0].label}</span>
                 </div>
                 <div className="word-actions">
+                  {settings.speechEnabled && (
+                    <button
+                      type="button"
+                      className="ghost-btn"
+                      onClick={() => handleSpeak(word.korean)}
+                      aria-label={`${word.korean} so‘zini talaffuz qilish`}
+                      title="Koreyscha talaffuzni eshitish"
+                    >
+                      🔊
+                    </button>
+                  )}
                   <button type="button" className="ghost-btn" onClick={() => handleEdit(word)}>
                     Tahrirlash
                   </button>
@@ -874,6 +1831,7 @@ function App() {
               </div>
             )) : <p className="empty-words">Bu turkumda hozircha so‘z yo‘q.</p>}
           </div>
+          {speechMessage && <p className="speech-status" role="status">{speechMessage}</p>}
         </main>
       )}
     </div>
