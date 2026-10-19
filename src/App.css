@@ -452,6 +452,52 @@ button:disabled {
   gap: 18px;
 }
 
+.topik-two-day-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.topik-two-day-content h2 {
+  margin: 0;
+}
+
+.topik-two-word-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.topik-two-word-list li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 2px 8px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-alt);
+}
+
+.topik-two-word-number {
+  grid-row: span 2;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.topik-two-word-list li strong {
+  color: var(--primary);
+}
+
+.topik-two-word-list li > span:last-child {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
 .topik-two-days {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -1595,6 +1641,10 @@ button:disabled {
   .topik-two-days {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
+  }
+
+  .topik-two-word-list {
+    grid-template-columns: 1fr;
   }
 
   .topik-two-skills button {

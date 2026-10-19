@@ -21,6 +21,41 @@ const CUSTOM_GRAMMAR_STORAGE_KEY = 'topik-play-custom-grammar'
 const MISTAKES_STORAGE_KEY = 'topik-play-mistakes'
 const ACCOUNT_DATA_OWNER_KEY = 'topik-play-account-data-owner'
 const LOCAL_MODE_STORAGE_KEY = 'topik-play-local-mode'
+const TOPIK_TWO_DAY_ONE_WORDS = [
+  { korean: '필요하다', meaning: 'kerak bo‘lmoq' },
+  { korean: '방법', meaning: 'usul' },
+  { korean: '이용하다', meaning: 'foydalanmoq' },
+  { korean: '생각하다', meaning: 'o‘ylamoq' },
+  { korean: '관심', meaning: 'qiziqish' },
+  { korean: '가능하다', meaning: 'mumkin bo‘lmoq' },
+  { korean: '결과', meaning: 'natija' },
+  { korean: '늘다', meaning: 'ko‘paymoq, oshmoq' },
+  { korean: '바꾸다', meaning: 'almashtirmoq' },
+  { korean: '노력하다', meaning: 'harakat qilmoq, tirishmoq' },
+  { korean: '느끼다', meaning: 'his qilmoq' },
+  { korean: '경우', meaning: 'holat' },
+  { korean: '상품', meaning: 'tovar, mahsulot' },
+  { korean: '생기다', meaning: 'paydo bo‘lmoq' },
+  { korean: '도움', meaning: 'yordam' },
+  { korean: '환경', meaning: 'atrof-muhit' },
+  { korean: '내용', meaning: 'mazmun' },
+  { korean: '상황', meaning: 'vaziyat' },
+  { korean: '바로잡다', meaning: 'tuzatmoq' },
+  { korean: '사회', meaning: 'jamiyat' },
+  { korean: '생활', meaning: 'turmush, hayot' },
+  { korean: '이상하다', meaning: 'g‘alati bo‘lmoq' },
+  { korean: '경험', meaning: 'tajriba' },
+  { korean: '다양하다', meaning: 'xilma-xil bo‘lmoq' },
+  { korean: '최근', meaning: 'yaqinda, so‘nggi paytlarda' },
+  { korean: '선택하다', meaning: 'tanlamoq' },
+  { korean: '효과', meaning: 'ta’sir, samara' },
+  { korean: '문제', meaning: 'muammo' },
+  { korean: '자신', meaning: 'o‘zi' },
+  { korean: '찾다', meaning: 'topmoq, izlamoq' },
+  { korean: '관계', meaning: 'munosabat' },
+  { korean: '기간', meaning: 'muddat, davr' },
+  { korean: '전문가', meaning: 'mutaxassis' },
+]
 
 function getLocalDateKey() {
   return new Date().toLocaleDateString('sv-SE')
@@ -1928,9 +1963,21 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
                       </button>
                     ))}
                   </div>
-                  <section className="topik-two-placeholder" aria-live="polite">
+                  <section className="topik-two-day-content" aria-live="polite">
                     <h2>{topikTwoDay}-kun · 33 ta lug‘at</h2>
-                    <p>PDF lug‘at yuborilgach, shu kunga tegishli so‘zlarni joylayman.</p>
+                    {topikTwoDay === 1
+                      ? (
+                          <ol className="topik-two-word-list">
+                            {TOPIK_TWO_DAY_ONE_WORDS.map((word, index) => (
+                              <li key={word.korean}>
+                                <span className="topik-two-word-number">{String(index + 1).padStart(2, '0')}</span>
+                                <strong lang="ko">{word.korean}</strong>
+                                <span>{word.meaning}</span>
+                              </li>
+                            ))}
+                          </ol>
+                        )
+                      : <p className="settings-description">Bu kunning lug‘atlari PDF yuborilgach qo‘shiladi.</p>}
                   </section>
                 </section>
               )

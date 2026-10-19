@@ -19,7 +19,7 @@ Google akkauntsiz foydalanish uchun kirish ekranidagi **Qurilmada davom etish** 
 
 Kirish usuli va kunduzgi/tungi mavzuni ilovaning **Sozlamalar** bo‘limidan boshqaring.
 
-Ilovaning pastki menyusida **TOPIK I**, **TOPIK II** va **Sozlamalar** bo‘limlari bor. TOPIK II ichida **Lug‘at** (30 kun, har kuni 33 tadan), **Sigi (쓰기, yozish)**, **Ilgi (읽기, o‘qish)** va **Titki (듣기, eshitish)** yo‘nalishlari ajratilgan. Lug‘at kunlari PDF manba yuborilgach to‘ldiriladi; qolgan yo‘nalishlar keyin belgilanadi.
+Ilovaning pastki menyusida **TOPIK I**, **TOPIK II** va **Sozlamalar** bo‘limlari bor. TOPIK II ichida **Lug‘at** (30 kun, har kuni 33 tadan), **Sigi (쓰기, yozish)**, **Ilgi (읽기, o‘qish)** va **Titki (듣기, eshitish)** yo‘nalishlari ajratilgan. Birinchi kunning 33 ta so‘zi o‘zbekcha tarjimasi bilan qo‘shilgan; qolgan kunlar PDF manbasi kelgach to‘ldiriladi.
 
 ## Ishga tushirish
 
