@@ -17,6 +17,8 @@ Google orqali ilk kirishda qurilmada saqlangan o‘quv ma’lumotlari akkauntnin
 
 Google akkauntsiz foydalanish uchun kirish ekranidagi **Qurilmada davom etish** tugmasini bosing. O‘quv ma’lumotlari faqat shu qurilma brauzerida saqlanadi va Google akkauntiga sinxronlanmaydi. Ilovaga qayta kirganda qurilma usuli saqlanib qoladi; ilova ichidagi **Kirish usulini tanlash** tugmasi orqali Google usuliga o‘tish mumkin.
 
+Kirish usuli va kunduzgi/tungi mavzuni ilovaning **Sozlamalar** bo‘limidan boshqaring.
+
 ## Ishga tushirish
 
 ```powershell

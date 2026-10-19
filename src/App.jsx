@@ -1323,36 +1323,6 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
           <div>
             <img className="brand-logo" src="/topik-play-logo.svg" alt="Topik Play — Koreys tilini o‘rganish o‘yini" />
           </div>
-          <div className="account-actions">
-            <div className="account-identity">
-              {user?.photoURL && <img src={user.photoURL} alt="" referrerPolicy="no-referrer" />}
-              <span>{user ? user.displayName || user.email : 'Qurilma xotirasi'}</span>
-            </div>
-            {user
-              ? (
-                  <button
-                    type="button"
-                    className="sign-out-btn"
-                    onClick={() => signOutUser().catch((error) => console.error('Akkauntdan chiqib bo‘lmadi:', error))}
-                  >
-                    Chiqish
-                  </button>
-                )
-              : (
-                  <button type="button" className="sign-out-btn" onClick={onChooseLoginMode}>
-                    Kirish usulini tanlash
-                  </button>
-                )}
-            <button
-              type="button"
-              className="color-mode-toggle"
-              onClick={() => setColorMode((mode) => mode === 'night' ? 'day' : 'night')}
-              aria-label={colorMode === 'night' ? 'Kunduzgi mavzuga o‘tish' : 'Tungi mavzuga o‘tish'}
-              title={colorMode === 'night' ? 'Kunduzgi mavzu' : 'Tungi mavzu'}
-            >
-              <span aria-hidden="true">{colorMode === 'night' ? '☀️' : '🌙'}</span>
-            </button>
-          </div>
         </div>
         {cloudError && <p className="account-sync-error" role="alert">{cloudError}</p>}
         <nav className="nav-tabs" aria-label="asosiy navigatsiya">
@@ -1904,9 +1874,47 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
       {activeTab === 'settings' && (
         <main className="panel settings-panel">
           <section className="settings-section">
+            <p className="eyebrow">Akkaunt</p>
+            <h2>Kirish usuli</h2>
+            <p className="settings-description">
+              {user
+                ? `Google akkaunt: ${user.displayName || user.email}. Ma’lumotlaringiz qurilmalar orasida sinxronlanadi.`
+                : 'Qurilma xotirasi. Ma’lumotlaringiz faqat shu qurilmada saqlanadi.'}
+            </p>
+            <div className="setting-action-row">
+              {user
+                ? (
+                    <button
+                      type="button"
+                      className="setting-action-btn"
+                      onClick={() => signOutUser().catch((error) => console.error('Akkauntdan chiqib bo‘lmadi:', error))}
+                    >
+                      Google akkauntdan chiqish
+                    </button>
+                  )
+                : (
+                    <button type="button" className="setting-action-btn" onClick={onChooseLoginMode}>
+                      Kirish usulini o‘zgartirish
+                    </button>
+                  )}
+            </div>
+          </section>
+
+          <section className="settings-section">
             <p className="eyebrow">Ko‘rinish</p>
-            <h2>Ranglarni o‘zgartirish</h2>
-            <p className="settings-description">Ilova rangini tanlang. Tanlovingiz Google akkauntingizda saqlanadi.</p>
+            <h2>Rang mavzusi</h2>
+            <p className="settings-description">Ilovaning kunduzgi yoki tungi ko‘rinishini tanlang.</p>
+            <div className="setting-action-row">
+              <button
+                type="button"
+                className="setting-action-btn"
+                onClick={() => setColorMode((mode) => mode === 'night' ? 'day' : 'night')}
+                aria-label={colorMode === 'night' ? 'Kunduzgi mavzuga o‘tish' : 'Tungi mavzuga o‘tish'}
+              >
+                <span aria-hidden="true">{colorMode === 'night' ? '☀️' : '🌙'}</span>
+                {colorMode === 'night' ? 'Kunduzgi mavzu' : 'Tungi mavzu'}
+              </button>
+            </div>
             <div className="theme-options" role="group" aria-label="Ilova rangini tanlang">
               {themes.map((option) => (
                 <button
@@ -2020,7 +2028,7 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
         <main className="panel words-panel">
           <form className="word-form" onSubmit={handleSubmitWord}>
             <h3>{editingId ? 'Soʻzni tahrirlash' : 'Yangi soʻz qoʻshish'}</h3>
-            <p className="storage-note">Lug‘at va o‘rganish jarayoningiz Google akkauntingizda saqlanadi.</p>
+            <p className="storage-note">Lug‘at va o‘rganish jarayoningiz tanlangan saqlash usulida saqlanadi.</p>
             <div className="form-grid">
               <input name="korean" value={form.korean} onChange={handleFormChange} placeholder="Koreyscha" />
               <input name="meaning" value={form.meaning} onChange={handleFormChange} placeholder="So'zning o'zbekcha tarjimasi" />
