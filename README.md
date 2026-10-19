@@ -13,7 +13,9 @@ Google orqali kirish va qurilmalararo saqlash uchun Firebase Console’da:
 3. **Firestore Database** bo‘limidan standart ma’lumotlar bazasini yarating.
 4. Firestore **Rules** bo‘limiga `firestore.rules` faylining mazmunini ko‘chirib, **Publish** tugmasini bosing. Bu qoida har bir foydalanuvchiga faqat o‘zining `users/{uid}` ma’lumotlarini o‘qish va yozish huquqini beradi.
 
-Google-д анх удаа нэвтрэхэд энэ төхөөрөмжид өмнө нь хадгалагдсан суралцах мэдээллийг аккаунтын Firestore баримт болгон хуулна. Аккаунтад cloud мэдээлэл аль хэдийн байвал түүнийг төхөөрөмжийн мэдээллийн оронд ашиглана.
+Google orqali ilk kirishda qurilmada saqlangan o‘quv ma’lumotlari akkauntning Firestore ma’lumotlariga ko‘chiriladi. Akkauntda avvaldan bulutli ma’lumot bo‘lsa, qurilmadagi ma’lumotlar o‘rniga o‘sha ma’lumot yuklanadi.
+
+Google akkauntsiz foydalanish uchun kirish ekranidagi **Qurilmada davom etish** tugmasini bosing. O‘quv ma’lumotlari faqat shu qurilma brauzerida saqlanadi va Google akkauntiga sinxronlanmaydi. Ilovaga qayta kirganda qurilma usuli saqlanib qoladi; ilova ichidagi **Kirish usulini tanlash** tugmasi orqali Google usuliga o‘tish mumkin.
 
 ## Ishga tushirish
 

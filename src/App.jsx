@@ -20,6 +20,7 @@ const SETTINGS_STORAGE_KEY = 'topik-play-settings'
 const CUSTOM_GRAMMAR_STORAGE_KEY = 'topik-play-custom-grammar'
 const MISTAKES_STORAGE_KEY = 'topik-play-mistakes'
 const ACCOUNT_DATA_OWNER_KEY = 'topik-play-account-data-owner'
+const LOCAL_MODE_STORAGE_KEY = 'topik-play-local-mode'
 
 function getLocalDateKey() {
   return new Date().toLocaleDateString('sv-SE')
@@ -581,22 +582,26 @@ function getAuthErrorMessage(error) {
   return 'Google akkaunt bilan kirib bo‘lmadi. Firebase sozlamalarini va internet aloqasini tekshiring.'
 }
 
-function LoginScreen({ error, busy, onGoogleSignIn }) {
+function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue }) {
   return (
     <main className="auth-shell">
       <section className="auth-card">
         <img className="auth-logo" src="/topik-play-logo.svg" alt="Topik Play" />
         <p className="eyebrow">Koreys tilini o‘rganish o‘yini</p>
-        <h1>Akkauntingizga kiring</h1>
+        <h1>Kirish usulini tanlang</h1>
         <p className="settings-description">
-          O‘rganish jarayoningiz Google akkauntingizda saqlanadi va boshqa qurilmalarda ham ochiladi.
+          Google akkaunt bilan ma’lumotlaringizni qurilmalar orasida sinxronlang yoki faqat shu qurilmada saqlang.
         </p>
         {error && <p className="auth-error" role="alert">{error}</p>}
         <button type="button" className="google-sign-in-btn" onClick={onGoogleSignIn} disabled={busy}>
           <span className="google-mark" aria-hidden="true">G</span>
           {busy ? 'Kirilmoqda...' : 'Google orqali kirish'}
         </button>
-        <p className="auth-privacy-note">Faqat Google orqali tasdiqlangan akkaunt ulanadi.</p>
+        <div className="auth-divider"><span>yoki</span></div>
+        <button type="button" className="local-sign-in-btn" onClick={onLocalContinue} disabled={busy}>
+          Qurilmada davom etish
+        </button>
+        <p className="auth-privacy-note">Qurilmada saqlangan ma’lumotlar boshqa qurilmalarda ochilmaydi.</p>
       </section>
     </main>
   )
@@ -605,9 +610,16 @@ function LoginScreen({ error, busy, onGoogleSignIn }) {
 function App() {
   const [authState, setAuthState] = useState({ loading: true, user: null, error: '' })
   const [signInBusy, setSignInBusy] = useState(false)
+  const [localMode, setLocalMode] = useState(() => localStorage.getItem(LOCAL_MODE_STORAGE_KEY) === '1')
 
   useEffect(() => observeAuth(
-    (user) => setAuthState({ loading: false, user, error: '' }),
+    (user) => {
+      if (user) {
+        localStorage.removeItem(LOCAL_MODE_STORAGE_KEY)
+        setLocalMode(false)
+      }
+      setAuthState({ loading: false, user, error: '' })
+    },
     (error) => {
       console.error('Kirish holatini tekshirib bo‘lmadi:', error)
       setAuthState({
@@ -620,6 +632,8 @@ function App() {
 
   const handleGoogleSignIn = async () => {
     setSignInBusy(true)
+    localStorage.removeItem(LOCAL_MODE_STORAGE_KEY)
+    setLocalMode(false)
     setAuthState((previous) => ({ ...previous, error: '' }))
     try {
       await signInWithGoogle()
@@ -631,6 +645,16 @@ function App() {
     }
   }
 
+  const handleLocalContinue = () => {
+    localStorage.setItem(LOCAL_MODE_STORAGE_KEY, '1')
+    setLocalMode(true)
+  }
+
+  const handleChooseLoginMode = () => {
+    localStorage.removeItem(LOCAL_MODE_STORAGE_KEY)
+    setLocalMode(false)
+  }
+
   if (authState.loading) {
     return (
       <main className="auth-shell">
@@ -640,15 +664,22 @@ function App() {
     )
   }
 
-  if (!authState.user) {
-    return <LoginScreen error={authState.error} busy={signInBusy} onGoogleSignIn={handleGoogleSignIn} />
+  if (!authState.user && !localMode) {
+    return (
+      <LoginScreen
+        error={authState.error}
+        busy={signInBusy}
+        onGoogleSignIn={handleGoogleSignIn}
+        onLocalContinue={handleLocalContinue}
+      />
+    )
   }
 
-  return <LearningApp user={authState.user} />
+  return <LearningApp user={authState.user} localMode={localMode} onChooseLoginMode={handleChooseLoginMode} />
 }
 
-function LearningApp({ user }) {
-  const [cloudReady, setCloudReady] = useState(false)
+function LearningApp({ user, localMode, onChooseLoginMode }) {
+  const [cloudReady, setCloudReady] = useState(localMode)
   const [cloudError, setCloudError] = useState('')
   const [words, setWords] = useState(loadWords)
   const [customGrammar, setCustomGrammar] = useState(loadCustomGrammar)
@@ -830,6 +861,8 @@ function LearningApp({ user }) {
   }, [settings])
 
   useEffect(() => {
+    if (!user) return undefined
+
     let active = true
 
     const syncInitialData = async () => {
@@ -894,10 +927,10 @@ function LearningApp({ user }) {
     return () => {
       active = false
     }
-  }, [user.uid])
+  }, [user])
 
   useEffect(() => {
-    if (!cloudReady) return undefined
+    if (!user || !cloudReady) return undefined
 
     const timeout = window.setTimeout(() => {
       saveAccountData(user.uid, {
@@ -918,7 +951,7 @@ function LearningApp({ user }) {
     }, 700)
 
     return () => window.clearTimeout(timeout)
-  }, [cloudReady, user.uid, words, customGrammar, mistakes, learningProgress, gameState, selectedTheme, colorMode, settings])
+  }, [cloudReady, user, words, customGrammar, mistakes, learningProgress, gameState, selectedTheme, colorMode, settings])
 
   useEffect(() => {
     const previousFontSize = document.documentElement.style.fontSize
@@ -1267,7 +1300,7 @@ function LearningApp({ user }) {
     }
   }
 
-  if (!cloudReady) {
+  if (user && !cloudReady) {
     return (
       <main className="auth-shell">
         <img className="auth-logo" src="/topik-play-logo.svg" alt="Topik Play" />
@@ -1292,16 +1325,24 @@ function LearningApp({ user }) {
           </div>
           <div className="account-actions">
             <div className="account-identity">
-              {user.photoURL && <img src={user.photoURL} alt="" referrerPolicy="no-referrer" />}
-              <span>{user.displayName || user.email}</span>
+              {user?.photoURL && <img src={user.photoURL} alt="" referrerPolicy="no-referrer" />}
+              <span>{user ? user.displayName || user.email : 'Qurilma xotirasi'}</span>
             </div>
-            <button
-              type="button"
-              className="sign-out-btn"
-              onClick={() => signOutUser().catch((error) => console.error('Akkauntdan chiqib bo‘lmadi:', error))}
-            >
-              Chiqish
-            </button>
+            {user
+              ? (
+                  <button
+                    type="button"
+                    className="sign-out-btn"
+                    onClick={() => signOutUser().catch((error) => console.error('Akkauntdan chiqib bo‘lmadi:', error))}
+                  >
+                    Chiqish
+                  </button>
+                )
+              : (
+                  <button type="button" className="sign-out-btn" onClick={onChooseLoginMode}>
+                    Kirish usulini tanlash
+                  </button>
+                )}
             <button
               type="button"
               className="color-mode-toggle"
