@@ -22,6 +22,19 @@
   --shadow: 0 20px 45px rgba(15, 23, 42, 0.45);
 }
 
+:root[data-color-mode='day'] {
+  color-scheme: light;
+  --bg: #f1f5f9;
+  --panel: rgba(255, 255, 255, 0.96);
+  --panel-alt: #f8fafc;
+  --text: #172033;
+  --muted: #526078;
+  --border: rgba(71, 85, 105, 0.2);
+  --shadow: 0 20px 45px rgba(51, 65, 85, 0.12);
+  color: var(--text);
+  background: #f1f5f9;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -36,6 +49,10 @@ body {
   min-height: 100vh;
   background: radial-gradient(circle at top, #172554 0%, #0b1220 35%, #040b14 100%);
   color: var(--text);
+}
+
+:root[data-color-mode='day'] body {
+  background: radial-gradient(circle at top, #dbeafe 0%, #f1f5f9 52%, #e2e8f0 100%);
 }
 
 button, input {
@@ -76,9 +93,164 @@ button:disabled {
   font-size: 0.7rem;
 }
 
-.topbar h1 {
-  margin: 0;
-  font-size: clamp(2.2rem, 5vw, 3.8rem);
+.brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.brand-logo {
+  display: block;
+  width: clamp(220px, 32vw, 340px);
+  height: auto;
+}
+
+.account-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.account-identity {
+  display: flex;
+  max-width: 210px;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.account-identity img {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.account-identity span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sign-out-btn {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 0.84rem;
+}
+
+.account-sync-error {
+  margin: -8px 0 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  border-radius: 12px;
+  background: rgba(248, 113, 113, 0.1);
+  color: var(--text);
+}
+
+.auth-shell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+}
+
+.auth-card {
+  width: min(100%, 440px);
+  padding: 32px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.auth-logo {
+  display: block;
+  width: min(100%, 290px);
+  margin: 0 auto 28px;
+}
+
+.auth-card h1 {
+  margin: 0 0 10px;
+  font-size: clamp(1.6rem, 5vw, 2rem);
+}
+
+.auth-card .settings-description {
+  margin: 0 0 22px;
+}
+
+.google-sign-in-btn {
+  display: flex;
+  width: 100%;
+  min-height: 50px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+  color: #1f2937;
+  font-weight: 700;
+}
+
+.google-mark {
+  color: #4285f4;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.auth-error {
+  margin: 0 0 16px;
+  padding: 12px;
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  border-radius: 12px;
+  background: rgba(248, 113, 113, 0.1);
+  color: var(--text);
+}
+
+.auth-privacy-note {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.color-mode-toggle {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  font-size: 1.35rem;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.color-mode-toggle:hover {
+  transform: rotate(12deg) scale(1.05);
+}
+
+.color-mode-toggle:focus-visible {
+  outline: 3px solid var(--primary-strong);
+  outline-offset: 3px;
+}
+
+:root[data-color-mode='day'] .nav-tabs button {
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 8px 18px rgba(51, 65, 85, 0.1);
+}
+
+:root[data-color-mode='day'] .nav-tabs button.active {
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  color: #102033;
 }
 
 .nav-tabs {
@@ -1154,13 +1326,39 @@ button:disabled {
 
   .topbar {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 10px;
     margin-bottom: 14px;
   }
 
-  .topbar h1 {
-    font-size: 2rem;
+  .brand-row {
+    width: 100%;
+  }
+
+  .account-actions {
+    gap: 6px;
+  }
+
+  .account-identity {
+    max-width: 42px;
+  }
+
+  .account-identity span {
+    display: none;
+  }
+
+  .sign-out-btn {
+    padding: 7px 8px;
+    font-size: 0.75rem;
+  }
+
+  .color-mode-toggle {
+    width: 42px;
+    height: 42px;
+  }
+
+  .brand-logo {
+    width: min(72vw, 260px);
   }
 
   .eyebrow {
@@ -1186,6 +1384,11 @@ button:disabled {
   .panel {
     padding: 16px;
     border-radius: 18px;
+  }
+
+  .auth-card {
+    padding: 24px 18px;
+    border-radius: 20px;
   }
 
   .quiz-panel,

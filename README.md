@@ -1,16 +1,34 @@
-# React + Vite
+# Topik Play
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Koreys tilini o‘zbek tilida o‘rgatuvchi React, Vite va Capacitor ilovasi.
 
-Currently, two official plugins are available:
+## Firebase sozlamalari
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Web Firebase sozlamalari `src/firebase.js` faylida. Firebase web ilovasi sozlamasidagi API kaliti brauzerda ko‘rinishi tabiiy; Firestore qoidalari foydalanuvchi ma’lumotlarini himoya qiladi.
 
-## React Compiler
+Google orqali kirish va qurilmalararo saqlash uchun Firebase Console’da:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. **Authentication → Kirish usuli → Google** provayderini yoqing va qo‘llab-quvvatlash elektron pochtasini tanlang.
+2. **Authentication → Settings → Authorized domains** qismiga `localhost`, `127.0.0.1` va `topik-play.vercel.app` domenlarini qo‘shing.
+3. **Firestore Database** bo‘limidan standart ma’lumotlar bazasini yarating.
+4. Firestore **Rules** bo‘limiga `firestore.rules` faylining mazmunini ko‘chirib, **Publish** tugmasini bosing. Bu qoida har bir foydalanuvchiga faqat o‘zining `users/{uid}` ma’lumotlarini o‘qish va yozish huquqini beradi.
 
-## Expanding the Oxlint configuration
+Google-д анх удаа нэвтрэхэд энэ төхөөрөмжид өмнө нь хадгалагдсан суралцах мэдээллийг аккаунтын Firestore баримт болгон хуулна. Аккаунтад cloud мэдээлэл аль хэдийн байвал түүнийг төхөөрөмжийн мэдээллийн оронд ашиглана.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Ishga tushirish
+
+```powershell
+npm install
+npm run dev
+```
+
+Vercel’ga tarqatishda o‘zgarishlarni GitHub’ga yuboring; `topik-play.vercel.app` domeni Firebase’da ruxsat etilgan bo‘lishi kerak.
+
+## Android
+
+```powershell
+npm run build
+npx cap sync android
+```
+
+So‘ng Android Studio’da `android` papkasini ochib, debug APK yarating. Android ilovasida Google OAuth ishlashi uchun Firebase Authentication’da Android ilovasini ham ro‘yxatdan o‘tkazib, SHA-1 fingerprint va OAuth sozlamalarini qo‘shish talab qilinadi.

@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import advancedWords from './advancedWords.js'
+import { loadAccountData, observeAuth, saveAccountData, signInWithGoogle, signOutUser } from './firebase.js'
 import grammarPoints from './grammarPoints.js'
 import './App.css'
 
@@ -12,14 +13,39 @@ const UNVERIFIED_WORD_ID_END = 2000
 const ADVANCED_WORDS_MIGRATION_KEY = 'topik-play-advanced-words-v1'
 const GAME_STATE_KEY = 'topik-play-game-state'
 const THEME_STORAGE_KEY = 'topik-play-theme'
+const COLOR_MODE_STORAGE_KEY = 'topik-play-color-mode'
 const WORDS_STORAGE_KEY = 'topik-play-words'
 const PROGRESS_STORAGE_KEY = 'topik-play-learning-progress'
 const SETTINGS_STORAGE_KEY = 'topik-play-settings'
 const CUSTOM_GRAMMAR_STORAGE_KEY = 'topik-play-custom-grammar'
 const MISTAKES_STORAGE_KEY = 'topik-play-mistakes'
+const ACCOUNT_DATA_OWNER_KEY = 'topik-play-account-data-owner'
 
 function getLocalDateKey() {
   return new Date().toLocaleDateString('sv-SE')
+}
+
+function createDefaultLearningProgress() {
+  return {
+    selectedDifficulty: 'easy',
+    currentIndex: 0,
+    selectedAnswer: null,
+    isAnswered: false,
+    quizMode: 'words',
+    mistakeIndex: 0,
+    grammarIndex: 0,
+    grammarQuizLevel: 'Hammasi',
+    grammarSelectedAnswer: null,
+    grammarAnswered: false,
+    topikIndex: 0,
+    topikListenIndex: 1,
+    topikMode: 'translate',
+    topikSelected: null,
+    topikAnswered: false,
+    topikListenInput: '',
+    topikListenAnswered: false,
+    topikListenCorrect: false,
+  }
 }
 
 const defaultSettings = {
@@ -94,26 +120,7 @@ function loadWords() {
 }
 
 function loadLearningProgress() {
-  const initial = {
-    selectedDifficulty: 'easy',
-    currentIndex: 0,
-    selectedAnswer: null,
-    isAnswered: false,
-    quizMode: 'words',
-    mistakeIndex: 0,
-    grammarIndex: 0,
-    grammarQuizLevel: 'Hammasi',
-    grammarSelectedAnswer: null,
-    grammarAnswered: false,
-    topikIndex: 0,
-    topikListenIndex: 1,
-    topikMode: 'translate',
-    topikSelected: null,
-    topikAnswered: false,
-    topikListenInput: '',
-    topikListenAnswered: false,
-    topikListenCorrect: false,
-  }
+  const initial = createDefaultLearningProgress()
   try {
     const saved = JSON.parse(localStorage.getItem(PROGRESS_STORAGE_KEY) ?? 'null')
     if (!saved || typeof saved !== 'object') return initial
@@ -196,6 +203,15 @@ function loadTheme() {
   } catch (error) {
     console.error('Rang sozlamasini o‘qib bo‘lmadi:', error)
     return themes[0].id
+  }
+}
+
+function loadColorMode() {
+  try {
+    return localStorage.getItem(COLOR_MODE_STORAGE_KEY) === 'day' ? 'day' : 'night'
+  } catch (error) {
+    console.error('Rang rejimini o‘qib bo‘lmadi:', error)
+    return 'night'
   }
 }
 
@@ -553,12 +569,93 @@ function makeGrammarChoices(correctPoint, allPoints) {
   return shuffleList([...wrongPatterns, correctPoint.pattern])
 }
 
+function getAuthErrorMessage(error) {
+  if (error.code === 'auth/unauthorized-domain') {
+    return 'Bu sayt Firebase’ning ruxsat etilgan domenlariga qo‘shilmagan. Firebase Authentication sozlamalarida domenni qo‘shing.'
+  }
+  if (error.code === 'auth/operation-not-allowed') {
+    return 'Firebase’da Google orqali kirish yoqilmagan. Authentication → Kirish usuli bo‘limini tekshiring.'
+  }
+  if (error.code === 'auth/popup-closed-by-user') return 'Kirish oynasi yopildi. Qayta urinib ko‘ring.'
+  if (error.code === 'auth/popup-blocked') return 'Brauzer kirish oynasini to‘sdi. Qalqib chiquvchi oynalarga ruxsat bering.'
+  return 'Google akkaunt bilan kirib bo‘lmadi. Firebase sozlamalarini va internet aloqasini tekshiring.'
+}
+
+function LoginScreen({ error, busy, onGoogleSignIn }) {
+  return (
+    <main className="auth-shell">
+      <section className="auth-card">
+        <img className="auth-logo" src="/topik-play-logo.svg" alt="Topik Play" />
+        <p className="eyebrow">Koreys tilini o‘rganish o‘yini</p>
+        <h1>Akkauntingizga kiring</h1>
+        <p className="settings-description">
+          O‘rganish jarayoningiz Google akkauntingizda saqlanadi va boshqa qurilmalarda ham ochiladi.
+        </p>
+        {error && <p className="auth-error" role="alert">{error}</p>}
+        <button type="button" className="google-sign-in-btn" onClick={onGoogleSignIn} disabled={busy}>
+          <span className="google-mark" aria-hidden="true">G</span>
+          {busy ? 'Kirilmoqda...' : 'Google orqali kirish'}
+        </button>
+        <p className="auth-privacy-note">Faqat Google orqali tasdiqlangan akkaunt ulanadi.</p>
+      </section>
+    </main>
+  )
+}
+
 function App() {
+  const [authState, setAuthState] = useState({ loading: true, user: null, error: '' })
+  const [signInBusy, setSignInBusy] = useState(false)
+
+  useEffect(() => observeAuth(
+    (user) => setAuthState({ loading: false, user, error: '' }),
+    (error) => {
+      console.error('Kirish holatini tekshirib bo‘lmadi:', error)
+      setAuthState({
+        loading: false,
+        user: null,
+        error: 'Firebase bilan bog‘lanib bo‘lmadi. Internet va Firebase sozlamalarini tekshiring.',
+      })
+    },
+  ), [])
+
+  const handleGoogleSignIn = async () => {
+    setSignInBusy(true)
+    setAuthState((previous) => ({ ...previous, error: '' }))
+    try {
+      await signInWithGoogle()
+    } catch (error) {
+      console.error('Google orqali kirib bo‘lmadi:', error)
+      setAuthState((previous) => ({ ...previous, error: getAuthErrorMessage(error) }))
+    } finally {
+      setSignInBusy(false)
+    }
+  }
+
+  if (authState.loading) {
+    return (
+      <main className="auth-shell">
+        <img className="auth-logo" src="/topik-play-logo.svg" alt="Topik Play" />
+        <p className="settings-description">Kirish holati tekshirilmoqda...</p>
+      </main>
+    )
+  }
+
+  if (!authState.user) {
+    return <LoginScreen error={authState.error} busy={signInBusy} onGoogleSignIn={handleGoogleSignIn} />
+  }
+
+  return <LearningApp user={authState.user} />
+}
+
+function LearningApp({ user }) {
+  const [cloudReady, setCloudReady] = useState(false)
+  const [cloudError, setCloudError] = useState('')
   const [words, setWords] = useState(loadWords)
   const [customGrammar, setCustomGrammar] = useState(loadCustomGrammar)
   const [mistakes, setMistakes] = useState(loadMistakes)
   const [activeTab, setActiveTab] = useState('quiz')
   const [selectedTheme, setSelectedTheme] = useState(loadTheme)
+  const [colorMode, setColorMode] = useState(loadColorMode)
   const [settings, setSettings] = useState(loadSettings)
   const [selectedCategory, setSelectedCategory] = useState('Hammasi')
   const [grammarLevel, setGrammarLevel] = useState('Hammasi')
@@ -579,6 +676,16 @@ function App() {
   const [gameState, setGameState] = useState(loadGameState)
   const [clockNow, setClockNow] = useState(0)
   const [speechMessage, setSpeechMessage] = useState('')
+  const localDataRef = useRef({
+    words,
+    customGrammar,
+    mistakes,
+    learningProgress,
+    gameState,
+    selectedTheme,
+    colorMode,
+    settings,
+  })
   const {
     selectedDifficulty,
     currentIndex,
@@ -706,12 +813,112 @@ function App() {
   }, [selectedTheme])
 
   useEffect(() => {
+    document.documentElement.dataset.colorMode = colorMode
+    try {
+      localStorage.setItem(COLOR_MODE_STORAGE_KEY, colorMode)
+    } catch (error) {
+      console.error('Rang rejimini qurilmada saqlab bo‘lmadi:', error)
+    }
+  }, [colorMode])
+
+  useEffect(() => {
     try {
       localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
     } catch (error) {
       console.error('Sozlamalarni qurilmada saqlab bo‘lmadi:', error)
     }
   }, [settings])
+
+  useEffect(() => {
+    let active = true
+
+    const syncInitialData = async () => {
+      try {
+        const saved = await loadAccountData(user.uid)
+        if (!active) return
+
+        if (saved) {
+          if (!Array.isArray(saved.words) || !Array.isArray(saved.customGrammar) || !Array.isArray(saved.mistakes)) {
+            throw new Error('Akkauntdagi o‘quv ma’lumotlari formati noto‘g‘ri.')
+          }
+          setWords(saved.words)
+          setCustomGrammar(saved.customGrammar)
+          setMistakes(saved.mistakes)
+          if (saved.learningProgress && typeof saved.learningProgress === 'object') setLearningProgress(saved.learningProgress)
+          if (saved.gameState && typeof saved.gameState === 'object') setGameState(saved.gameState)
+          if (themes.some((item) => item.id === saved.selectedTheme)) setSelectedTheme(saved.selectedTheme)
+          if (saved.colorMode === 'day' || saved.colorMode === 'night') setColorMode(saved.colorMode)
+          if (saved.settings && typeof saved.settings === 'object') setSettings(saved.settings)
+          localStorage.setItem(ACCOUNT_DATA_OWNER_KEY, user.uid)
+        } else {
+          const savedOwner = localStorage.getItem(ACCOUNT_DATA_OWNER_KEY)
+          const firstAccountData = !savedOwner || savedOwner === user.uid
+          const initialData = firstAccountData
+            ? localDataRef.current
+            : {
+                words: categorizedWords,
+                customGrammar: [],
+                mistakes: [],
+                learningProgress: createDefaultLearningProgress(),
+                gameState: { score: 0, hearts: MAX_HEARTS, nextHeartRefillAt: Date.now() + HEART_REFILL_INTERVAL },
+                selectedTheme: themes[0].id,
+                colorMode: 'night',
+                settings: { ...defaultSettings, dailyDate: getLocalDateKey() },
+              }
+          if (!firstAccountData) {
+            setWords(initialData.words)
+            setCustomGrammar(initialData.customGrammar)
+            setMistakes(initialData.mistakes)
+            setLearningProgress(initialData.learningProgress)
+            setGameState(initialData.gameState)
+            setSelectedTheme(initialData.selectedTheme)
+            setColorMode(initialData.colorMode)
+            setSettings(initialData.settings)
+          }
+          await saveAccountData(user.uid, initialData)
+          if (!active) return
+          localStorage.setItem(ACCOUNT_DATA_OWNER_KEY, user.uid)
+        }
+
+        setCloudReady(true)
+      } catch (error) {
+        console.error('Akkaunt ma’lumotlarini sinxronlab bo‘lmadi:', error)
+        if (active) {
+          setCloudError('Bulutli saqlash ulanmagan. Firebase Firestore bazasi va xavfsizlik qoidalarini sozlang.')
+          setCloudReady(true)
+        }
+      }
+    }
+
+    syncInitialData()
+    return () => {
+      active = false
+    }
+  }, [user.uid])
+
+  useEffect(() => {
+    if (!cloudReady) return undefined
+
+    const timeout = window.setTimeout(() => {
+      saveAccountData(user.uid, {
+        words,
+        customGrammar,
+        mistakes,
+        learningProgress,
+        gameState,
+        selectedTheme,
+        colorMode,
+        settings,
+      }).then(() => {
+        setCloudError('')
+      }).catch((error) => {
+        console.error('Akkaunt ma’lumotlarini saqlab bo‘lmadi:', error)
+        setCloudError('Ma’lumotlarni Google akkauntingizga saqlab bo‘lmadi. Firestore sozlamalarini tekshiring.')
+      })
+    }, 700)
+
+    return () => window.clearTimeout(timeout)
+  }, [cloudReady, user.uid, words, customGrammar, mistakes, learningProgress, gameState, selectedTheme, colorMode, settings])
 
   useEffect(() => {
     const previousFontSize = document.documentElement.style.fontSize
@@ -1060,6 +1267,15 @@ function App() {
     }
   }
 
+  if (!cloudReady) {
+    return (
+      <main className="auth-shell">
+        <img className="auth-logo" src="/topik-play-logo.svg" alt="Topik Play" />
+        <p className="settings-description">Google akkauntingizdagi ma’lumotlar yuklanmoqda...</p>
+      </main>
+    )
+  }
+
   return (
     <div
       className="app-shell"
@@ -1070,10 +1286,34 @@ function App() {
       }}
     >
       <header className="topbar">
-        <div>
-          <p className="eyebrow">Koreys tilini o'rganish o'yini</p>
-          <h1>Topik Play</h1>
+        <div className="brand-row">
+          <div>
+            <img className="brand-logo" src="/topik-play-logo.svg" alt="Topik Play — Koreys tilini o‘rganish o‘yini" />
+          </div>
+          <div className="account-actions">
+            <div className="account-identity">
+              {user.photoURL && <img src={user.photoURL} alt="" referrerPolicy="no-referrer" />}
+              <span>{user.displayName || user.email}</span>
+            </div>
+            <button
+              type="button"
+              className="sign-out-btn"
+              onClick={() => signOutUser().catch((error) => console.error('Akkauntdan chiqib bo‘lmadi:', error))}
+            >
+              Chiqish
+            </button>
+            <button
+              type="button"
+              className="color-mode-toggle"
+              onClick={() => setColorMode((mode) => mode === 'night' ? 'day' : 'night')}
+              aria-label={colorMode === 'night' ? 'Kunduzgi mavzuga o‘tish' : 'Tungi mavzuga o‘tish'}
+              title={colorMode === 'night' ? 'Kunduzgi mavzu' : 'Tungi mavzu'}
+            >
+              <span aria-hidden="true">{colorMode === 'night' ? '☀️' : '🌙'}</span>
+            </button>
+          </div>
         </div>
+        {cloudError && <p className="account-sync-error" role="alert">{cloudError}</p>}
         <nav className="nav-tabs" aria-label="asosiy navigatsiya">
           <button className={activeTab === 'quiz' ? 'active' : ''} onClick={() => setActiveTab('quiz')}>
             Test
@@ -1625,7 +1865,7 @@ function App() {
           <section className="settings-section">
             <p className="eyebrow">Ko‘rinish</p>
             <h2>Ranglarni o‘zgartirish</h2>
-            <p className="settings-description">Ilova rangini tanlang. Tanlovingiz shu qurilmada saqlanadi.</p>
+            <p className="settings-description">Ilova rangini tanlang. Tanlovingiz Google akkauntingizda saqlanadi.</p>
             <div className="theme-options" role="group" aria-label="Ilova rangini tanlang">
               {themes.map((option) => (
                 <button
@@ -1722,6 +1962,7 @@ function App() {
             <p className="eyebrow">Aloqa</p>
             <h2>Muallif</h2>
             <p className="author-name">Ozodbek Nabiqo‘ziyev</p>
+            <p className="settings-description">Xato yoki talab va taklif bo‘lsa, aloqaga chiqing.</p>
             <div className="contact-links">
               <a href="https://t.me/ozodbek_dc" target="_blank" rel="noreferrer">
                 Telegram <span>@ozodbek_dc</span>
@@ -1738,7 +1979,7 @@ function App() {
         <main className="panel words-panel">
           <form className="word-form" onSubmit={handleSubmitWord}>
             <h3>{editingId ? 'Soʻzni tahrirlash' : 'Yangi soʻz qoʻshish'}</h3>
-            <p className="storage-note">Lug‘at va o‘rganish jarayoningiz ushbu qurilma brauzerida saqlanadi.</p>
+            <p className="storage-note">Lug‘at va o‘rganish jarayoningiz Google akkauntingizda saqlanadi.</p>
             <div className="form-grid">
               <input name="korean" value={form.korean} onChange={handleFormChange} placeholder="Koreyscha" />
               <input name="meaning" value={form.meaning} onChange={handleFormChange} placeholder="So'zning o'zbekcha tarjimasi" />
