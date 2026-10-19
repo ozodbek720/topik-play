@@ -19,6 +19,8 @@ Google akkauntsiz foydalanish uchun kirish ekranidagi **Qurilmada davom etish** 
 
 Kirish usuli va kunduzgi/tungi mavzuni ilovaning **Sozlamalar** bo‘limidan boshqaring.
 
+Ilovaning pastki menyusida **TOPIK 1**, **TOPIK 2** va **Sozlamalar** bo‘limlari bor. TOPIK 2 ichida **Sigi (쓰기, yozish)**, **Ilgi (읽기, o‘qish)** va **Titki (듣기, eshitish)** yo‘nalishlari ajratilgan; ularning o‘quv mazmuni keyin qo‘shiladi.
+
 ## Ishga tushirish
 
 ```powershell

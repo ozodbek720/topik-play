@@ -684,7 +684,9 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
   const [words, setWords] = useState(loadWords)
   const [customGrammar, setCustomGrammar] = useState(loadCustomGrammar)
   const [mistakes, setMistakes] = useState(loadMistakes)
+  const [mainSection, setMainSection] = useState('topik1')
   const [activeTab, setActiveTab] = useState('quiz')
+  const [topikTwoSkill, setTopikTwoSkill] = useState('sigi')
   const [selectedTheme, setSelectedTheme] = useState(loadTheme)
   const [colorMode, setColorMode] = useState(loadColorMode)
   const [settings, setSettings] = useState(loadSettings)
@@ -1325,29 +1327,28 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
           </div>
         </div>
         {cloudError && <p className="account-sync-error" role="alert">{cloudError}</p>}
-        <nav className="nav-tabs" aria-label="asosiy navigatsiya">
-          <button className={activeTab === 'quiz' ? 'active' : ''} onClick={() => setActiveTab('quiz')}>
-            Test
-          </button>
-          <button className={activeTab === 'words' ? 'active' : ''} onClick={() => setActiveTab('words')}>
-            Lug'at
-          </button>
-          <button className={activeTab === 'topik' ? 'active' : ''} onClick={() => setActiveTab('topik')}>
-            TOPIK
-          </button>
-          <button className={activeTab === 'grammar' ? 'active' : ''} onClick={() => setActiveTab('grammar')}>
-            Grammatika
-          </button>
-          <button className={activeTab === 'hearts' ? 'active' : ''} onClick={() => setActiveTab('hearts')}>
-            Do‘kon
-          </button>
-          <button className={activeTab === 'settings' ? 'active' : ''} onClick={() => setActiveTab('settings')}>
-            Sozlamalar
-          </button>
-        </nav>
+        {mainSection === 'topik1' && (
+          <nav className="nav-tabs" aria-label="TOPIK I bo‘limi">
+            <button className={activeTab === 'quiz' ? 'active' : ''} onClick={() => setActiveTab('quiz')}>
+              Test
+            </button>
+            <button className={activeTab === 'words' ? 'active' : ''} onClick={() => setActiveTab('words')}>
+              Lug'at
+            </button>
+            <button className={activeTab === 'topik' ? 'active' : ''} onClick={() => setActiveTab('topik')}>
+              TOPIK
+            </button>
+            <button className={activeTab === 'grammar' ? 'active' : ''} onClick={() => setActiveTab('grammar')}>
+              Grammatika
+            </button>
+            <button className={activeTab === 'hearts' ? 'active' : ''} onClick={() => setActiveTab('hearts')}>
+              Do‘kon
+            </button>
+          </nav>
+        )}
       </header>
 
-      {!['words', 'settings', 'grammar'].includes(activeTab) && (
+      {mainSection === 'topik1' && !['words', 'grammar'].includes(activeTab) && (
         <section className="stats-grid">
           <article className="stat-card accent">
             <span>Ball</span>
@@ -1361,7 +1362,7 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
         </section>
       )}
 
-      {activeTab === 'quiz' && (
+      {mainSection === 'topik1' && activeTab === 'quiz' && (
         <main className="panel quiz-panel">
           <div className="quiz-mode-tabs" role="group" aria-label="Test turini tanlang">
             <button
@@ -1569,7 +1570,7 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
         </main>
       )}
 
-      {activeTab === 'topik' && currentTopik && (
+      {mainSection === 'topik1' && activeTab === 'topik' && currentTopik && (
         <main className="panel topik-panel">
           <div className="topik-header">
             <span className="topik-tag">TOPIK I mashq</span>
@@ -1715,7 +1716,7 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
         </main>
       )}
 
-      {activeTab === 'grammar' && (
+      {mainSection === 'topik1' && activeTab === 'grammar' && (
         <main className="panel grammar-panel">
           <div className="grammar-header">
             <div>
@@ -1842,7 +1843,7 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
         </main>
       )}
 
-      {activeTab === 'hearts' && (
+      {mainSection === 'topik1' && activeTab === 'hearts' && (
         <main className="panel hearts-panel">
           <div>
             <p className="eyebrow">Yuraklar do‘koni</p>
@@ -1871,7 +1872,44 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
         </main>
       )}
 
-      {activeTab === 'settings' && (
+      {mainSection === 'topik2' && (
+        <main className="panel topik-two-panel">
+          <p className="eyebrow">Ikkinchi daraja</p>
+          <h1>TOPIK 2 ga tayyorgarlik</h1>
+          <nav className="topik-two-skills" aria-label="TOPIK II ko‘nikmalari">
+            <button
+              type="button"
+              className={topikTwoSkill === 'sigi' ? 'active' : ''}
+              onClick={() => setTopikTwoSkill('sigi')}
+              aria-pressed={topikTwoSkill === 'sigi'}
+            >
+              쓰기 · Sigi <span>Yozish</span>
+            </button>
+            <button
+              type="button"
+              className={topikTwoSkill === 'ilgi' ? 'active' : ''}
+              onClick={() => setTopikTwoSkill('ilgi')}
+              aria-pressed={topikTwoSkill === 'ilgi'}
+            >
+              읽기 · Ilgi <span>O‘qish</span>
+            </button>
+            <button
+              type="button"
+              className={topikTwoSkill === 'titki' ? 'active' : ''}
+              onClick={() => setTopikTwoSkill('titki')}
+              aria-pressed={topikTwoSkill === 'titki'}
+            >
+              듣기 · Titki <span>Eshitish</span>
+            </button>
+          </nav>
+          <section className="topik-two-placeholder" aria-live="polite">
+            <h2>{topikTwoSkill === 'sigi' ? 'Sigi — yozish' : topikTwoSkill === 'ilgi' ? 'Ilgi — o‘qish' : 'Titki — eshitish'}</h2>
+            <p>Bu bo‘limga qo‘shiladigan materiallarni keyin belgilaymiz.</p>
+          </section>
+        </main>
+      )}
+
+      {mainSection === 'settings' && (
         <main className="panel settings-panel">
           <section className="settings-section">
             <p className="eyebrow">Akkaunt</p>
@@ -2024,7 +2062,7 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
         </main>
       )}
 
-      {activeTab === 'words' && (
+      {mainSection === 'topik1' && activeTab === 'words' && (
         <main className="panel words-panel">
           <form className="word-form" onSubmit={handleSubmitWord}>
             <h3>{editingId ? 'Soʻzni tahrirlash' : 'Yangi soʻz qoʻshish'}</h3>
@@ -2124,6 +2162,36 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
           {speechMessage && <p className="speech-status" role="status">{speechMessage}</p>}
         </main>
       )}
+
+      <nav className="main-section-nav" aria-label="Asosiy bo‘limlar">
+        <button
+          type="button"
+          className={mainSection === 'topik1' ? 'active' : ''}
+          onClick={() => setMainSection('topik1')}
+          aria-pressed={mainSection === 'topik1'}
+        >
+          <span aria-hidden="true">📘</span>
+          <span>TOPIK 1</span>
+        </button>
+        <button
+          type="button"
+          className={mainSection === 'topik2' ? 'active' : ''}
+          onClick={() => setMainSection('topik2')}
+          aria-pressed={mainSection === 'topik2'}
+        >
+          <span aria-hidden="true">📚</span>
+          <span>TOPIK 2</span>
+        </button>
+        <button
+          type="button"
+          className={mainSection === 'settings' ? 'active' : ''}
+          onClick={() => setMainSection('settings')}
+          aria-pressed={mainSection === 'settings'}
+        >
+          <span aria-hidden="true">⚙️</span>
+          <span>Sozlamalar</span>
+        </button>
+      </nav>
     </div>
   )
 }

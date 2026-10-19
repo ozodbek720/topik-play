@@ -71,7 +71,7 @@ button:disabled {
 .app-shell {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 32px 20px 64px;
+  padding: 32px 20px 112px;
   min-height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
@@ -328,6 +328,122 @@ button:disabled {
   border-color: transparent;
   color: #06131d;
   font-weight: 700;
+}
+
+.main-section-nav {
+  position: fixed;
+  right: 50%;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 10;
+  display: grid;
+  width: min(calc(100% - 32px), 560px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 8px;
+  transform: translateX(50%);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.main-section-nav button {
+  display: flex;
+  min-width: 0;
+  min-height: 54px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.main-section-nav button > span:first-child {
+  font-size: 1.15rem;
+}
+
+.main-section-nav button.active {
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  color: #06131d;
+}
+
+:root[data-color-mode='day'] .main-section-nav button.active {
+  color: #102033;
+}
+
+.topik-two-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.topik-two-panel > h1 {
+  margin: -8px 0 0;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+}
+
+.topik-two-skills {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.topik-two-skills button {
+  display: flex;
+  min-height: 76px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel-alt);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.topik-two-skills button span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.topik-two-skills button.active {
+  border-color: var(--primary-strong);
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  color: #06131d;
+}
+
+.topik-two-skills button.active span {
+  color: #102033;
+}
+
+.topik-two-placeholder {
+  min-height: 180px;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 8px;
+  padding: 24px;
+  border: 1px dashed var(--border);
+  border-radius: 18px;
+  text-align: center;
+}
+
+.topik-two-placeholder h2,
+.topik-two-placeholder p {
+  margin: 0;
+}
+
+.topik-two-placeholder p {
+  color: var(--muted);
 }
 
 .stats-grid {
@@ -1369,7 +1485,7 @@ button:disabled {
 
 @media (max-width: 720px) {
   .app-shell {
-    padding: 14px 12px 22px;
+    padding: 14px 12px 112px;
   }
 
   .topbar {
@@ -1420,6 +1536,25 @@ button:disabled {
     gap: 6px;
     padding-top: 0;
     position: static;
+  }
+
+  .main-section-nav {
+    width: calc(100% - 24px);
+    padding: 6px;
+  }
+
+  .main-section-nav button {
+    min-height: 50px;
+    font-size: 0.72rem;
+  }
+
+  .topik-two-skills {
+    gap: 6px;
+  }
+
+  .topik-two-skills button {
+    padding: 8px 3px;
+    font-size: 0.8rem;
   }
 
   .nav-tabs button {
