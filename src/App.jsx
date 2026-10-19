@@ -686,7 +686,8 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
   const [mistakes, setMistakes] = useState(loadMistakes)
   const [mainSection, setMainSection] = useState('topik1')
   const [activeTab, setActiveTab] = useState('quiz')
-  const [topikTwoSkill, setTopikTwoSkill] = useState('sigi')
+  const [topikTwoSkill, setTopikTwoSkill] = useState('vocabulary')
+  const [topikTwoDay, setTopikTwoDay] = useState(1)
   const [selectedTheme, setSelectedTheme] = useState(loadTheme)
   const [colorMode, setColorMode] = useState(loadColorMode)
   const [settings, setSettings] = useState(loadSettings)
@@ -1875,8 +1876,16 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
       {mainSection === 'topik2' && (
         <main className="panel topik-two-panel">
           <p className="eyebrow">Ikkinchi daraja</p>
-          <h1>TOPIK 2 ga tayyorgarlik</h1>
+          <h1>TOPIK II ga tayyorgarlik</h1>
           <nav className="topik-two-skills" aria-label="TOPIK II ko‘nikmalari">
+            <button
+              type="button"
+              className={topikTwoSkill === 'vocabulary' ? 'active' : ''}
+              onClick={() => setTopikTwoSkill('vocabulary')}
+              aria-pressed={topikTwoSkill === 'vocabulary'}
+            >
+              어휘 · Lug‘at <span>30 kun · 990 ta so‘z</span>
+            </button>
             <button
               type="button"
               className={topikTwoSkill === 'sigi' ? 'active' : ''}
@@ -1902,10 +1911,35 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
               듣기 · Titki <span>Eshitish</span>
             </button>
           </nav>
-          <section className="topik-two-placeholder" aria-live="polite">
-            <h2>{topikTwoSkill === 'sigi' ? 'Sigi — yozish' : topikTwoSkill === 'ilgi' ? 'Ilgi — o‘qish' : 'Titki — eshitish'}</h2>
-            <p>Bu bo‘limga qo‘shiladigan materiallarni keyin belgilaymiz.</p>
-          </section>
+          {topikTwoSkill === 'vocabulary'
+            ? (
+                <section className="topik-two-vocabulary">
+                  <div className="topik-two-days" aria-label="30 kunlik TOPIK II lug‘at">
+                    {Array.from({ length: 30 }, (_, index) => index + 1).map((day) => (
+                      <button
+                        key={day}
+                        type="button"
+                        className={topikTwoDay === day ? 'active' : ''}
+                        onClick={() => setTopikTwoDay(day)}
+                        aria-pressed={topikTwoDay === day}
+                      >
+                        <strong>{day}-kun</strong>
+                        <span>33 ta so‘z</span>
+                      </button>
+                    ))}
+                  </div>
+                  <section className="topik-two-placeholder" aria-live="polite">
+                    <h2>{topikTwoDay}-kun · 33 ta lug‘at</h2>
+                    <p>PDF lug‘at yuborilgach, shu kunga tegishli so‘zlarni joylayman.</p>
+                  </section>
+                </section>
+              )
+            : (
+                <section className="topik-two-placeholder" aria-live="polite">
+                  <h2>{topikTwoSkill === 'sigi' ? 'Sigi — yozish' : topikTwoSkill === 'ilgi' ? 'Ilgi — o‘qish' : 'Titki — eshitish'}</h2>
+                  <p>Bu bo‘limga qo‘shiladigan materiallarni keyin belgilaymiz.</p>
+                </section>
+              )}
         </main>
       )}
 
@@ -2171,7 +2205,7 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
           aria-pressed={mainSection === 'topik1'}
         >
           <span aria-hidden="true">📘</span>
-          <span>TOPIK 1</span>
+          <span>TOPIK I</span>
         </button>
         <button
           type="button"
@@ -2180,7 +2214,7 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
           aria-pressed={mainSection === 'topik2'}
         >
           <span aria-hidden="true">📚</span>
-          <span>TOPIK 2</span>
+          <span>TOPIK II</span>
         </button>
         <button
           type="button"

@@ -391,7 +391,7 @@ button:disabled {
 
 .topik-two-skills {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -444,6 +444,46 @@ button:disabled {
 
 .topik-two-placeholder p {
   color: var(--muted);
+}
+
+.topik-two-vocabulary {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.topik-two-days {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.topik-two-days button {
+  display: flex;
+  min-height: 66px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-alt);
+  color: var(--text);
+}
+
+.topik-two-days button span {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.topik-two-days button.active {
+  border-color: var(--primary-strong);
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  color: #06131d;
+}
+
+.topik-two-days button.active span {
+  color: #102033;
 }
 
 .stats-grid {
@@ -1549,6 +1589,11 @@ button:disabled {
   }
 
   .topik-two-skills {
+    gap: 6px;
+  }
+
+  .topik-two-days {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
   }
 
