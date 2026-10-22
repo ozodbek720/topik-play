@@ -333,16 +333,16 @@ button:disabled {
 .main-section-nav {
   position: fixed;
   right: 50%;
-  bottom: max(12px, env(safe-area-inset-bottom));
+  bottom: max(10px, env(safe-area-inset-bottom));
   z-index: 10;
   display: grid;
-  width: min(calc(100% - 32px), 560px);
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-  padding: 8px;
+  width: min(calc(100% - 24px), 520px);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  padding: 6px;
   transform: translateX(50%);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 18px;
   background: var(--panel);
   box-shadow: var(--shadow);
   backdrop-filter: blur(16px);
@@ -352,21 +352,22 @@ button:disabled {
 .main-section-nav button {
   display: flex;
   min-width: 0;
-  min-height: 54px;
+  min-height: 48px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 1px;
   border: 0;
-  border-radius: 14px;
+  border-radius: 12px;
   background: transparent;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.7rem;
   font-weight: 700;
+  padding: 4px 2px;
 }
 
 .main-section-nav button > span:first-child {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
 }
 
 .main-section-nav button.active {
@@ -1625,13 +1626,22 @@ button:disabled {
   }
 
   .main-section-nav {
-    width: calc(100% - 24px);
-    padding: 6px;
+    width: calc(100% - 16px);
+    bottom: max(6px, env(safe-area-inset-bottom));
+    padding: 4px;
+    gap: 3px;
+    border-radius: 14px;
   }
 
   .main-section-nav button {
-    min-height: 50px;
-    font-size: 0.72rem;
+    min-height: 42px;
+    font-size: 0.62rem;
+    padding: 3px 1px;
+    border-radius: 10px;
+  }
+
+  .main-section-nav button > span:first-child {
+    font-size: 1rem;
   }
 
   .topik-two-skills {

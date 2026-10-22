@@ -617,8 +617,8 @@ function getAuthErrorMessage(error) {
   return 'Google akkaunt bilan kirib bo‘lmadi. Firebase sozlamalarini va internet aloqasini tekshiring.'
 }
 
-function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileReady }) {
-  const [step, setStep] = useState(1)
+function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileReady, skipProfile }) {
+  const [step, setStep] = useState(skipProfile ? 2 : 1)
   const [pf, setPf] = useState({ firstName: '', lastName: '', bio: '', avatar: '' })
   const [av, setAv] = useState('')
   const handleAvatarChange = (e) => {
@@ -629,9 +629,8 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
     reader.readAsDataURL(file)
   }
   const handleSubmit = () => {
-    if (!pf.firstName.trim()) return
     setStep(2)
-    onProfileReady && onProfileReady(pf)
+    if (onProfileReady) onProfileReady(pf)
   }
   return (
     <main className="auth-shell">
@@ -640,29 +639,32 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
         <p className="eyebrow">Koreys tilini o'rganish o'yini</p>
         {step === 1 ? (
           <>
-            <h1>Profil yarating</h1>
-            <p className="settings-description">Kirishdan oldin o'zingiz haqingizda ma'lumot kiriting.</p>
+            <h1 style={{fontSize:'1.3rem',marginBottom:'4px'}}>Profil (ixtiyoriy)</h1>
+            <p className="settings-description">Ismingizni kiriting yoki o'tkazib yuboring.</p>
             {error && <p className="auth-error" role="alert">{error}</p>}
-            <div className="profile-setup-avatar">
+            <div className="profile-setup-avatar" style={{marginBottom:'12px'}}>
               <label className="profile-setup-avatar-label">
                 {av ? <img className="profile-setup-avatar-img" src={av} alt="Avatar" /> : <div className="profile-setup-avatar-placeholder"><span>📷</span><span>Rasm yuklash</span></div>}
                 <input type="file" accept="image/*" onChange={handleAvatarChange} hidden />
               </label>
             </div>
-            <input type="text" className="auth-input" placeholder="Ism *" value={pf.firstName} onChange={(e) => setPf((p) => ({ ...p, firstName: e.target.value }))} required />
+            <input type="text" className="auth-input" placeholder="Ism" value={pf.firstName} onChange={(e) => setPf((p) => ({ ...p, firstName: e.target.value }))} />
             <input type="text" className="auth-input" placeholder="Familiya" value={pf.lastName} onChange={(e) => setPf((p) => ({ ...p, lastName: e.target.value }))} />
-            <textarea className="auth-input auth-textarea" placeholder="Bio" rows={3} value={pf.bio} onChange={(e) => setPf((p) => ({ ...p, bio: e.target.value }))} />
-            <button type="button" className="primary-btn auth-next-btn" onClick={handleSubmit} disabled={!pf.firstName.trim()}>Davom etish →</button>
+            <textarea className="auth-input auth-textarea" placeholder="Bio (ixtiyoriy)" rows={2} value={pf.bio} onChange={(e) => setPf((p) => ({ ...p, bio: e.target.value }))} />
+            <button type="button" className="primary-btn auth-next-btn" onClick={handleSubmit}>Davom etish →</button>
+            <button type="button" className="ghost-btn" style={{fontSize:'0.85rem'}} onClick={() => { setStep(2); if(onProfileReady) onProfileReady(pf) }}>O'tkazib yuborish</button>
           </>
         ) : (
           <>
-            <div className="profile-setup-preview">
-              {av ? <img className="profile-setup-preview-avatar" src={av} alt="Avatar" /> : <div className="profile-setup-preview-avatar-placeholder">{(pf.firstName || 'U')[0].toUpperCase()}</div>}
-              <h2>{pf.firstName} {pf.lastName}</h2>
-              {pf.bio && <p className="profile-setup-preview-bio">{pf.bio}</p>}
-            </div>
-            <h1>Kirish usulini tanlang</h1>
-            <p className="settings-description">Google akkaunt bilan ma'lumotlaringizni sinxronlang yoki faqat shu qurilmada saqlang.</p>
+            {pf.firstName && (
+              <div className="profile-setup-preview">
+                {av ? <img className="profile-setup-preview-avatar" src={av} alt="Avatar" /> : <div className="profile-setup-preview-avatar-placeholder">{(pf.firstName || 'U')[0].toUpperCase()}</div>}
+                <h2>{pf.firstName} {pf.lastName}</h2>
+                {pf.bio && <p className="profile-setup-preview-bio">{pf.bio}</p>}
+              </div>
+            )}
+            <h1 style={{fontSize:'1.3rem',marginBottom:'4px'}}>Kirish usuli</h1>
+            <p className="settings-description">Google bilan sinxronlang yoki qurilmada saqlang.</p>
             {error && <p className="auth-error" role="alert">{error}</p>}
             <button type="button" className="google-sign-in-btn" onClick={onGoogleSignIn} disabled={busy}>
               <span className="google-mark" aria-hidden="true">G</span>
@@ -673,7 +675,7 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
               Qurilmada davom etish
             </button>
             <p className="auth-privacy-note">Qurilmada saqlangan ma'lumotlar boshqa qurilmalarda ochilmaydi.</p>
-            <button type="button" className="ghost-btn auth-back-btn" onClick={() => setStep(1)}>← Orqaga</button>
+            {!skipProfile && <button type="button" className="ghost-btn auth-back-btn" onClick={() => setStep(1)}>← Orqaga</button>}
           </>
         )}
       </section>
@@ -681,35 +683,53 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
   )
 }
 
+const PROFILE_STORAGE_KEY = 'topik-play-profile'
+
+function getSavedProfile() {
+  try {
+    const saved = localStorage.getItem(PROFILE_STORAGE_KEY)
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      if (parsed && typeof parsed === 'object') return parsed
+    }
+  } catch (error) {
+    console.error('Profilni o\'qib bo\'lmadi:', error)
+  }
+  return null
+}
+
 function App() {
   const [authState, setAuthState] = useState({ loading: true, user: null, error: '' })
   const [signInBusy, setSignInBusy] = useState(false)
   const [localMode, setLocalMode] = useState(() => localStorage.getItem(LOCAL_MODE_STORAGE_KEY) === '1')
   const [pendingProfile, setPendingProfile] = useState(null)
+  const savedProfile = getSavedProfile()
+  const skipProfile = savedProfile !== null
 
   useEffect(() => observeAuth(
     (user) => {
       if (user) {
         localStorage.removeItem(LOCAL_MODE_STORAGE_KEY)
         setLocalMode(false)
-        if (pendingProfile) {
+        const profileToSave = pendingProfile || savedProfile
+        if (profileToSave) {
           saveProfile(user.uid, {
-            firstName: pendingProfile.firstName,
-            lastName: pendingProfile.lastName,
-            bio: pendingProfile.bio,
-            avatar: pendingProfile.avatar || user.photoURL || '',
+            firstName: profileToSave.firstName || '',
+            lastName: profileToSave.lastName || '',
+            bio: profileToSave.bio || '',
+            avatar: profileToSave.avatar || user.photoURL || '',
           }).catch((e) => console.error('Saqlash xatosi:', e))
-          setPendingProfile(null)
         }
+        setPendingProfile(null)
       }
       setAuthState({ loading: false, user, error: '' })
     },
     (error) => {
-      console.error('Kirish holatini tekshirib bo‘lmadi:', error)
+      console.error('Kirish holatini tekshirib bo\'lmadi:', error)
       setAuthState({
         loading: false,
         user: null,
-        error: 'Firebase bilan bog‘lanib bo‘lmadi. Internet va Firebase sozlamalarini tekshiring.',
+        error: 'Firebase bilan bog\'lanib bo\'lmadi. Internet va Firebase sozlamalarini tekshiring.',
       })
     },
   ), [])
@@ -722,7 +742,7 @@ function App() {
     try {
       await signInWithGoogle()
     } catch (error) {
-      console.error('Google orqali kirib bo‘lmadi:', error)
+      console.error('Google orqali kirib bo\'lmadi:', error)
       setAuthState((previous) => ({ ...previous, error: getAuthErrorMessage(error) }))
     } finally {
       setSignInBusy(false)
@@ -732,10 +752,11 @@ function App() {
   const handleLocalContinue = () => {
     localStorage.setItem(LOCAL_MODE_STORAGE_KEY, '1')
     setLocalMode(true)
-    if (pendingProfile) {
-      localStorage.setItem('topik-play-profile', JSON.stringify(pendingProfile))
-      setPendingProfile(null)
+    const profileToSave = pendingProfile || savedProfile
+    if (profileToSave) {
+      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileToSave))
     }
+    setPendingProfile(null)
   }
 
   const handleChooseLoginMode = () => {
@@ -745,6 +766,7 @@ function App() {
 
   const handleProfileReady = (profileData) => {
     setPendingProfile(profileData)
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileData))
   }
 
   if (authState.loading) {
@@ -764,11 +786,12 @@ function App() {
         onGoogleSignIn={handleGoogleSignIn}
         onLocalContinue={handleLocalContinue}
         onProfileReady={handleProfileReady}
+        skipProfile={skipProfile}
       />
     )
   }
 
-  return <LearningApp user={authState.user} localMode={localMode} onChooseLoginMode={handleChooseLoginMode} pendingProfile={pendingProfile} />
+  return <LearningApp user={authState.user} localMode={localMode} onChooseLoginMode={handleChooseLoginMode} pendingProfile={pendingProfile || savedProfile} />
 }
 
 function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
@@ -2332,6 +2355,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
             <div className="profile-settings-section author-card">
               <h4>Muallif</h4>
               <p className="author-name">Ozodbek Nabiqo'ziyev</p>
+              <p className="settings-description" style={{marginBottom:'10px',fontSize:'0.82rem'}}>Xato, taklif yoki talab bo'lsa, aloqaga chiqing!</p>
               <div className="contact-links">
                 <a href="https://t.me/ozodbek_dc" target="_blank" rel="noreferrer">Telegram</a>
                 <a href="https://www.instagram.com/ozodbek_dc/" target="_blank" rel="noreferrer">Instagram</a>
