@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth'
+import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth'
 import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, getFirestore, onSnapshot, orderBy, query, serverTimestamp, setDoc, Timestamp, where } from 'firebase/firestore'
 
 const firebaseConfig = {
@@ -19,7 +19,9 @@ const googleProvider = new GoogleAuthProvider()
 googleProvider.setCustomParameters({ prompt: 'select_account' })
 
 export const observeAuth = (callback, onError) => onAuthStateChanged(auth, callback, onError)
-export const signInWithGoogle = () => signInWithPopup(auth, googleProvider)
+export const signInWithGooglePopup = () => signInWithPopup(auth, googleProvider)
+export const signInWithGoogleRedirect = () => signInWithRedirect(auth, googleProvider)
+export const getRedirectResultAuth = () => getRedirectResult(auth)
 export const signOutUser = () => signOut(auth)
 
 export async function loadAccountData(uid) {

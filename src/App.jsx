@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import advancedWords from './advancedWords.js'
-import { addFriend, getAllProfiles, loadAccountData, loadProfile, listenToFriends, listenToMessages, listenToProfiles, observeAuth, removeFriend, saveAccountData, saveProfile, sendMessage, signInWithGoogle, signOutUser } from './firebase.js'
+import { addFriend, getAllProfiles, getRedirectResultAuth, loadAccountData, loadProfile, listenToFriends, listenToMessages, listenToProfiles, observeAuth, removeFriend, saveAccountData, saveProfile, sendMessage, signInWithGooglePopup, signInWithGoogleRedirect, signOutUser } from './firebase.js'
 import grammarPoints from './grammarPoints.js'
 import './App.css'
 
@@ -606,15 +606,27 @@ function makeGrammarChoices(correctPoint, allPoints) {
 }
 
 function getAuthErrorMessage(error) {
-  if (error.code === 'auth/unauthorized-domain') {
-    return 'Bu sayt Firebase’ning ruxsat etilgan domenlariga qo‘shilmagan. Firebase Authentication sozlamalarida domenni qo‘shing.'
+  if (error.code === 'auth/unauthorized-domain' || error.code === 'auth/unauthorized-display') {
+    return '⚠️ Bu sayt Firebase\'ning ruxsat etilgan domenlariga qo\'shilmagan.\n\n📋 Firebase Console → Authentication → Settings → Authorized domains bo\'limiga kiring va domenni qo\'shing.'
   }
   if (error.code === 'auth/operation-not-allowed') {
-    return 'Firebase’da Google orqali kirish yoqilmagan. Authentication → Kirish usuli bo‘limini tekshiring.'
+    return '⚠️ Firebase\'da Google orqali kirish yoqilmagan.\n\n📋 Firebase Console → Authentication → Sign-in method bo\'limiga kiring va Google ni yoqing.'
   }
-  if (error.code === 'auth/popup-closed-by-user') return 'Kirish oynasi yopildi. Qayta urinib ko‘ring.'
-  if (error.code === 'auth/popup-blocked') return 'Brauzer kirish oynasini to‘sdi. Qalqib chiquvchi oynalarga ruxsat bering.'
-  return 'Google akkaunt bilan kirib bo‘lmadi. Firebase sozlamalarini va internet aloqasini tekshiring.'
+  if (error.code === 'auth/popup-closed-by-user') return 'Kirish oynasi yopildi. Qayta urinib ko\'ring.'
+  if (error.code === 'auth/popup-blocked') return 'Brauzer kirish oynasini to\'sdi. Qalqib chiquvchi oynalarga ruxsat bering yoki qurilmada davom eting.'
+  if (error.code === 'auth/network-request-failed') {
+    return '⚠️ Internet aloqasi uzildi.\n\n📋 Internetni tekshiring va qayta urinib ko\'ring.'
+  }
+  if (error.code === 'auth/account-exists-with-different-credential') {
+    return '⚠️ Bu email bilan boshqa akkaunt mavjud.\n\n📋 Avval o\'sha akkauntga kiring yoki qurilmada davom eting.'
+  }
+  if (error.code === 'auth/invalid-api-key') {
+    return '⚠️ Firebase sozlamalarida xatolik.\n\n📋 Firebase API kaliti noto\'g\'ri. Loyiha sozlamalarini tekshiring.'
+  }
+  if (error.code === 'auth/invalid-origin') {
+    return '⚠️ Bu sayt Firebase\'da ruxsat etilmagan.\n\n📋 Firebase Console → Authentication → Settings → Authorized domains bo\'limiga kiring.'
+  }
+  return 'Google akkaunt bilan kirib bo\'lmadi. Internet aloqasini tekshiring yoki qurilmada davom eting.'
 }
 
 function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileReady, skipProfile }) {
@@ -670,6 +682,9 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
               <span className="google-mark" aria-hidden="true">G</span>
               {busy ? 'Kirilmoqda...' : 'Google orqali kirish'}
             </button>
+            <p className="auth-help-note" style={{fontSize:'0.75rem',color:'var(--muted)',marginTop:'8px',textAlign:'center',marginBottom:'0'}}>
+              Google orqali kirish ishlamasa, "Qurilmada davom etish" tugmasini bosing.
+            </p>
             <div className="auth-divider"><span>yoki</span></div>
             <button type="button" className="local-sign-in-btn" onClick={onLocalContinue} disabled={busy}>
               Qurilmada davom etish
@@ -734,16 +749,44 @@ function App() {
     },
   ), [])
 
+  // Redirect natijasini tekshirish
+  useEffect(() => {
+    getRedirectResultAuth().then((result) => {
+      if (result && result.user) {
+        console.log('Redirect orqali kirdi:', result.user.email)
+      }
+    }).catch((error) => {
+      if (error.code !== 'auth/no-auth-event') {
+        console.error('Redirect xatosi:', error)
+        setAuthState((previous) => ({ ...previous, error: getAuthErrorMessage(error) }))
+      }
+    })
+  }, [])
+
   const handleGoogleSignIn = async () => {
     setSignInBusy(true)
     localStorage.removeItem(LOCAL_MODE_STORAGE_KEY)
     setLocalMode(false)
     setAuthState((previous) => ({ ...previous, error: '' }))
     try {
-      await signInWithGoogle()
+      // Avval popup usulini sinaymiz
+      await signInWithGooglePopup()
     } catch (error) {
-      console.error('Google orqali kirib bo\'lmadi:', error)
-      setAuthState((previous) => ({ ...previous, error: getAuthErrorMessage(error) }))
+      // Agar popup ishlamasa, redirect usuliga o'tamiz
+      if (error.code === 'auth/popup-blocked' || error.code === 'auth/unauthorized-display') {
+        console.log('Popup ishlamadi, redirect ishlatilmoqda...')
+        try {
+          await signInWithGoogleRedirect()
+          // Redirect dan keyin sahifa qayta yuklanadi
+          setAuthState((previous) => ({ ...previous, error: '' }))
+        } catch (redirectError) {
+          console.error('Google orqali kirib bo\'lmadi:', redirectError)
+          setAuthState((previous) => ({ ...previous, error: getAuthErrorMessage(redirectError) }))
+        }
+      } else {
+        console.error('Google orqali kirib bo\'lmadi:', error)
+        setAuthState((previous) => ({ ...previous, error: getAuthErrorMessage(error) }))
+      }
     } finally {
       setSignInBusy(false)
     }
