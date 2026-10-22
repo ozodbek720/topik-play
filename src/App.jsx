@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import advancedWords from './advancedWords.js'
-import { getAllProfiles, loadAccountData, loadProfile, listenToMessages, listenToProfiles, observeAuth, saveAccountData, saveProfile, sendMessage, signInWithGoogle, signOutUser } from './firebase.js'
+import { addFriend, getAllProfiles, loadAccountData, loadProfile, listenToFriends, listenToMessages, listenToProfiles, observeAuth, removeFriend, saveAccountData, saveProfile, sendMessage, signInWithGoogle, signOutUser } from './firebase.js'
 import grammarPoints from './grammarPoints.js'
 import './App.css'
 
@@ -829,9 +829,12 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   // Profile state
   const [myProfile, setMyProfile] = useState(null)
   const [profileEditing, setProfileEditing] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '', bio: '', avatar: '' })
   // Chat state
   const [chatUsers, setChatUsers] = useState([])
+  const [friends, setFriends] = useState([])
+  const [chatTab, setChatTab] = useState('friends')
   const [selectedChatUser, setSelectedChatUser] = useState(null)
   const [chatMessages, setChatMessages] = useState([])
   const [chatInput, setChatInput] = useState('')
@@ -1148,6 +1151,15 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
     return () => unsubscribe()
   }, [user, localMode])
 
+  // Listen to friends
+  useEffect(() => {
+    if (!user || localMode) return
+    const unsubscribe = listenToFriends(user.uid, (friendIds) => {
+      setFriends(friendIds)
+    })
+    return () => unsubscribe()
+  }, [user, localMode])
+
   // Listen to chat messages
   useEffect(() => {
     if (!selectedChatUser || !user || localMode) return
@@ -1244,6 +1256,27 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       .then(() => setChatInput(''))
       .catch((e) => console.error('Send message error:', e))
   }
+
+  // Friend handlers
+  const handleAddFriend = (profile) => {
+    if (!user || localMode) return
+    const isAlreadyFriend = friends.some((f) => f.id === profile.id)
+    if (isAlreadyFriend) return
+    addFriend(user.uid, profile.id).catch((e) => console.error('Add friend error:', e))
+  }
+
+  const handleRemoveFriend = (friendId) => {
+    if (!user || localMode) return
+    removeFriend(user.uid, friendId).catch((e) => console.error('Remove friend error:', e))
+  }
+
+  const friendProfiles = useMemo(() => {
+    return chatUsers.filter((u) => friends.some((f) => f.id === u.id))
+  }, [chatUsers, friends])
+
+  const nonFriendProfiles = useMemo(() => {
+    return chatUsers.filter((u) => !friends.some((f) => f.id === u.id))
+  }, [chatUsers, friends])
 
   const handleNextWord = () => {
     if (quizMode === 'mistakes') {
@@ -2092,7 +2125,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
               onClick={() => setTopikTwoSkill('sigi')}
               aria-pressed={topikTwoSkill === 'sigi'}
             >
-              쓰기 · Sigi <span>Yozish</span>
+              쓰기 <span>Yozish</span>
             </button>
             <button
               type="button"
@@ -2159,6 +2192,9 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         <main className="panel profile-panel">
           {/* Profile Header - Instagram Style */}
           <section className="profile-header-glass">
+            <button className="profile-settings-toggle" onClick={() => setShowSettings((s) => !s)} aria-label="Sozlamalar">
+              ⚙️ {showSettings ? '✕' : ''}
+            </button>
             <div className="profile-avatar-section">
               <div className="profile-avatar-ring">
                 {myProfile?.avatar ? (
@@ -2256,15 +2292,15 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
               </div>
               <div className="profile-highlight-item" onClick={() => { setMainSection('topik2'); setTopikTwoSkill('sigi'); }}>
                 <div className="profile-highlight-icon">✍️</div>
-                <span>Sigi</span>
+                <span>쓰기</span>
               </div>
               <div className="profile-highlight-item" onClick={() => { setMainSection('topik2'); setTopikTwoSkill('ilgi'); }}>
                 <div className="profile-highlight-icon">📰</div>
-                <span>Ilgi</span>
+                <span>읽기</span>
               </div>
               <div className="profile-highlight-item" onClick={() => { setMainSection('topik2'); setTopikTwoSkill('titki'); }}>
                 <div className="profile-highlight-icon">🎧</div>
-                <span>Titki</span>
+                <span>듣기</span>
               </div>
               <div className="profile-highlight-item" onClick={() => setMainSection('chat')}>
                 <div className="profile-highlight-icon">💬</div>
@@ -2273,9 +2309,10 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
             </div>
           </section>
 
-          {/* Settings in Profile */}
+          {/* Settings in Profile - Collapsible */}
+          {showSettings && (
           <section className="profile-settings-glass">
-            <h3 className="profile-settings-title">⚙️ Sozlamalar</h3>
+            <h3 className="profile-settings-title">Sozlamalar</h3>
 
             {/* Account */}
             <div className="profile-settings-section">
@@ -2362,6 +2399,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
               </div>
             </div>
           </section>
+          )}
         </main>
       )}
 
@@ -2373,21 +2411,49 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
               <h2 className="chat-title">💬 Xabarlar</h2>
               {user && !localMode ? (
                 <>
-                  {chatUsers.length === 0 ? (
-                    <p className="chat-empty">Hali foydalanuvchilar yo'q. Birinchi bo'ling!</p>
+                  <nav className="chat-tabs" aria-label="Chat bo'limlari">
+                    <button className={chatTab === 'friends' ? 'active' : ''} onClick={() => setChatTab('friends')}>
+                      👥 Dostlar {friendProfiles.length > 0 && `(${friendProfiles.length})`}
+                    </button>
+                    <button className={chatTab === 'all' ? 'active' : ''} onClick={() => setChatTab('all')}>
+                      🌐 Hamma {nonFriendProfiles.length > 0 && `(${nonFriendProfiles.length})`}
+                    </button>
+                  </nav>
+                  {chatTab === 'friends' ? (
+                    friendProfiles.length === 0 ? (
+                      <p className="chat-empty">Hali dostlaringiz yo'q. "Hamma" bo'limidan dost qo'shing!</p>
+                    ) : (
+                      friendProfiles.map((u) => (
+                        <div key={u.id} className="chat-user-item glass-card">
+                          <div className="chat-user-avatar" onClick={() => setSelectedChatUser(u)}>
+                            {u.avatar ? <img src={u.avatar} alt="" /> : <span>{(u.firstName || 'U')[0]?.toUpperCase()}</span>}
+                          </div>
+                          <div className="chat-user-info" onClick={() => setSelectedChatUser(u)}>
+                            <span className="chat-user-name">{u.firstName || 'Noma\'lum'} {u.lastName || ''}</span>
+                            {u.bio && <span className="chat-user-bio">{u.bio}</span>}
+                          </div>
+                          <button className="chat-remove-friend-btn" onClick={() => handleRemoveFriend(u.id)} title="Dostlardan o'chirish">✕</button>
+                          <span className="chat-arrow" onClick={() => setSelectedChatUser(u)}>›</span>
+                        </div>
+                      ))
+                    )
                   ) : (
-                    chatUsers.map((u) => (
-                      <div key={u.id} className="chat-user-item glass-card" onClick={() => setSelectedChatUser(u)}>
-                        <div className="chat-user-avatar">
-                          {u.avatar ? <img src={u.avatar} alt="" /> : <span>{(u.firstName || 'U')[0]?.toUpperCase()}</span>}
+                    nonFriendProfiles.length === 0 ? (
+                      <p className="chat-empty">Hamma dostlaringiz ro'yxatda!</p>
+                    ) : (
+                      nonFriendProfiles.map((u) => (
+                        <div key={u.id} className="chat-user-item glass-card">
+                          <div className="chat-user-avatar">
+                            {u.avatar ? <img src={u.avatar} alt="" /> : <span>{(u.firstName || 'U')[0]?.toUpperCase()}</span>}
+                          </div>
+                          <div className="chat-user-info">
+                            <span className="chat-user-name">{u.firstName || 'Noma\'lum'} {u.lastName || ''}</span>
+                            {u.bio && <span className="chat-user-bio">{u.bio}</span>}
+                          </div>
+                          <button className="chat-add-friend-btn" onClick={() => handleAddFriend(u)}>+ Dost</button>
                         </div>
-                        <div className="chat-user-info">
-                          <span className="chat-user-name">{u.firstName || 'Noma\'lum'} {u.lastName || ''}</span>
-                          {u.bio && <span className="chat-user-bio">{u.bio}</span>}
-                        </div>
-                        <span className="chat-arrow">›</span>
-                      </div>
-                    ))
+                      ))
+                    )
                   )}
                 </>
               ) : (

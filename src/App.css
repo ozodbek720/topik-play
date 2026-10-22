@@ -3153,6 +3153,7 @@ button:disabled {
 }
 
 .profile-header-glass {
+  position: relative;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -3676,6 +3677,115 @@ button:disabled {
 .chat-send-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ===== Profile Settings Toggle ===== */
+
+.profile-settings-toggle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  z-index: 5;
+}
+
+.profile-settings-toggle:hover {
+  transform: scale(1.1);
+  background: var(--primary);
+  color: var(--bg);
+}
+
+/* ===== Chat Tabs ===== */
+
+.chat-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 4px;
+  background: var(--panel);
+  border-radius: 14px;
+  border: 1px solid var(--border);
+}
+
+.chat-tabs button {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.chat-tabs button.active {
+  background: var(--primary);
+  color: var(--bg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.chat-tabs button:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+/* ===== Chat Friend Buttons ===== */
+
+.chat-add-friend-btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 20px;
+  background: var(--primary);
+  color: var(--bg);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.chat-add-friend-btn:hover {
+  transform: scale(1.05);
+  background: var(--strong);
+}
+
+.chat-remove-friend-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+}
+
+.chat-remove-friend-btn:hover {
+  background: #ef4444;
+  color: white;
+  transform: scale(1.1);
 }
 
 .glass-card {

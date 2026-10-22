@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth'
-import { addDoc, collection, doc, getDoc, getDocs, getFirestore, onSnapshot, orderBy, query, serverTimestamp, setDoc, Timestamp, where } from 'firebase/firestore'
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, getFirestore, onSnapshot, orderBy, query, serverTimestamp, setDoc, Timestamp, where } from 'firebase/firestore'
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDPy3xcJz_FIv_D5jlaqT3_vD82UUPa-3I',
@@ -88,5 +88,38 @@ export function listenToProfiles(callback) {
       profiles.push({ id: d.id, ...d.data() })
     })
     callback(profiles)
+  })
+}
+
+// --- Dostlar funksiyalari ---
+
+export async function addFriend(myUid, friendUid) {
+  await setDoc(doc(db, 'users', myUid, 'friends', friendUid), {
+    uid: friendUid,
+    addedAt: serverTimestamp(),
+  })
+}
+
+export async function removeFriend(myUid, friendUid) {
+  await deleteDoc(doc(db, 'users', myUid, 'friends', friendUid))
+}
+
+export function getFriends(uid) {
+  return getDocs(collection(db, 'users', uid, 'friends')).then((snapshot) => {
+    const friends = []
+    snapshot.forEach((d) => {
+      friends.push({ id: d.id, ...d.data() })
+    })
+    return friends
+  })
+}
+
+export function listenToFriends(uid, callback) {
+  return onSnapshot(collection(db, 'users', uid, 'friends'), (snapshot) => {
+    const friends = []
+    snapshot.forEach((d) => {
+      friends.push({ id: d.id, ...d.data() })
+    })
+    callback(friends)
   })
 }
