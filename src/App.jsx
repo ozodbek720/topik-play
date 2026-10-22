@@ -726,15 +726,19 @@ function App() {
       if (user) {
         localStorage.removeItem(LOCAL_MODE_STORAGE_KEY)
         setLocalMode(false)
+        // Har doim profilni saqlash - agar profil saqlanmagan bo'lsa, Google'dan olingan ma'lumotlar bilan yaratish
         const profileToSave = pendingProfile || savedProfile
-        if (profileToSave) {
-          saveProfile(user.uid, {
-            firstName: profileToSave.firstName || '',
-            lastName: profileToSave.lastName || '',
-            bio: profileToSave.bio || '',
-            avatar: profileToSave.avatar || user.photoURL || '',
-          }).catch((e) => console.error('Saqlash xatosi:', e))
-        }
+        const firstName = profileToSave?.firstName || user.displayName?.split(' ')[0] || ''
+        const lastName = profileToSave?.lastName || user.displayName?.split(' ').slice(1).join(' ') || ''
+        const bio = profileToSave?.bio || ''
+        const avatar = profileToSave?.avatar || user.photoURL || ''
+        saveProfile(user.uid, {
+          firstName,
+          lastName,
+          bio,
+          avatar,
+          email: user.email,
+        }).catch((e) => console.error('Saqlash xatosi:', e))
         setPendingProfile(null)
       }
       setAuthState({ loading: false, user, error: '' })
