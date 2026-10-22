@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { generateAIResponse } from './aiChat.js'
 import advancedWords from './advancedWords.js'
 import topik2Lugat from './topik2Lugat.js'
 import { addFriend, getAllProfiles, getRedirectResultAuth, loadAccountData, loadProfile, listenToFriends, listenToMessages, listenToProfiles, observeAuth, removeFriend, saveAccountData, saveProfile, sendMessage, signInWithGooglePopup, signInWithGoogleRedirect, signOutUser } from './firebase.js'
@@ -892,6 +893,17 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [chatMessages, setChatMessages] = useState([])
   const [chatInput, setChatInput] = useState('')
   const chatEndRef = useRef(null)
+  // AI Chat state
+  const [aiMessages, setAiMessages] = useState(() => {
+    try {
+      const saved = localStorage.getItem('topik-play-ai-chat')
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
+  })
+  const [aiInput, setAiInput] = useState('')
+  const aiEndRef = useRef(null)
   const localDataRef = useRef({
     words,
     customGrammar,
@@ -1227,6 +1239,11 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatMessages])
+
+  // Auto-scroll AI chat
+  useEffect(() => {
+    aiEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [aiMessages])
 
   const spendHeart = () => {
     setGameState((previous) => ({ ...previous, hearts: Math.max(0, previous.hearts - 1) }))
@@ -2778,6 +2795,196 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         </main>
       )}
 
+      {mainSection === 'ai' && (
+        <main className="panel ai-chat-panel">
+          <div className="ai-chat-header">
+            <div className="ai-chat-title">
+              <span className="ai-avatar">🤖</span>
+              <div>
+                <h2>AI Koreys o'qituvchisi</h2>
+                <p className="ai-subtitle">Tarjima, grammatika, suhbat va test</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="ghost-btn ai-clear-btn"
+              onClick={() => {
+                setAiMessages([])
+                localStorage.removeItem('topik-play-ai-chat')
+              }}
+              title="Chatni tozalash"
+            >
+              🗑️
+            </button>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="ai-quick-actions">
+            <button
+              type="button"
+              className="ai-quick-btn"
+              onClick={() => setAiInput('tarjima: ')}
+            >
+              📖 Tarjima
+            </button>
+            <button
+              type="button"
+              className="ai-quick-btn"
+              onClick={() => setAiInput('grammatika: ')}
+            >
+              📝 Grammatika
+            </button>
+            <button
+              type="button"
+              className="ai-quick-btn"
+              onClick={() => setAiInput('안녕하세요')}
+            >
+              💬 Suhbat
+            </button>
+            <button
+              type="button"
+              className="ai-quick-btn"
+              onClick={() => {
+                const response = generateAIResponse('test')
+                if (response) {
+                  const userMsg = { id: Date.now(), role: 'user', content: '🧠 Test savoli bering' }
+                  const aiMsg = { id: Date.now() + 1, role: 'ai', ...response }
+                  const newMessages = [...aiMessages, userMsg, aiMsg]
+                  setAiMessages(newMessages)
+                  try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(newMessages.slice(-100))) } catch {}
+                }
+              }}
+            >
+              🧠 Test
+            </button>
+          </div>
+
+          {/* Messages */}
+          <div className="ai-messages-container">
+            {aiMessages.length === 0 ? (
+              <div className="ai-welcome">
+                <span className="ai-welcome-icon">🤖</span>
+                <h3>Salom! Men AI Koreys o'qituvchisiman</h3>
+                <p>Sizga koreys tilini o'rganishda yordam beraman:</p>
+                <ul>
+                  <li>📖 So'zlar tarjima qilish</li>
+                  <li>📝 Grammatika tushuntirish</li>
+                  <li>💬 Koreys tilida suhbatlashish</li>
+                  <li>🧠 Test savollari berish</li>
+                </ul>
+                <p className="ai-hint">Quyidagi tez buyruqlardan foydalaning yoki xabar yozing!</p>
+              </div>
+            ) : (
+              aiMessages.map((msg) => (
+                <div key={msg.id} className={`ai-message ${msg.role === 'user' ? 'ai-message-user' : 'ai-message-ai'}`}>
+                  {msg.role === 'ai' && <span className="ai-msg-avatar">🤖</span>}
+                  <div className="ai-bubble">
+                    {msg.type === 'test' ? (
+                      <div className="ai-test-question">
+                        <p className="ai-test-text">{msg.content.question}</p>
+                        <div className="ai-test-options">
+                          {msg.content.answers.map((answer, idx) => {
+                            let extraClass = ''
+                            if (msg.selectedAnswer !== undefined) {
+                              if (idx === msg.content.correctIndex) extraClass = 'ai-test-correct'
+                              else if (idx === msg.selectedAnswer && idx !== msg.content.correctIndex) extraClass = 'ai-test-wrong'
+                            }
+                            return (
+                              <button
+                                key={idx}
+                                type="button"
+                                className={`ai-test-option ${extraClass}`}
+                                disabled={msg.selectedAnswer !== undefined}
+                                onClick={() => {
+                                  const updated = aiMessages.map(m =>
+                                    m.id === msg.id ? { ...m, selectedAnswer: idx } : m
+                                  )
+                                  setAiMessages(updated)
+                                  try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(updated.slice(-100))) } catch {}
+                                }}
+                              >
+                                {answer}
+                              </button>
+                            )
+                          })}
+                        </div>
+                        {msg.selectedAnswer !== undefined && (
+                          <div className={`ai-test-result ${msg.selectedAnswer === msg.content.correctIndex ? 'ai-test-correct' : 'ai-test-wrong'}`}>
+                            {msg.selectedAnswer === msg.content.correctIndex
+                              ? '✅ To\'g\'ri!'
+                              : `❌ Noto\'g\'ri. To\'g\'ri javob: ${msg.content.answers[msg.content.correctIndex]}`}
+                            <p className="ai-test-explanation">{msg.content.explanation}</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="ai-bubble-text">{msg.content.split('\n').map((line, i) => (
+                        <span key={i}>
+                          {line.split(/(\*\*[^*]+\*\*)/).map((part, j) =>
+                            part.startsWith('**') && part.endsWith('**')
+                              ? <strong key={j}>{part.slice(2, -2)}</strong>
+                              : <span key={j}>{part}</span>
+                          )}
+                          {i < msg.content.split('\n').length - 1 && <br />}
+                        </span>
+                      ))}</p>
+                    )}
+                    <span className="ai-bubble-time">
+                      {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }) : ''}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+            <div ref={aiEndRef} />
+          </div>
+
+          {/* Input */}
+          <div className="ai-input-container">
+            <input
+              className="ai-input"
+              type="text"
+              placeholder="Xabar yozing... (masalan: tarjima: 사랑)"
+              value={aiInput}
+              onChange={(e) => setAiInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && aiInput.trim()) {
+                  const userMsg = { id: Date.now(), role: 'user', content: aiInput.trim(), timestamp: Date.now() }
+                  const response = generateAIResponse(aiInput.trim(), aiMessages)
+                  let aiMsg = null
+                  if (response) {
+                    aiMsg = { id: Date.now() + 1, role: 'ai', ...response, timestamp: Date.now() + 1 }
+                  }
+                  const newMessages = aiMsg ? [...aiMessages, userMsg, aiMsg] : [...aiMessages, userMsg]
+                  setAiMessages(newMessages)
+                  try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(newMessages.slice(-100))) } catch {}
+                  setAiInput('')
+                }
+              }}
+            />
+            <button
+              className="ai-send-btn"
+              onClick={() => {
+                if (!aiInput.trim()) return
+                const userMsg = { id: Date.now(), role: 'user', content: aiInput.trim(), timestamp: Date.now() }
+                const response = generateAIResponse(aiInput.trim(), aiMessages)
+                let aiMsg = null
+                if (response) {
+                  aiMsg = { id: Date.now() + 1, role: 'ai', ...response, timestamp: Date.now() + 1 }
+                }
+                const newMessages = aiMsg ? [...aiMessages, userMsg, aiMsg] : [...aiMessages, userMsg]
+                setAiMessages(newMessages)
+                try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(newMessages.slice(-100))) } catch {}
+                setAiInput('')
+              }}
+              disabled={!aiInput.trim()}
+            >
+              ➤
+            </button>
+          </div>
+        </main>
+      )}
+
       {mainSection === 'settings' && (
         <main className="panel settings-panel">
           <section className="settings-section">
@@ -3059,6 +3266,15 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         >
           <span aria-hidden="true">💬</span>
           <span>Chat</span>
+        </button>
+        <button
+          type="button"
+          className={mainSection === 'ai' ? 'active' : ''}
+          onClick={() => setMainSection('ai')}
+          aria-pressed={mainSection === 'ai'}
+        >
+          <span aria-hidden="true">🤖</span>
+          <span>AI</span>
         </button>
         <button
           type="button"
