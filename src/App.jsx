@@ -2799,10 +2799,10 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         <main className="panel ai-chat-panel">
           <div className="ai-chat-header">
             <div className="ai-chat-title">
-              <span className="ai-avatar">🤖</span>
+              <span className="ai-avatar">🌸</span>
               <div>
-                <h2>AI Koreys o'qituvchisi</h2>
-                <p className="ai-subtitle">Tarjima, grammatika, suhbat va test</p>
+                <h2>Asiye AI</h2>
+                <p className="ai-subtitle">Koreys tilini o'rganish bo'yicha yordamchi</p>
               </div>
             </div>
             <button
@@ -2818,66 +2818,25 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
             </button>
           </div>
 
-          {/* Quick Actions */}
-          <div className="ai-quick-actions">
-            <button
-              type="button"
-              className="ai-quick-btn"
-              onClick={() => setAiInput('tarjima: ')}
-            >
-              📖 Tarjima
-            </button>
-            <button
-              type="button"
-              className="ai-quick-btn"
-              onClick={() => setAiInput('grammatika: ')}
-            >
-              📝 Grammatika
-            </button>
-            <button
-              type="button"
-              className="ai-quick-btn"
-              onClick={() => setAiInput('안녕하세요')}
-            >
-              💬 Suhbat
-            </button>
-            <button
-              type="button"
-              className="ai-quick-btn"
-              onClick={() => {
-                const response = generateAIResponse('test')
-                if (response) {
-                  const userMsg = { id: Date.now(), role: 'user', content: '🧠 Test savoli bering' }
-                  const aiMsg = { id: Date.now() + 1, role: 'ai', ...response }
-                  const newMessages = [...aiMessages, userMsg, aiMsg]
-                  setAiMessages(newMessages)
-                  try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(newMessages.slice(-100))) } catch {}
-                }
-              }}
-            >
-              🧠 Test
-            </button>
-          </div>
-
           {/* Messages */}
           <div className="ai-messages-container">
             {aiMessages.length === 0 ? (
               <div className="ai-welcome">
-                <span className="ai-welcome-icon">🤖</span>
-                <h3>Salom! Men AI Koreys o'qituvchisiman</h3>
-                <p>Sizga koreys tilini o'rganishda yordam beraman:</p>
+                <span className="ai-welcome-icon">🌸</span>
+                <h3>Salom! Men Asiye AI</h3>
+                <p>Koreys tilini o'rganish bo'yicha aqlli yordamchiman. Istalgan savol bering!</p>
                 <ul>
                   <li>📖 So'zlar tarjima qilish</li>
                   <li>📝 Grammatika tushuntirish</li>
                   <li>💬 Koreys tilida suhbatlashish</li>
                   <li>🧠 Test savollari berish</li>
+                  <li>🌍 Koreys madaniyati haqida</li>
                 </ul>
-                <p className="ai-hint">Quyidagi tez buyruqlardan foydalaning yoki xabar yozing!</p>
               </div>
             ) : (
               aiMessages.map((msg) => (
                 <div key={msg.id} className={`ai-message ${msg.role === 'user' ? 'ai-message-user' : 'ai-message-ai'}`}>
-                  {msg.role === 'ai' && <span className="ai-msg-avatar">🤖</span>}
+                  {msg.role === 'ai' && <span className="ai-msg-avatar">🌸</span>}
                   <div className="ai-bubble">
                     {msg.type === 'test' ? (
                       <div className="ai-test-question">
@@ -2944,7 +2903,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
             <input
               className="ai-input"
               type="text"
-              placeholder="Xabar yozing... (masalan: tarjima: 사랑)"
+              placeholder="Asiye AI ga savol bering..."
               value={aiInput}
               onChange={(e) => setAiInput(e.target.value)}
               onKeyDown={(e) => {
@@ -3273,8 +3232,8 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
           onClick={() => setMainSection('ai')}
           aria-pressed={mainSection === 'ai'}
         >
-          <span aria-hidden="true">🤖</span>
-          <span>AI</span>
+          <span aria-hidden="true">🌸</span>
+          <span>Asiye</span>
         </button>
         <button
           type="button"
