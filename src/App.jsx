@@ -903,6 +903,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
     }
   })
   const [aiInput, setAiInput] = useState('')
+  const [aiTyping, setAiTyping] = useState(false)
   const aiEndRef = useRef(null)
   const localDataRef = useRef({
     words,
@@ -1243,7 +1244,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   // Auto-scroll AI chat
   useEffect(() => {
     aiEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [aiMessages])
+  }, [aiMessages, aiTyping])
 
   const spendHeart = () => {
     setGameState((previous) => ({ ...previous, hearts: Math.max(0, previous.hearts - 1) }))
@@ -1325,6 +1326,33 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
     sendMessage(chatId, user.uid, myProfile?.firstName || 'Men', chatInput.trim())
       .then(() => setChatInput(''))
       .catch((e) => console.error('Send message error:', e))
+  }
+
+  // AI Chat handler
+  const handleSendAIMessage = () => {
+    if (!aiInput.trim() || aiTyping) return
+    const userMsg = { id: Date.now(), role: 'user', content: aiInput.trim(), timestamp: Date.now() }
+    const currentMessages = [...aiMessages, userMsg]
+    setAiMessages(currentMessages)
+    setAiInput('')
+    setAiTyping(true)
+
+    // Simulate AI thinking delay (800-1500ms)
+    const delay = 800 + Math.random() * 700
+    setTimeout(() => {
+      const response = generateAIResponse(userMsg.content, aiMessages)
+      let aiMsg = null
+      if (response) {
+        aiMsg = { id: Date.now() + 1, role: 'ai', ...response, timestamp: Date.now() + 1 }
+      }
+      const newMessages = aiMsg ? [...currentMessages, aiMsg] : currentMessages
+      setAiMessages(newMessages)
+      setAiTyping(false)
+      try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(newMessages.slice(-100))) } catch {}
+    }, delay)
+
+    // Save user message immediately
+    try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(currentMessages.slice(-100))) } catch {}
   }
 
   // Friend handlers
@@ -2799,7 +2827,23 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         <main className="panel ai-chat-panel">
           <div className="ai-chat-header">
             <div className="ai-chat-title">
-              <span className="ai-avatar">🌸</span>
+              <div className="ai-avatar">
+                <svg viewBox="0 0 40 40" width="28" height="28">
+                  <defs>
+                    <linearGradient id="asiyeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#7dd3fc" />
+                      <stop offset="50%" stopColor="#a78bfa" />
+                      <stop offset="100%" stopColor="#f9a8d4" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="20" cy="20" r="18" fill="url(#asiyeGrad)" opacity="0.2" />
+                  <circle cx="20" cy="20" r="12" fill="url(#asiyeGrad)" opacity="0.4" />
+                  <circle cx="16" cy="17" r="2" fill="#7dd3fc" />
+                  <circle cx="24" cy="17" r="2" fill="#a78bfa" />
+                  <path d="M15 24 Q20 28 25 24" stroke="#f9a8d4" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                  <circle cx="20" cy="10" r="1.5" fill="#7dd3fc" opacity="0.6" />
+                </svg>
+              </div>
               <div>
                 <h2>Asiye AI</h2>
                 <p className="ai-subtitle">Koreys tilini o'rganish bo'yicha yordamchi</p>
@@ -2822,21 +2866,64 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
           <div className="ai-messages-container">
             {aiMessages.length === 0 ? (
               <div className="ai-welcome">
-                <span className="ai-welcome-icon">🌸</span>
-                <h3>Salom! Men Asiye AI</h3>
-                <p>Koreys tilini o'rganish bo'yicha aqlli yordamchiman. Istalgan savol bering!</p>
-                <ul>
-                  <li>📖 So'zlar tarjima qilish</li>
-                  <li>📝 Grammatika tushuntirish</li>
-                  <li>💬 Koreys tilida suhbatlashish</li>
-                  <li>🧠 Test savollari berish</li>
-                  <li>🌍 Koreys madaniyati haqida</li>
-                </ul>
+                <div className="ai-welcome-logo">
+                  <svg viewBox="0 0 80 80" width="80" height="80">
+                    <defs>
+                      <linearGradient id="asiyeWelcomeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#7dd3fc" />
+                        <stop offset="50%" stopColor="#a78bfa" />
+                        <stop offset="100%" stopColor="#f9a8d4" />
+                      </linearGradient>
+                    </defs>
+                    <circle cx="40" cy="40" r="36" fill="url(#asiyeWelcomeGrad)" opacity="0.15" />
+                    <circle cx="40" cy="40" r="28" fill="url(#asiyeWelcomeGrad)" opacity="0.25" />
+                    <circle cx="40" cy="40" r="20" fill="url(#asiyeWelcomeGrad)" opacity="0.4" />
+                    <circle cx="32" cy="35" r="3.5" fill="#7dd3fc" />
+                    <circle cx="48" cy="35" r="3.5" fill="#a78bfa" />
+                    <path d="M30 48 Q40 56 50 48" stroke="#f9a8d4" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+                    <circle cx="40" cy="20" r="3" fill="#7dd3fc" opacity="0.7" />
+                    <circle cx="25" cy="28" r="2" fill="#a78bfa" opacity="0.5" />
+                    <circle cx="55" cy="28" r="2" fill="#f9a8d4" opacity="0.5" />
+                  </svg>
+                </div>
+                <h3>Salom! Men Asiye AI ✨</h3>
+                <p>Koreys tilini o'rganish bo'yicha aqlli yordamchiman. Sizga qanday yordam bera olaman?</p>
+                <div className="ai-welcome-suggestions">
+                  <button className="ai-suggestion-btn" onClick={() => {
+                    setAiInput('Koreys tilini qanday o\'rganish kerak?')
+                  }}>📚 Koreys tilini qanday o'rganish kerak?</button>
+                  <button className="ai-suggestion-btn" onClick={() => {
+                    setAiInput('TOPIK imtihoni haqida ma\'lumot ber')
+                  }}>📋 TOPIK imtihoni haqida</button>
+                  <button className="ai-suggestion-btn" onClick={() => {
+                    setAiInput('안녕하세요 nima degani?')
+                  }}>📖 "안녕하세요" nima degani?</button>
+                  <button className="ai-suggestion-btn" onClick={() => {
+                    setAiInput('test savoli ber')
+                  }}>🧠 Test savoli ber</button>
+                </div>
               </div>
             ) : (
               aiMessages.map((msg) => (
                 <div key={msg.id} className={`ai-message ${msg.role === 'user' ? 'ai-message-user' : 'ai-message-ai'}`}>
-                  {msg.role === 'ai' && <span className="ai-msg-avatar">🌸</span>}
+                  {msg.role === 'ai' && (
+                    <div className="ai-msg-avatar">
+                      <svg viewBox="0 0 40 40" width="20" height="20">
+                        <defs>
+                          <linearGradient id="asiyeMsgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#7dd3fc" />
+                            <stop offset="50%" stopColor="#a78bfa" />
+                            <stop offset="100%" stopColor="#f9a8d4" />
+                          </linearGradient>
+                        </defs>
+                        <circle cx="20" cy="20" r="18" fill="url(#asiyeMsgGrad)" opacity="0.2" />
+                        <circle cx="20" cy="20" r="12" fill="url(#asiyeMsgGrad)" opacity="0.4" />
+                        <circle cx="16" cy="17" r="2" fill="#7dd3fc" />
+                        <circle cx="24" cy="17" r="2" fill="#a78bfa" />
+                        <path d="M15 24 Q20 28 25 24" stroke="#f9a8d4" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                      </svg>
+                    </div>
+                  )}
                   <div className="ai-bubble">
                     {msg.type === 'test' ? (
                       <div className="ai-test-question">
@@ -2895,6 +2982,32 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                 </div>
               ))
             )}
+            {aiTyping && (
+              <div className="ai-message ai-message-ai">
+                <div className="ai-msg-avatar">
+                  <svg viewBox="0 0 40 40" width="20" height="20">
+                    <defs>
+                      <linearGradient id="asiyeTypingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#7dd3fc" />
+                        <stop offset="50%" stopColor="#a78bfa" />
+                        <stop offset="100%" stopColor="#f9a8d4" />
+                      </linearGradient>
+                    </defs>
+                    <circle cx="20" cy="20" r="18" fill="url(#asiyeTypingGrad)" opacity="0.2" />
+                    <circle cx="20" cy="20" r="12" fill="url(#asiyeTypingGrad)" opacity="0.4" />
+                    <circle cx="16" cy="17" r="2" fill="#7dd3fc" />
+                    <circle cx="24" cy="17" r="2" fill="#a78bfa" />
+                    <path d="M15 24 Q20 28 25 24" stroke="#f9a8d4" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <div className="ai-bubble ai-typing-bubble">
+                  <div className="ai-typing-dots">
+                    <span></span><span></span><span></span>
+                  </div>
+                  <span className="ai-typing-text">Asiye yozmoqda</span>
+                </div>
+              </div>
+            )}
             <div ref={aiEndRef} />
           </div>
 
@@ -2908,35 +3021,14 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
               onChange={(e) => setAiInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && aiInput.trim()) {
-                  const userMsg = { id: Date.now(), role: 'user', content: aiInput.trim(), timestamp: Date.now() }
-                  const response = generateAIResponse(aiInput.trim(), aiMessages)
-                  let aiMsg = null
-                  if (response) {
-                    aiMsg = { id: Date.now() + 1, role: 'ai', ...response, timestamp: Date.now() + 1 }
-                  }
-                  const newMessages = aiMsg ? [...aiMessages, userMsg, aiMsg] : [...aiMessages, userMsg]
-                  setAiMessages(newMessages)
-                  try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(newMessages.slice(-100))) } catch {}
-                  setAiInput('')
+                  handleSendAIMessage()
                 }
               }}
             />
             <button
               className="ai-send-btn"
-              onClick={() => {
-                if (!aiInput.trim()) return
-                const userMsg = { id: Date.now(), role: 'user', content: aiInput.trim(), timestamp: Date.now() }
-                const response = generateAIResponse(aiInput.trim(), aiMessages)
-                let aiMsg = null
-                if (response) {
-                  aiMsg = { id: Date.now() + 1, role: 'ai', ...response, timestamp: Date.now() + 1 }
-                }
-                const newMessages = aiMsg ? [...aiMessages, userMsg, aiMsg] : [...aiMessages, userMsg]
-                setAiMessages(newMessages)
-                try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(newMessages.slice(-100))) } catch {}
-                setAiInput('')
-              }}
-              disabled={!aiInput.trim()}
+              onClick={handleSendAIMessage}
+              disabled={!aiInput.trim() || aiTyping}
             >
               ➤
             </button>
