@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import advancedWords from './advancedWords.js'
-import { loadAccountData, observeAuth, saveAccountData, signInWithGoogle, signOutUser } from './firebase.js'
+import { getAllProfiles, loadAccountData, loadProfile, listenToMessages, listenToProfiles, observeAuth, saveAccountData, saveProfile, sendMessage, signInWithGoogle, signOutUser } from './firebase.js'
 import grammarPoints from './grammarPoints.js'
 import './App.css'
 
@@ -617,26 +617,65 @@ function getAuthErrorMessage(error) {
   return 'Google akkaunt bilan kirib bo‘lmadi. Firebase sozlamalarini va internet aloqasini tekshiring.'
 }
 
-function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue }) {
+function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileReady }) {
+  const [step, setStep] = useState(1)
+  const [pf, setPf] = useState({ firstName: '', lastName: '', bio: '', avatar: '' })
+  const [av, setAv] = useState('')
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => { setAv(ev.target.result); setPf((p) => ({ ...p, avatar: ev.target.result })) }
+    reader.readAsDataURL(file)
+  }
+  const handleSubmit = () => {
+    if (!pf.firstName.trim()) return
+    setStep(2)
+    onProfileReady && onProfileReady(pf)
+  }
   return (
     <main className="auth-shell">
       <section className="auth-card">
         <img className="auth-logo" src="/topik-play-logo.svg" alt="Topik Play" />
-        <p className="eyebrow">Koreys tilini o‘rganish o‘yini</p>
-        <h1>Kirish usulini tanlang</h1>
-        <p className="settings-description">
-          Google akkaunt bilan ma’lumotlaringizni qurilmalar orasida sinxronlang yoki faqat shu qurilmada saqlang.
-        </p>
-        {error && <p className="auth-error" role="alert">{error}</p>}
-        <button type="button" className="google-sign-in-btn" onClick={onGoogleSignIn} disabled={busy}>
-          <span className="google-mark" aria-hidden="true">G</span>
-          {busy ? 'Kirilmoqda...' : 'Google orqali kirish'}
-        </button>
-        <div className="auth-divider"><span>yoki</span></div>
-        <button type="button" className="local-sign-in-btn" onClick={onLocalContinue} disabled={busy}>
-          Qurilmada davom etish
-        </button>
-        <p className="auth-privacy-note">Qurilmada saqlangan ma’lumotlar boshqa qurilmalarda ochilmaydi.</p>
+        <p className="eyebrow">Koreys tilini o'rganish o'yini</p>
+        {step === 1 ? (
+          <>
+            <h1>Profil yarating</h1>
+            <p className="settings-description">Kirishdan oldin o'zingiz haqingizda ma'lumot kiriting.</p>
+            {error && <p className="auth-error" role="alert">{error}</p>}
+            <div className="profile-setup-avatar">
+              <label className="profile-setup-avatar-label">
+                {av ? <img className="profile-setup-avatar-img" src={av} alt="Avatar" /> : <div className="profile-setup-avatar-placeholder"><span>📷</span><span>Rasm yuklash</span></div>}
+                <input type="file" accept="image/*" onChange={handleAvatarChange} hidden />
+              </label>
+            </div>
+            <input type="text" className="auth-input" placeholder="Ism *" value={pf.firstName} onChange={(e) => setPf((p) => ({ ...p, firstName: e.target.value }))} required />
+            <input type="text" className="auth-input" placeholder="Familiya" value={pf.lastName} onChange={(e) => setPf((p) => ({ ...p, lastName: e.target.value }))} />
+            <textarea className="auth-input auth-textarea" placeholder="Bio" rows={3} value={pf.bio} onChange={(e) => setPf((p) => ({ ...p, bio: e.target.value }))} />
+            <button type="button" className="primary-btn auth-next-btn" onClick={handleSubmit} disabled={!pf.firstName.trim()}>Davom etish →</button>
+          </>
+        ) : (
+          <>
+            <div className="profile-setup-preview">
+              {av ? <img className="profile-setup-preview-avatar" src={av} alt="Avatar" /> : <div className="profile-setup-preview-avatar-placeholder">{(pf.firstName || 'U')[0].toUpperCase()}</div>}
+              <h2>{pf.firstName} {pf.lastName}</h2>
+              {pf.bio && <p className="profile-setup-preview-bio">{pf.bio}</p>}
+            </div>
+            <h1>Kirish usulini tanlang</h1>
+            <p className="settings-description">Google akkaunt bilan ma'lumotlaringizni sinxronlang yoki faqat shu qurilmada saqlang.</p>
+            {error && <p className="auth-error" role="alert">{error}</p>}
+            <button type="button" className="google-sign-in-btn" onClick={onGoogleSignIn} disabled={busy}>
+              <span className="google-mark" aria-hidden="true">G</span>
+              {busy ? 'Kirilmoqda...' : 'Google orqali kirish'}
+            </button>
+            <div className="auth-divider"><span>yoki</span></div>
+            <button type="button" className="local-sign-in-btn" onClick={onLocalContinue} disabled={busy}>
+              Qurilmada davom etish
+            </button>
+            <p className="auth-privacy-note">Qurilmada saqlangan ma'lumotlar boshqa qurilmalarda ochilmaydi.</p>
+            <button type="button" className="ghost-btn auth-back-btn" onClick={() => setStep(1)}>← Orqaga</button>
+          </>
+        )}
       </section>
     </main>
   )
@@ -646,12 +685,22 @@ function App() {
   const [authState, setAuthState] = useState({ loading: true, user: null, error: '' })
   const [signInBusy, setSignInBusy] = useState(false)
   const [localMode, setLocalMode] = useState(() => localStorage.getItem(LOCAL_MODE_STORAGE_KEY) === '1')
+  const [pendingProfile, setPendingProfile] = useState(null)
 
   useEffect(() => observeAuth(
     (user) => {
       if (user) {
         localStorage.removeItem(LOCAL_MODE_STORAGE_KEY)
         setLocalMode(false)
+        if (pendingProfile) {
+          saveProfile(user.uid, {
+            firstName: pendingProfile.firstName,
+            lastName: pendingProfile.lastName,
+            bio: pendingProfile.bio,
+            avatar: pendingProfile.avatar || user.photoURL || '',
+          }).catch((e) => console.error('Saqlash xatosi:', e))
+          setPendingProfile(null)
+        }
       }
       setAuthState({ loading: false, user, error: '' })
     },
@@ -683,11 +732,19 @@ function App() {
   const handleLocalContinue = () => {
     localStorage.setItem(LOCAL_MODE_STORAGE_KEY, '1')
     setLocalMode(true)
+    if (pendingProfile) {
+      localStorage.setItem('topik-play-profile', JSON.stringify(pendingProfile))
+      setPendingProfile(null)
+    }
   }
 
   const handleChooseLoginMode = () => {
     localStorage.removeItem(LOCAL_MODE_STORAGE_KEY)
     setLocalMode(false)
+  }
+
+  const handleProfileReady = (profileData) => {
+    setPendingProfile(profileData)
   }
 
   if (authState.loading) {
@@ -706,14 +763,15 @@ function App() {
         busy={signInBusy}
         onGoogleSignIn={handleGoogleSignIn}
         onLocalContinue={handleLocalContinue}
+        onProfileReady={handleProfileReady}
       />
     )
   }
 
-  return <LearningApp user={authState.user} localMode={localMode} onChooseLoginMode={handleChooseLoginMode} />
+  return <LearningApp user={authState.user} localMode={localMode} onChooseLoginMode={handleChooseLoginMode} pendingProfile={pendingProfile} />
 }
 
-function LearningApp({ user, localMode, onChooseLoginMode }) {
+function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [cloudReady, setCloudReady] = useState(localMode)
   const [cloudError, setCloudError] = useState('')
   const [words, setWords] = useState(loadWords)
@@ -745,6 +803,16 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
   const [gameState, setGameState] = useState(loadGameState)
   const [clockNow, setClockNow] = useState(0)
   const [speechMessage, setSpeechMessage] = useState('')
+  // Profile state
+  const [myProfile, setMyProfile] = useState(null)
+  const [profileEditing, setProfileEditing] = useState(false)
+  const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '', bio: '', avatar: '' })
+  // Chat state
+  const [chatUsers, setChatUsers] = useState([])
+  const [selectedChatUser, setSelectedChatUser] = useState(null)
+  const [chatMessages, setChatMessages] = useState([])
+  const [chatInput, setChatInput] = useState('')
+  const chatEndRef = useRef(null)
   const localDataRef = useRef({
     words,
     customGrammar,
@@ -1023,6 +1091,55 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
     return () => window.clearInterval(timer)
   }, [])
 
+  // Load profile data
+  useEffect(() => {
+    if (!user || localMode) {
+      // Load from localStorage for local mode
+      const saved = localStorage.getItem('topik-play-profile')
+      if (saved) {
+        try {
+          const p = JSON.parse(saved)
+          setMyProfile(p)
+          setProfileForm(p)
+        } catch (e) { /* ignore */ }
+      }
+      return
+    }
+    loadProfile(user.uid).then((p) => {
+      if (p) {
+        setMyProfile(p)
+        setProfileForm(p)
+      } else if (pendingProfile) {
+        setMyProfile(pendingProfile)
+        setProfileForm(pendingProfile)
+      }
+    }).catch(() => { /* ignore */ })
+  }, [user, localMode, pendingProfile])
+
+  // Listen to chat users
+  useEffect(() => {
+    if (!user || localMode) return
+    const unsubscribe = listenToProfiles((profiles) => {
+      setChatUsers(profiles.filter((p) => p.id !== user.uid))
+    })
+    return () => unsubscribe()
+  }, [user, localMode])
+
+  // Listen to chat messages
+  useEffect(() => {
+    if (!selectedChatUser || !user || localMode) return
+    const chatId = [user.uid, selectedChatUser.id].sort().join('-')
+    const unsubscribe = listenToMessages(chatId, (msgs) => {
+      setChatMessages(msgs)
+    })
+    return () => unsubscribe()
+  }, [selectedChatUser, user, localMode])
+
+  // Auto-scroll chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [chatMessages])
+
   const spendHeart = () => {
     setGameState((previous) => ({ ...previous, hearts: Math.max(0, previous.hearts - 1) }))
   }
@@ -1077,6 +1194,34 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
     window.speechSynthesis.speak(utterance)
   }
 
+  // Profile handlers
+  const handleSaveProfile = () => {
+    setMyProfile({ ...profileForm })
+    setProfileEditing(false)
+    if (user && !localMode) {
+      saveProfile(user.uid, profileForm).catch((e) => console.error('Profile save error:', e))
+    } else {
+      localStorage.setItem('topik-play-profile', JSON.stringify(profileForm))
+    }
+  }
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => setProfileForm((p) => ({ ...p, avatar: ev.target.result }))
+    reader.readAsDataURL(file)
+  }
+
+  // Chat handlers
+  const handleSendChatMessage = () => {
+    if (!chatInput.trim() || !selectedChatUser || !user || localMode) return
+    const chatId = [user.uid, selectedChatUser.id].sort().join('-')
+    sendMessage(chatId, user.uid, myProfile?.firstName || 'Men', chatInput.trim())
+      .then(() => setChatInput(''))
+      .catch((e) => console.error('Send message error:', e))
+  }
+
   const handleNextWord = () => {
     if (quizMode === 'mistakes') {
       if (mistakeQueue.length === 0) return
@@ -1117,13 +1262,10 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
     setLearningProgress((previous) => ({
       ...previous,
       quizMode: mode,
-      currentIndex: 0,
       selectedAnswer: null,
       isAnswered: false,
-      grammarIndex: 0,
       grammarSelectedAnswer: null,
       grammarAnswered: false,
-      mistakeIndex: 0,
     }))
   }
 
@@ -1990,6 +2132,302 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
         </main>
       )}
 
+      {mainSection === 'profile' && (
+        <main className="panel profile-panel">
+          {/* Profile Header - Instagram Style */}
+          <section className="profile-header-glass">
+            <div className="profile-avatar-section">
+              <div className="profile-avatar-ring">
+                {myProfile?.avatar ? (
+                  <img className="profile-avatar-img" src={myProfile.avatar} alt="Avatar" />
+                ) : (
+                  <div className="profile-avatar-placeholder">
+                    {(myProfile?.firstName || user?.displayName || 'U')[0]?.toUpperCase()}
+                  </div>
+                )}
+              </div>
+              {profileEditing ? (
+                <label className="profile-edit-avatar-btn">
+                  📷 Rasm o'zgartirish
+                  <input type="file" accept="image/*" onChange={handleAvatarChange} hidden />
+                </label>
+              ) : null}
+            </div>
+
+            {profileEditing ? (
+              <div className="profile-edit-form">
+                <input
+                  className="profile-input"
+                  type="text"
+                  placeholder="Ism"
+                  value={profileForm.firstName || ''}
+                  onChange={(e) => setProfileForm((p) => ({ ...p, firstName: e.target.value }))}
+                />
+                <input
+                  className="profile-input"
+                  type="text"
+                  placeholder="Familiya"
+                  value={profileForm.lastName || ''}
+                  onChange={(e) => setProfileForm((p) => ({ ...p, lastName: e.target.value }))}
+                />
+                <textarea
+                  className="profile-input profile-textarea"
+                  placeholder="Bio — o'zingiz haqingizda"
+                  rows={3}
+                  value={profileForm.bio || ''}
+                  onChange={(e) => setProfileForm((p) => ({ ...p, bio: e.target.value }))}
+                />
+                <div className="profile-edit-actions">
+                  <button className="primary-btn" onClick={handleSaveProfile}>Saqlash</button>
+                  <button className="ghost-btn" onClick={() => { setProfileEditing(false); setProfileForm(myProfile || {}) }}>Bekor qilish</button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="profile-name-section">
+                  <h2 className="profile-name">{myProfile?.firstName || user?.displayName || 'Foydalanuvchi'} {myProfile?.lastName || ''}</h2>
+                  {myProfile?.bio && <p className="profile-bio">{myProfile.bio}</p>}
+                </div>
+                <button className="profile-edit-btn" onClick={() => setProfileEditing(true)}>
+                  Profilni tahrirlash
+                </button>
+              </>
+            )}
+
+            {/* Stats */}
+            <div className="profile-stats">
+              <div className="profile-stat-item">
+                <span className="profile-stat-value">{words.length}</span>
+                <span className="profile-stat-label">So'zlar</span>
+              </div>
+              <div className="profile-stat-item">
+                <span className="profile-stat-value">{gameState?.streak || 0}</span>
+                <span className="profile-stat-label">Kunlar 🔥</span>
+              </div>
+              <div className="profile-stat-item">
+                <span className="profile-stat-value">{gameState?.hearts ?? MAX_HEARTS}</span>
+                <span className="profile-stat-label">Yuraklar ❤️</span>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="profile-progress">
+              <div className="profile-progress-label">
+                <span>O'zlashtirilgan so'zlar</span>
+                <span>{todayCompleted}/{settings.dailyGoal}</span>
+              </div>
+              <div className="profile-progress-bar">
+                <div className="profile-progress-fill" style={{ width: `${Math.min(100, (todayCompleted / settings.dailyGoal) * 100)}%` }} />
+              </div>
+            </div>
+
+            {/* Story Highlights */}
+            <div className="profile-highlights">
+              <div className="profile-highlight-item" onClick={() => setMainSection('topik1')}>
+                <div className="profile-highlight-icon">📘</div>
+                <span>TOPIK I</span>
+              </div>
+              <div className="profile-highlight-item" onClick={() => { setMainSection('topik2'); setTopikTwoSkill('vocabulary'); }}>
+                <div className="profile-highlight-icon">📖</div>
+                <span>Lug'at</span>
+              </div>
+              <div className="profile-highlight-item" onClick={() => { setMainSection('topik2'); setTopikTwoSkill('sigi'); }}>
+                <div className="profile-highlight-icon">✍️</div>
+                <span>Sigi</span>
+              </div>
+              <div className="profile-highlight-item" onClick={() => { setMainSection('topik2'); setTopikTwoSkill('ilgi'); }}>
+                <div className="profile-highlight-icon">📰</div>
+                <span>Ilgi</span>
+              </div>
+              <div className="profile-highlight-item" onClick={() => { setMainSection('topik2'); setTopikTwoSkill('titki'); }}>
+                <div className="profile-highlight-icon">🎧</div>
+                <span>Titki</span>
+              </div>
+              <div className="profile-highlight-item" onClick={() => setMainSection('chat')}>
+                <div className="profile-highlight-icon">💬</div>
+                <span>Chat</span>
+              </div>
+            </div>
+          </section>
+
+          {/* Settings in Profile */}
+          <section className="profile-settings-glass">
+            <h3 className="profile-settings-title">⚙️ Sozlamalar</h3>
+
+            {/* Account */}
+            <div className="profile-settings-section">
+              <h4>Akkaunt</h4>
+              <p className="settings-description">
+                {user
+                  ? `Google: ${user.displayName || user.email}`
+                  : 'Qurilma xotirasida saqlanadi.'}
+              </p>
+              <div className="setting-action-row">
+                {user
+                  ? <button type="button" className="setting-action-btn" onClick={() => signOutUser().catch((e) => console.error('Chiqish xatosi:', e))}>Chiqish</button>
+                  : <button type="button" className="setting-action-btn" onClick={onChooseLoginMode}>Kirish usulini o'zgartirish</button>}
+              </div>
+            </div>
+
+            {/* Appearance */}
+            <div className="profile-settings-section">
+              <h4>Ko'rinish</h4>
+              <div className="setting-action-row">
+                <button type="button" className="setting-action-btn" onClick={() => setColorMode((m) => m === 'night' ? 'day' : 'night')}>
+                  <span>{colorMode === 'night' ? '☀️' : '🌙'}</span>
+                  {colorMode === 'night' ? 'Kunduzgi' : 'Tungi'}
+                </button>
+              </div>
+              <div className="theme-options" role="group" aria-label="Rangni tanlang">
+                {themes.map((option) => (
+                  <button key={option.id} type="button" className={`theme-option ${selectedTheme === option.id ? 'active' : ''}`} onClick={() => setSelectedTheme(option.id)}>
+                    <span className="theme-swatches" aria-hidden="true">
+                      <span style={{ backgroundColor: option.primary }} />
+                      <span style={{ backgroundColor: option.strong }} />
+                      <span style={{ backgroundColor: option.accent }} />
+                    </span>
+                    <span>{option.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Voice */}
+            <div className="profile-settings-section">
+              <h4>Ovoz</h4>
+              <label className="setting-control setting-toggle">
+                <span>Koreyscha talaffuz</span>
+                <input type="checkbox" checked={settings.speechEnabled} onChange={(e) => {
+                  if (!e.target.checked && 'speechSynthesis' in window) window.speechSynthesis.cancel()
+                  setSettings((p) => ({ ...p, speechEnabled: e.target.checked }))
+                }} />
+              </label>
+              <label className="setting-control" htmlFor="speech-rate-profile">
+                <span>Tezlik</span>
+                <span className="setting-value">{settings.speechRate}x</span>
+                <input id="speech-rate-profile" type="range" min="0.6" max="1.2" step="0.05" value={settings.speechRate} disabled={!settings.speechEnabled} onChange={(e) => setSettings((p) => ({ ...p, speechRate: Number(e.target.value) }))} />
+              </label>
+            </div>
+
+            {/* Learning */}
+            <div className="profile-settings-section">
+              <h4>O'rganish</h4>
+              <label className="setting-control setting-select">
+                <span>Matn kattaligi</span>
+                <select value={settings.textSize} onChange={(e) => setSettings((p) => ({ ...p, textSize: e.target.value }))}>
+                  <option value="small">Kichik</option>
+                  <option value="medium">O'rtacha</option>
+                  <option value="large">Katta</option>
+                </select>
+              </label>
+              <label className="setting-control setting-select">
+                <span>Kunlik maqsad</span>
+                <select value={settings.dailyGoal} onChange={(e) => setSettings((p) => ({ ...p, dailyGoal: Number(e.target.value) }))}>
+                  {[5, 10, 15, 20, 30].map((g) => <option key={g} value={g}>{g} ta so'z</option>)}
+                </select>
+              </label>
+            </div>
+
+            {/* Author */}
+            <div className="profile-settings-section author-card">
+              <h4>Muallif</h4>
+              <p className="author-name">Ozodbek Nabiqo'ziyev</p>
+              <div className="contact-links">
+                <a href="https://t.me/ozodbek_dc" target="_blank" rel="noreferrer">Telegram</a>
+                <a href="https://www.instagram.com/ozodbek_dc/" target="_blank" rel="noreferrer">Instagram</a>
+              </div>
+            </div>
+          </section>
+        </main>
+      )}
+
+      {mainSection === 'chat' && (
+        <main className="panel chat-panel">
+          {!selectedChatUser ? (
+            /* User List */
+            <section className="chat-user-list">
+              <h2 className="chat-title">💬 Xabarlar</h2>
+              {user && !localMode ? (
+                <>
+                  {chatUsers.length === 0 ? (
+                    <p className="chat-empty">Hali foydalanuvchilar yo'q. Birinchi bo'ling!</p>
+                  ) : (
+                    chatUsers.map((u) => (
+                      <div key={u.id} className="chat-user-item glass-card" onClick={() => setSelectedChatUser(u)}>
+                        <div className="chat-user-avatar">
+                          {u.avatar ? <img src={u.avatar} alt="" /> : <span>{(u.firstName || 'U')[0]?.toUpperCase()}</span>}
+                        </div>
+                        <div className="chat-user-info">
+                          <span className="chat-user-name">{u.firstName || 'Noma\'lum'} {u.lastName || ''}</span>
+                          {u.bio && <span className="chat-user-bio">{u.bio}</span>}
+                        </div>
+                        <span className="chat-arrow">›</span>
+                      </div>
+                    ))
+                  )}
+                </>
+              ) : (
+                <p className="chat-empty">Chat uchun Google orqali kiring.</p>
+              )}
+            </section>
+          ) : (
+            /* Chat Messages */
+            <section className="chat-messages-view">
+              <div className="chat-header">
+                <button className="ghost-btn chat-back-btn" onClick={() => setSelectedChatUser(null)}>← Orqaga</button>
+                <div className="chat-header-user">
+                  <div className="chat-header-avatar">
+                    {selectedChatUser.avatar ? <img src={selectedChatUser.avatar} alt="" /> : <span>{(selectedChatUser.firstName || 'U')[0]?.toUpperCase()}</span>}
+                  </div>
+                  <span>{selectedChatUser.firstName} {selectedChatUser.lastName}</span>
+                </div>
+              </div>
+
+              <div className="chat-messages-container">
+                {user && !localMode ? (
+                  <>
+                    {chatMessages.length === 0 ? (
+                      <p className="chat-no-messages">Xabarlar yo'q. Birinchi xabarni yozing!</p>
+                    ) : (
+                      chatMessages.map((msg) => {
+                        const isMe = msg.senderId === user.uid
+                        return (
+                          <div key={msg.id} className={`chat-bubble ${isMe ? 'chat-bubble-mine' : 'chat-bubble-theirs'}`}>
+                            <p className="chat-bubble-text">{msg.text}</p>
+                            <span className="chat-bubble-time">
+                              {msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }) : ''}
+                            </span>
+                          </div>
+                        )
+                      })
+                    )}
+                    <div ref={chatEndRef} />
+                  </>
+                ) : (
+                  <p className="chat-no-messages">Chat uchun Google orqali kiring.</p>
+                )}
+              </div>
+
+              {user && !localMode && (
+                <div className="chat-input-container">
+                  <input
+                    className="chat-input"
+                    type="text"
+                    placeholder="Xabar yozing..."
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleSendChatMessage() }}
+                  />
+                  <button className="chat-send-btn" onClick={handleSendChatMessage} disabled={!chatInput.trim()}>
+                    ➤
+                  </button>
+                </div>
+              )}
+            </section>
+          )}
+        </main>
+      )}
+
       {mainSection === 'settings' && (
         <main className="panel settings-panel">
           <section className="settings-section">
@@ -2265,12 +2703,21 @@ function LearningApp({ user, localMode, onChooseLoginMode }) {
         </button>
         <button
           type="button"
-          className={mainSection === 'settings' ? 'active' : ''}
-          onClick={() => setMainSection('settings')}
-          aria-pressed={mainSection === 'settings'}
+          className={mainSection === 'chat' ? 'active' : ''}
+          onClick={() => setMainSection('chat')}
+          aria-pressed={mainSection === 'chat'}
         >
-          <span aria-hidden="true">⚙️</span>
-          <span>Sozlamalar</span>
+          <span aria-hidden="true">💬</span>
+          <span>Chat</span>
+        </button>
+        <button
+          type="button"
+          className={mainSection === 'profile' ? 'active' : ''}
+          onClick={() => setMainSection('profile')}
+          aria-pressed={mainSection === 'profile'}
+        >
+          <span aria-hidden="true">👤</span>
+          <span>Profil</span>
         </button>
       </nav>
     </div>
