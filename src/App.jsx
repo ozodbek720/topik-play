@@ -1142,11 +1142,11 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
     }).catch(() => { /* ignore */ })
   }, [user, localMode, pendingProfile])
 
-  // Listen to chat users
+  // Listen to chat users (only Google users)
   useEffect(() => {
     if (!user || localMode) return
     const unsubscribe = listenToProfiles((profiles) => {
-      setChatUsers(profiles.filter((p) => p.id !== user.uid))
+      setChatUsers(profiles)
     })
     return () => unsubscribe()
   }, [user, localMode])
@@ -1271,12 +1271,15 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   }
 
   const friendProfiles = useMemo(() => {
-    return chatUsers.filter((u) => friends.some((f) => f.id === u.id))
-  }, [chatUsers, friends])
+    if (!user || localMode) return []
+    return chatUsers.filter((u) => u.id !== user.uid && friends.some((f) => f.id === u.id))
+  }, [chatUsers, friends, user, localMode])
 
-  const nonFriendProfiles = useMemo(() => {
-    return chatUsers.filter((u) => !friends.some((f) => f.id === u.id))
-  }, [chatUsers, friends])
+  const allProfiles = useMemo(() => {
+    // Barcha foydalanuvchilar, o'zini bundan chiqarib (faqat Google orqali kirganlar)
+    if (!user || localMode) return []
+    return chatUsers.filter((u) => u.id !== user.uid)
+  }, [chatUsers, user, localMode])
 
   const handleNextWord = () => {
     if (quizMode === 'mistakes') {
@@ -2416,7 +2419,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                       👥 Dostlar {friendProfiles.length > 0 && `(${friendProfiles.length})`}
                     </button>
                     <button className={chatTab === 'all' ? 'active' : ''} onClick={() => setChatTab('all')}>
-                      🌐 Hamma {nonFriendProfiles.length > 0 && `(${nonFriendProfiles.length})`}
+                      🌐 Hamma ({allProfiles.length})
                     </button>
                   </nav>
                   {chatTab === 'friends' ? (
@@ -2438,26 +2441,35 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                       ))
                     )
                   ) : (
-                    nonFriendProfiles.length === 0 ? (
-                      <p className="chat-empty">Hamma dostlaringiz ro'yxatda!</p>
+                    allProfiles.length === 0 ? (
+                      <p className="chat-empty">Hali boshqa foydalanuvchilar yo'q. Birinchi bo'ling!</p>
                     ) : (
-                      nonFriendProfiles.map((u) => (
-                        <div key={u.id} className="chat-user-item glass-card">
-                          <div className="chat-user-avatar">
-                            {u.avatar ? <img src={u.avatar} alt="" /> : <span>{(u.firstName || 'U')[0]?.toUpperCase()}</span>}
+                      allProfiles.map((u) => {
+                        const isFriend = friends.some((f) => f.id === u.id)
+                        return (
+                          <div key={u.id} className="chat-user-item glass-card">
+                            <div className="chat-user-avatar" onClick={() => setSelectedChatUser(u)}>
+                              {u.avatar ? <img src={u.avatar} alt="" /> : <span>{(u.firstName || 'U')[0]?.toUpperCase()}</span>}
+                            </div>
+                            <div className="chat-user-info" onClick={() => setSelectedChatUser(u)}>
+                              <span className="chat-user-name">{u.firstName || 'Noma\'lum'} {u.lastName || ''}</span>
+                              {u.bio && <span className="chat-user-bio">{u.bio}</span>}
+                              {isFriend && <span className="chat-friend-badge">✓ Dost</span>}
+                            </div>
+                            {isFriend ? (
+                              <button className="chat-remove-friend-btn" onClick={() => handleRemoveFriend(u.id)} title="Dostlardan o'chirish">✕</button>
+                            ) : (
+                              <button className="chat-add-friend-btn" onClick={() => handleAddFriend(u)}>+ Dost</button>
+                            )}
+                            <span className="chat-arrow" onClick={() => setSelectedChatUser(u)}>›</span>
                           </div>
-                          <div className="chat-user-info">
-                            <span className="chat-user-name">{u.firstName || 'Noma\'lum'} {u.lastName || ''}</span>
-                            {u.bio && <span className="chat-user-bio">{u.bio}</span>}
-                          </div>
-                          <button className="chat-add-friend-btn" onClick={() => handleAddFriend(u)}>+ Dost</button>
-                        </div>
-                      ))
+                        )
+                      })
                     )
                   )}
                 </>
               ) : (
-                <p className="chat-empty">Chat uchun Google orqali kiring.</p>
+                <p className="chat-empty">Chat va foydalanuvchilar ro'yxati faqat Google orqali kirganingizda ko'rinadi.</p>
               )}
             </section>
           ) : (
