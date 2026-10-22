@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import advancedWords from './advancedWords.js'
+import topik2Lugat from './topik2Lugat.js'
 import { addFriend, getAllProfiles, getRedirectResultAuth, loadAccountData, loadProfile, listenToFriends, listenToMessages, listenToProfiles, observeAuth, removeFriend, saveAccountData, saveProfile, sendMessage, signInWithGooglePopup, signInWithGoogleRedirect, signOutUser } from './firebase.js'
 import grammarPoints from './grammarPoints.js'
 import './App.css'
@@ -851,6 +852,11 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [activeTab, setActiveTab] = useState('quiz')
   const [topikTwoSkill, setTopikTwoSkill] = useState('vocabulary')
   const [topikTwoDay, setTopikTwoDay] = useState(1)
+  const [topik2LugatPage, setTopik2LugatPage] = useState('list')
+  const [topik2LugatQuizIndex, setTopik2LugatQuizIndex] = useState(0)
+  const [topik2LugatQuizScore, setTopik2LugatQuizScore] = useState(0)
+  const [topik2LugatQuizAnswered, setTopik2LugatQuizAnswered] = useState(null)
+  const [topik2LugatQuizOptions, setTopik2LugatQuizOptions] = useState([])
   const [selectedTheme, setSelectedTheme] = useState(loadTheme)
   const [colorMode, setColorMode] = useState(loadColorMode)
   const [settings, setSettings] = useState(loadSettings)
@@ -2193,6 +2199,14 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
             >
               듣기 · Titki <span>Eshitish</span>
             </button>
+            <button
+              type="button"
+              className={topikTwoSkill === 'topikWords' ? 'active' : ''}
+              onClick={() => { setTopikTwoSkill('topikWords'); setTopik2LugatPage('list'); }}
+              aria-pressed={topikTwoSkill === 'topikWords'}
+            >
+              📝 TOPIK so'zlar <span>{topik2Lugat.length} ta</span>
+            </button>
           </nav>
           {topikTwoSkill === 'vocabulary'
             ? (
@@ -2229,10 +2243,197 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                   </section>
                 </section>
               )
+            : topikTwoSkill === 'topikWords'
+            ? (
+                <section className="topik-two-topik-words" aria-live="polite">
+                  <h2>📝 TOPIKda ko'p uchraydigan so'zlar</h2>
+                  <p className="settings-description">{topik2Lugat.length} ta so'z · Test va eshitish mashqlari</p>
+                  <nav className="topik-words-tabs">
+                    <button type="button" className={topik2LugatPage === 'list' ? 'active' : ''} onClick={() => setTopik2LugatPage('list')}>📖 Ro'yxat</button>
+                    <button type="button" className={topik2LugatPage === 'quiz' ? 'active' : ''} onClick={() => {
+                      setTopik2LugatPage('quiz')
+                      setTopik2LugatQuizIndex(0)
+                      setTopik2LugatQuizScore(0)
+                      setTopik2LugatQuizAnswered(null)
+                      const shuffled = [...topik2Lugat].sort(() => Math.random() - 0.5).slice(0, 20)
+                      const options = shuffled.map((target) => {
+                        const wrongPool = topik2Lugat.filter((w) => w.id !== target.id)
+                        const wrong = []
+                        const usedIndices = new Set()
+                        while (wrong.length < 3 && usedIndices.size < wrongPool.length) {
+                          const randIndex = Math.floor(Math.random() * wrongPool.length)
+                          if (!usedIndices.has(randIndex)) {
+                            usedIndices.add(randIndex)
+                            wrong.push(wrongPool[randIndex].meaning)
+                          }
+                        }
+                        const allOptions = [...wrong, target.meaning].sort(() => Math.random() - 0.5)
+                        return { word: target, options: allOptions, correct: target.meaning }
+                      })
+                      setTopik2LugatQuizOptions(options)
+                    }}>🧠 Test</button>
+                    <button type="button" className={topik2LugatPage === 'listening' ? 'active' : ''} onClick={() => {
+                      setTopik2LugatPage('listening')
+                      setTopik2LugatQuizIndex(0)
+                      setTopik2LugatQuizScore(0)
+                      setTopik2LugatQuizAnswered(null)
+                      const shuffled = [...topik2Lugat].sort(() => Math.random() - 0.5).slice(0, 20)
+                      const options = shuffled.map((target) => {
+                        const wrongPool = topik2Lugat.filter((w) => w.id !== target.id)
+                        const wrong = []
+                        const usedIndices = new Set()
+                        while (wrong.length < 3 && usedIndices.size < wrongPool.length) {
+                          const randIndex = Math.floor(Math.random() * wrongPool.length)
+                          if (!usedIndices.has(randIndex)) {
+                            usedIndices.add(randIndex)
+                            wrong.push(wrongPool[randIndex].korean)
+                          }
+                        }
+                        const allOptions = [...wrong, target.korean].sort(() => Math.random() - 0.5)
+                        return { word: target, options: allOptions, correct: target.korean }
+                      })
+                      setTopik2LugatQuizOptions(options)
+                    }}>🎧 Eshitish</button>
+                  </nav>
+
+                  {topik2LugatPage === 'list' && (
+                    <div className="topik-words-list">
+                      {topik2Lugat.map((word, index) => (
+                        <div key={word.id} className="topik-word-item glass-card">
+                          <span className="topik-word-number">{String(index + 1).padStart(3, '0')}</span>
+                          <div className="topik-word-content">
+                            <strong lang="ko">{word.korean}</strong>
+                            <span className="topik-word-meaning">{word.meaning}</span>
+                            <span className="topik-word-example" lang="ko">{word.example}</span>
+                          </div>
+                          <button type="button" className="topik-word-speak-btn" onClick={() => handleSpeak(word.korean)} title="Eshitish">🔊</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {topik2LugatPage === 'quiz' && topik2LugatQuizOptions.length > 0 && (
+                    <div className="topik-words-quiz">
+                      {topik2LugatQuizIndex < topik2LugatQuizOptions.length ? (
+                        <>
+                          <div className="quiz-progress-bar">
+                            <div className="quiz-progress-fill" style={{ width: `${((topik2LugatQuizIndex + 1) / topik2LugatQuizOptions.length) * 100}%` }} />
+                          </div>
+                          <p className="quiz-counter">{topik2LugatQuizIndex + 1} / {topik2LugatQuizOptions.length}</p>
+                          <div className="quiz-question-card glass-card">
+                            <p className="quiz-instruction">Quyidagi so'zning tarjimasini tanlang:</p>
+                            <h3 lang="ko">{topik2LugatQuizOptions[topik2LugatQuizIndex].word.korean}</h3>
+                            <button type="button" className="quiz-speak-btn" onClick={() => handleSpeak(topik2LugatQuizOptions[topik2LugatQuizIndex].word.korean)}>🔊 Eshitish</button>
+                            <div className="quiz-options">
+                              {topik2LugatQuizOptions[topik2LugatQuizIndex].options.map((option, optIdx) => {
+                                const isAnswered = topik2LugatQuizAnswered !== null
+                                const isCorrect = option === topik2LugatQuizOptions[topik2LugatQuizIndex].correct
+                                const isSelected = option === topik2LugatQuizAnswered
+                                let className = 'quiz-option-btn glass-card'
+                                if (isAnswered && isCorrect) className += ' correct'
+                                if (isAnswered && isSelected && !isCorrect) className += ' wrong'
+                                return (
+                                  <button key={optIdx} type="button" className={className} disabled={isAnswered} onClick={() => {
+                                    setTopik2LugatQuizAnswered(option)
+                                    if (option === topik2LugatQuizOptions[topik2LugatQuizIndex].correct) {
+                                      setTopik2LugatQuizScore((s) => s + 1)
+                                    }
+                                  }}>
+                                    {option}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                            {topik2LugatQuizAnswered !== null && (
+                              <button type="button" className="primary-btn quiz-next-btn" onClick={() => {
+                                if (topik2LugatQuizIndex + 1 >= topik2LugatQuizOptions.length) {
+                                  setTopik2LugatPage('list')
+                                  setTopik2LugatQuizIndex(0)
+                                  setTopik2LugatQuizScore(0)
+                                  setTopik2LugatQuizAnswered(null)
+                                } else {
+                                  setTopik2LugatQuizIndex((i) => i + 1)
+                                  setTopik2LugatQuizAnswered(null)
+                                }
+                              }}>
+                                {topik2LugatQuizIndex + 1 >= topik2LugatQuizOptions.length ? 'Natijaga qaytish' : 'Keyingi →'}
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="quiz-result glass-card">
+                          <h3>Test yakunlandi!</h3>
+                          <p>{topik2LugatQuizScore} / {topik2LugatQuizOptions.length} to'g'ri</p>
+                          <button type="button" className="primary-btn" onClick={() => setTopik2LugatPage('list')}>Ro'yxatga qaytish</button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {topik2LugatPage === 'listening' && topik2LugatQuizOptions.length > 0 && (
+                    <div className="topik-words-quiz">
+                      {topik2LugatQuizIndex < topik2LugatQuizOptions.length ? (
+                        <>
+                          <div className="quiz-progress-bar">
+                            <div className="quiz-progress-fill" style={{ width: `${((topik2LugatQuizIndex + 1) / topik2LugatQuizOptions.length) * 100}%` }} />
+                          </div>
+                          <p className="quiz-counter">{topik2LugatQuizIndex + 1} / {topik2LugatQuizOptions.length}</p>
+                          <div className="quiz-question-card glass-card">
+                            <p className="quiz-instruction">Eshitgan so'zingizni tanlang:</p>
+                            <button type="button" className="quiz-listen-btn" onClick={() => handleSpeak(topik2LugatQuizOptions[topik2LugatQuizIndex].word.korean)}>🔊 Eshitish</button>
+                            <div className="quiz-options">
+                              {topik2LugatQuizOptions[topik2LugatQuizIndex].options.map((option, optIdx) => {
+                                const isAnswered = topik2LugatQuizAnswered !== null
+                                const isCorrect = option === topik2LugatQuizOptions[topik2LugatQuizIndex].correct
+                                const isSelected = option === topik2LugatQuizAnswered
+                                let className = 'quiz-option-btn glass-card'
+                                if (isAnswered && isCorrect) className += ' correct'
+                                if (isAnswered && isSelected && !isCorrect) className += ' wrong'
+                                return (
+                                  <button key={optIdx} type="button" className={className} disabled={isAnswered} onClick={() => {
+                                    setTopik2LugatQuizAnswered(option)
+                                    if (option === topik2LugatQuizOptions[topik2LugatQuizIndex].correct) {
+                                      setTopik2LugatQuizScore((s) => s + 1)
+                                    }
+                                  }}>
+                                    <span lang="ko">{option}</span>
+                                  </button>
+                                )
+                              })}
+                            </div>
+                            {topik2LugatQuizAnswered !== null && (
+                              <button type="button" className="primary-btn quiz-next-btn" onClick={() => {
+                                if (topik2LugatQuizIndex + 1 >= topik2LugatQuizOptions.length) {
+                                  setTopik2LugatPage('list')
+                                  setTopik2LugatQuizIndex(0)
+                                  setTopik2LugatQuizScore(0)
+                                  setTopik2LugatQuizAnswered(null)
+                                } else {
+                                  setTopik2LugatQuizIndex((i) => i + 1)
+                                  setTopik2LugatQuizAnswered(null)
+                                }
+                              }}>
+                                {topik2LugatQuizIndex + 1 >= topik2LugatQuizOptions.length ? 'Natijaga qaytish' : 'Keyingi →'}
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="quiz-result glass-card">
+                          <h3>Eshitish yakunlandi!</h3>
+                          <p>{topik2LugatQuizScore} / {topik2LugatQuizOptions.length} to'g'ri</p>
+                          <button type="button" className="primary-btn" onClick={() => setTopik2LugatPage('list')}>Ro'yxatga qaytish</button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </section>
+              )
             : (
                 <section className="topik-two-placeholder" aria-live="polite">
-                  <h2>{topikTwoSkill === 'sigi' ? 'Sigi — yozish' : topikTwoSkill === 'ilgi' ? 'Ilgi — o‘qish' : 'Titki — eshitish'}</h2>
-                  <p>Bu bo‘limga qo‘shiladigan materiallarni keyin belgilaymiz.</p>
+                  <h2>{topikTwoSkill === 'sigi' ? 'Sigi — yozish' : topikTwoSkill === 'ilgi' ? 'Ilgi — oqish' : 'Titki — eshitish'}</h2>
+                  <p>Bu bo'limga qo'shiladigan materiallarni keyin belgilaymiz.</p>
                 </section>
               )}
         </main>
