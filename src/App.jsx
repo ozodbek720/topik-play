@@ -431,9 +431,9 @@ const wordCategories = [
 ]
 
 const quizDifficulties = [
-  { id: 'easy', label: t('quizEasy'), points: 1 },
-  { id: 'medium', label: t('quizMedium'), points: 2 },
-  { id: 'hard', label: t('quizHard'), points: 3 },
+  { id: 'easy', label: 'Oson soʻzlar', points: 1 },
+  { id: 'medium', label: 'Oʻrta soʻzlar', points: 2 },
+  { id: 'hard', label: 'Qiyin soʻzlar', points: 3 },
 ]
 
 const initialCategoryIds = {
