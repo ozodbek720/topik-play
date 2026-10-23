@@ -936,7 +936,26 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
     }
   })
   const [isGeminiKeyVisible, setIsGeminiKeyVisible] = useState(false) // Toggle password visibility
+  const [keyboardVisible, setKeyboardVisible] = useState(false) // Keyboard is open on mobile
   const aiEndRef = useRef(null)
+
+  // Detect keyboard visibility using visualViewport API (mobile only)
+  useEffect(() => {
+    if (!window.visualViewport) return
+    const vp = window.visualViewport
+    const checkKeyboard = () => {
+      const heightRatio = vp.height / window.innerHeight
+      // If viewport height shrinks by more than 15%, keyboard is likely open
+      setKeyboardVisible(heightRatio < 0.85)
+    }
+    vp.addEventListener('resize', checkKeyboard)
+    vp.addEventListener('scroll', checkKeyboard)
+    checkKeyboard()
+    return () => {
+      vp.removeEventListener('resize', checkKeyboard)
+      vp.removeEventListener('scroll', checkKeyboard)
+    }
+  }, [])
 
   // Derived: active chat messages
   const aiMessages = useMemo(() => {
@@ -1810,7 +1829,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
   return (
     <div
-      className="app-shell" data-section={mainSection}
+      className="app-shell" data-section={mainSection} data-keyboard={keyboardVisible ? 'visible' : 'hidden'}
       style={{
         '--primary': theme.primary,
         '--primary-strong': theme.strong,
