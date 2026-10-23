@@ -3,7 +3,7 @@ import { generateGeminiResponse } from './aiChat.js'
 import advancedWords from './advancedWords.js'
 import topik2Lugat from './topik2Lugat.js'
 import topik1CommonWords from './topik1Words.js'
-import { addFriend, getAllProfiles, getRedirectResultAuth, loadAccountData, loadProfile, listenToFriends, listenToMessages, listenToProfiles, observeAuth, removeFriend, saveAccountData, saveProfile, sendMessage, signInWithGooglePopup, signInWithGoogleRedirect, signOutUser } from './firebase.js'
+import { addFriend, getAllProfiles, getRedirectResultAuth, loadAccountData, loadProfile, listenToFriends, listenToMessages, listenToProfiles, observeAuth, removeFriend, saveAccountData, saveProfile, sendMessage, signInWithGooglePopup, signInWithGoogleRedirect, signOutUser, createUserWithEmail, signInWithEmail, setupRecaptcha, signInWithPhone } from './firebase.js'
 import grammarPoints from './grammarPoints.js'
 import { t as translate } from './translations.js'
 import './App.css'
@@ -633,11 +633,24 @@ function getAuthErrorMessage(error) {
   return 'Google akkaunt bilan kirib bo\'lmadi. Internet aloqasini tekshiring yoki qurilmada davom eting.'
 }
 
-function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileReady, skipProfile, lang }) {
+function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileReady, skipProfile, lang, onEmailSignUp, onEmailSignIn, onPhoneSignIn, onPhoneSignUp }) {
   const t = (key) => translate(key, lang || 'uz')
   const [step, setStep] = useState(skipProfile ? 2 : 1)
   const [pf, setPf] = useState({ firstName: '', lastName: '', bio: '', avatar: '' })
   const [av, setAv] = useState('')
+  // Email/Password forms
+  const [authMode, setAuthMode] = useState('') // 'signIn' | 'signUp' | ''
+  const [authEmail, setAuthEmail] = useState('')
+  const [authPassword, setAuthPassword] = useState('')
+  const [authError, setAuthError] = useState('')
+  // Phone forms
+  const [phoneMode, setPhoneMode] = useState('') // 'signIn' | 'signUp' | ''
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [smsCode, setSmsCode] = useState('')
+  const [smsSent, setSmsSent] = useState(false)
+  const [confirmationResult, setConfirmationResult] = useState(null)
+  const recaptchaRef = useRef(null)
+
   const handleAvatarChange = (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -649,6 +662,64 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
     setStep(2)
     if (onProfileReady) onProfileReady(pf)
   }
+
+  // Email/Password handlers
+  const handleEmailAuth = async () => {
+    setAuthError('')
+    if (!authEmail || !authPassword) {
+      setAuthError(authMode === 'signUp' ? t('loginFillEmailPass') : t('loginFillEmailPass'))
+      return
+    }
+    if (authPassword.length < 6) {
+      setAuthError(t('loginPasswordShort'))
+      return
+    }
+    try {
+      if (authMode === 'signUp') {
+        await onEmailSignUp(authEmail, authPassword, pf)
+      } else {
+        await onEmailSignIn(authEmail, authPassword)
+      }
+    } catch (e) {
+      setAuthError(getAuthErrorMessage(e))
+    }
+  }
+
+  // Phone handlers
+  const handlePhoneSendSms = async () => {
+    setAuthError('')
+    if (!phoneNumber) {
+      setAuthError(t('loginFillPhone'))
+      return
+    }
+    try {
+      // Setup recaptcha
+      let container = recaptchaRef.current
+      if (!container) return
+      const verifier = setupRecaptcha(null, container, 'invisible')
+      const result = await onPhoneSignUp(phoneNumber, verifier)
+      setConfirmationResult(result)
+      setSmsSent(true)
+    } catch (e) {
+      setAuthError(getAuthErrorMessage(e))
+    }
+  }
+
+  const handlePhoneVerifyCode = async () => {
+    setAuthError('')
+    if (!smsCode) {
+      setAuthError(t('loginFillSmsCode'))
+      return
+    }
+    try {
+      await confirmationResult.confirm(smsCode)
+      // Profile save will be handled by onProfileReady in App component
+      if (onProfileReady) onProfileReady(pf)
+    } catch (e) {
+      setAuthError(getAuthErrorMessage(e))
+    }
+  }
+
   return (
     <main className="auth-shell">
       <section className="auth-card">
@@ -680,22 +751,97 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
                 {pf.bio && <p className="profile-setup-preview-bio">{pf.bio}</p>}
               </div>
             )}
-            <h1 style={{fontSize:'1.3rem',marginBottom:'4px'}}>{t('loginMethod')}</h1>
-            <p className="settings-description">{t('loginSyncHint')}</p>
-            {error && <p className="auth-error" role="alert">{error}</p>}
-            <button type="button" className="google-sign-in-btn" onClick={onGoogleSignIn} disabled={busy}>
-              <span className="google-mark" aria-hidden="true">G</span>
-              {busy ? t('loginSigningIn') : t('loginGoogle')}
-            </button>
-            <p className="auth-help-note" style={{fontSize:'0.75rem',color:'var(--muted)',marginTop:'8px',textAlign:'center',marginBottom:'0'}}>
-              {t('loginGoogleHelp')}
-            </p>
-            <div className="auth-divider"><span>{t('loginOr')}</span></div>
-            <button type="button" className="local-sign-in-btn" onClick={onLocalContinue} disabled={busy}>
-              {t('loginLocal')}
-            </button>
-            <p className="auth-privacy-note">{t('loginPrivacy')}</p>
-            {!skipProfile && <button type="button" className="ghost-btn auth-back-btn" onClick={() => setStep(1)}>{t('back')}</button>}
+
+            {/* ===== Email/Password Sign In / Sign Up ===== */}
+            {authMode ? (
+              <>
+                <h1 style={{fontSize:'1.2rem',marginBottom:'4px'}}>
+                  {authMode === 'signUp' ? t('loginCreateAccount') : t('loginEmailSignIn')}
+                </h1>
+                {authError && <p className="auth-error" role="alert">{authError}</p>}
+                <input type="email" className="auth-input" placeholder={t('loginEmail')} value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} />
+                <input type="password" className="auth-input" placeholder={t('loginPassword')} value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} />
+                <button type="button" className="primary-btn" style={{marginTop:'8px'}} onClick={handleEmailAuth} disabled={busy}>
+                  {busy ? t('loginSigningIn') : (authMode === 'signUp' ? t('loginCreateAccount') : t('loginSignIn'))}
+                </button>
+                <button type="button" className="ghost-btn" style={{fontSize:'0.85rem'}} onClick={() => { setAuthMode(''); setAuthError(''); setAuthEmail(''); setAuthPassword('') }}>
+                  {authMode === 'signUp' ? t('loginHaveAccount') : t('loginNoAccount')}
+                </button>
+                <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setAuthMode(''); setAuthError('') }}>{t('back')}</button>
+              </>
+            ) : phoneMode ? (
+              /* ===== Phone Sign In / Sign Up ===== */
+              <>
+                <h1 style={{fontSize:'1.2rem',marginBottom:'4px'}}>
+                  {t('loginPhoneSignIn')}
+                </h1>
+                {authError && <p className="auth-error" role="alert">{authError}</p>}
+                <div ref={recaptchaRef} />
+                {!smsSent ? (
+                  <>
+                    <p className="settings-description">{t('loginPhoneHint')}</p>
+                    <input type="tel" className="auth-input" placeholder={t('loginPhoneNumber')} value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
+                    <button type="button" className="primary-btn" style={{marginTop:'8px'}} onClick={handlePhoneSendSms} disabled={busy}>
+                      {busy ? t('loginSending') : t('loginSendSms')}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="settings-description">{t('loginSmsSent')}</p>
+                    <input type="text" className="auth-input" placeholder={t('loginSmsCode')} value={smsCode} onChange={(e) => setSmsCode(e.target.value)} maxLength={6} />
+                    <button type="button" className="primary-btn" style={{marginTop:'8px'}} onClick={handlePhoneVerifyCode} disabled={busy}>
+                      {busy ? t('loginVerifying') : t('loginVerifyCode')}
+                    </button>
+                    <button type="button" className="ghost-btn" style={{fontSize:'0.85rem'}} onClick={() => { setSmsSent(false); setSmsCode(''); setAuthError('') }}>
+                      {t('loginResendSms')}
+                    </button>
+                  </>
+                )}
+                <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setPhoneMode(''); setSmsSent(false); setAuthError('') }}>{t('back')}</button>
+              </>
+            ) : (
+              /* ===== Main Login Methods ===== */
+              <>
+                <h1 style={{fontSize:'1.3rem',marginBottom:'4px'}}>{t('loginMethod')}</h1>
+                <p className="settings-description">{t('loginSyncHint')}</p>
+                {error && <p className="auth-error" role="alert">{error}</p>}
+
+                {/* Google */}
+                <button type="button" className="google-sign-in-btn" onClick={onGoogleSignIn} disabled={busy}>
+                  <span className="google-mark" aria-hidden="true">G</span>
+                  {busy ? t('loginSigningIn') : t('loginGoogle')}
+                </button>
+                <p className="auth-help-note" style={{fontSize:'0.75rem',color:'var(--muted)',marginTop:'8px',textAlign:'center',marginBottom:'0'}}>
+                  {t('loginGoogleHelp')}
+                </p>
+
+                <div className="auth-divider"><span>{t('loginOr')}</span></div>
+
+                {/* Email/Password */}
+                <button type="button" className="email-sign-in-btn" onClick={() => setAuthMode('signIn')} disabled={busy}>
+                  {t('loginEmailSignIn')}
+                </button>
+                <button type="button" className="email-sign-up-btn" onClick={() => setAuthMode('signUp')} disabled={busy}>
+                  {t('loginCreateAccount')}
+                </button>
+
+                <div className="auth-divider"><span>{t('loginOr')}</span></div>
+
+                {/* Phone */}
+                <button type="button" className="phone-sign-in-btn" onClick={() => setPhoneMode('signIn')} disabled={busy}>
+                  {t('loginPhoneSignIn')}
+                </button>
+
+                <div className="auth-divider"><span>{t('loginOr')}</span></div>
+
+                {/* Local */}
+                <button type="button" className="local-sign-in-btn" onClick={onLocalContinue} disabled={busy}>
+                  {t('loginLocal')}
+                </button>
+                <p className="auth-privacy-note">{t('loginPrivacy')}</p>
+                {!skipProfile && <button type="button" className="ghost-btn auth-back-btn" onClick={() => setStep(1)}>{t('back')}</button>}
+              </>
+            )}
           </>
         )}
       </section>
@@ -821,6 +967,57 @@ function App() {
     localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileData))
   }
 
+  // Email/Password orqali hisob ochish
+  const handleEmailSignUp = async (email, password, profileData) => {
+    setSignInBusy(true)
+    setAuthState((previous) => ({ ...previous, error: '' }))
+    try {
+      await createUserWithEmail(email, password)
+      // Profilni saqlash onAuthStateChanged orqali avtomatik bo'ladi
+      if (profileData && (profileData.firstName || profileData.lastName || profileData.bio)) {
+        setPendingProfile(profileData)
+        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileData))
+      }
+    } catch (error) {
+      console.error('Email orqali hisob ochish xatosi:', error)
+      setAuthState((previous) => ({ ...previous, error: getAuthErrorMessage(error) }))
+      throw error
+    } finally {
+      setSignInBusy(false)
+    }
+  }
+
+  // Email/Password orqali kirish
+  const handleEmailSignIn = async (email, password) => {
+    setSignInBusy(true)
+    setAuthState((previous) => ({ ...previous, error: '' }))
+    try {
+      await signInWithEmail(email, password)
+    } catch (error) {
+      console.error('Email orqali kirish xatosi:', error)
+      setAuthState((previous) => ({ ...previous, error: getAuthErrorMessage(error) }))
+      throw error
+    } finally {
+      setSignInBusy(false)
+    }
+  }
+
+  // Telefon raqami orqali SMS yuborish
+  const handlePhoneSignUp = async (phoneNumber, verifier) => {
+    setSignInBusy(true)
+    setAuthState((previous) => ({ ...previous, error: '' }))
+    try {
+      const result = await signInWithPhone(phoneNumber, verifier)
+      return result
+    } catch (error) {
+      console.error('Telefon orqali kirish xatosi:', error)
+      setAuthState((previous) => ({ ...previous, error: getAuthErrorMessage(error) }))
+      throw error
+    } finally {
+      setSignInBusy(false)
+    }
+  }
+
   if (authState.loading) {
     return (
       <main className="auth-shell">
@@ -840,6 +1037,10 @@ function App() {
         onProfileReady={handleProfileReady}
         skipProfile={skipProfile}
         lang={localStorage.getItem('topik-play-lang') || 'uz'}
+        onEmailSignUp={handleEmailSignUp}
+        onEmailSignIn={handleEmailSignIn}
+        onPhoneSignIn={handlePhoneSignUp}
+        onPhoneSignUp={handlePhoneSignUp}
       />
     )
   }

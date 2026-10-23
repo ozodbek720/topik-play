@@ -207,6 +207,32 @@ button:disabled {
   font-weight: 700;
 }
 
+.email-sign-in-btn,
+.email-sign-up-btn,
+.phone-sign-in-btn {
+  width: 100%;
+  min-height: 50px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel);
+  color: var(--text);
+  font-weight: 700;
+  transition: all 0.3s ease;
+}
+
+.email-sign-in-btn:hover,
+.email-sign-up-btn:hover,
+.phone-sign-in-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.email-sign-up-btn {
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  color: var(--bg);
+  border-color: transparent;
+}
+
 .auth-divider {
   display: flex;
   align-items: center;

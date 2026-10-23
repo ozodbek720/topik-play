@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth'
+import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth'
 import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, getFirestore, onSnapshot, orderBy, query, serverTimestamp, setDoc, Timestamp, where } from 'firebase/firestore'
 
 const firebaseConfig = {
@@ -23,6 +23,21 @@ export const signInWithGooglePopup = () => signInWithPopup(auth, googleProvider)
 export const signInWithGoogleRedirect = () => signInWithRedirect(auth, googleProvider)
 export const getRedirectResultAuth = () => getRedirectResult(auth)
 export const signOutUser = () => signOut(auth)
+
+// --- Email/Parol orqali hisob ochish va kirish ---
+
+export const createUserWithEmail = (email, password) => createUserWithEmailAndPassword(auth, email, password)
+export const signInWithEmail = (email, password) => signInWithEmailAndPassword(auth, email, password)
+
+// --- Telefon raqami orqali kirish ---
+
+export const RecaptchaVerifierClass = RecaptchaVerifier
+
+export function setupRecaptcha(auth, container, size) {
+  return new RecaptchaVerifier(auth, container, { size: size || 'invisible' })
+}
+
+export const signInWithPhone = (phoneNumber, appVerifier) => signInWithPhoneNumber(auth, phoneNumber, appVerifier)
 
 export async function loadAccountData(uid) {
   const accountDocument = await getDoc(doc(db, 'users', uid, 'appData', 'learning'))
