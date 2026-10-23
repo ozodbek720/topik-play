@@ -2605,96 +2605,103 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
             </div>
           </section>
 
-          {/* Settings in Profile - Collapsible */}
+          {/* Settings Modal - Liquid Glass Popup */}
           {showSettings && (
-          <section className="profile-settings-glass">
-            <h3 className="profile-settings-title">Sozlamalar</h3>
+            <>
+              <div className="settings-modal-overlay" onClick={() => setShowSettings(false)} />
+              <div className="settings-modal">
+                <div className="settings-modal-header">
+                  <h3>⚙️ Sozlamalar</h3>
+                  <button className="settings-modal-close" onClick={() => setShowSettings(false)}>✕</button>
+                </div>
+                <div className="settings-modal-body">
+                  {/* Account */}
+                  <div className="profile-settings-section">
+                    <h4>Akkaunt</h4>
+                    <p className="settings-description">
+                      {user
+                        ? `Google: ${user.displayName || user.email}`
+                        : 'Qurilma xotirasida saqlanadi.'}
+                    </p>
+                    <div className="setting-action-row">
+                      {user
+                        ? <button type="button" className="setting-action-btn" onClick={() => signOutUser().catch((e) => console.error('Chiqish xatosi:', e))}>Chiqish</button>
+                        : <button type="button" className="setting-action-btn" onClick={onChooseLoginMode}>Kirish usulini o'zgartirish</button>}
+                    </div>
+                  </div>
 
-            {/* Account */}
-            <div className="profile-settings-section">
-              <h4>Akkaunt</h4>
-              <p className="settings-description">
-                {user
-                  ? `Google: ${user.displayName || user.email}`
-                  : 'Qurilma xotirasida saqlanadi.'}
-              </p>
-              <div className="setting-action-row">
-                {user
-                  ? <button type="button" className="setting-action-btn" onClick={() => signOutUser().catch((e) => console.error('Chiqish xatosi:', e))}>Chiqish</button>
-                  : <button type="button" className="setting-action-btn" onClick={onChooseLoginMode}>Kirish usulini o'zgartirish</button>}
+                  {/* Appearance */}
+                  <div className="profile-settings-section">
+                    <h4>Ko'rinish</h4>
+                    <div className="setting-action-row">
+                      <button type="button" className="setting-action-btn" onClick={() => setColorMode((m) => m === 'night' ? 'day' : 'night')}>
+                        <span>{colorMode === 'night' ? '☀️' : '🌙'}</span>
+                        {colorMode === 'night' ? 'Kunduzgi' : 'Tungi'}
+                      </button>
+                    </div>
+                    <div className="theme-options" role="group" aria-label="Rangni tanlang">
+                      {themes.map((option) => (
+                        <button key={option.id} type="button" className={`theme-option ${selectedTheme === option.id ? 'active' : ''}`} onClick={() => setSelectedTheme(option.id)}>
+                          <span className="theme-swatches" aria-hidden="true">
+                            <span style={{ backgroundColor: option.primary }} />
+                            <span style={{ backgroundColor: option.strong }} />
+                            <span style={{ backgroundColor: option.accent }} />
+                          </span>
+                          <span>{option.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Voice */}
+                  <div className="profile-settings-section">
+                    <h4>Ovoz</h4>
+                    <label className="setting-control setting-toggle">
+                      <span>Koreyscha talaffuz</span>
+                      <input type="checkbox" checked={settings.speechEnabled} onChange={(e) => {
+                        if (!e.target.checked && 'speechSynthesis' in window) window.speechSynthesis.cancel()
+                        setSettings((p) => ({ ...p, speechEnabled: e.target.checked }))
+                      }} />
+                    </label>
+                    <label className="setting-control" htmlFor="speech-rate-profile">
+                      <span>Tezlik</span>
+                      <span className="setting-value">{settings.speechRate}x</span>
+                      <input id="speech-rate-profile" type="range" min="0.6" max="1.2" step="0.05" value={settings.speechRate} disabled={!settings.speechEnabled} onChange={(e) => setSettings((p) => ({ ...p, speechRate: Number(e.target.value) }))} />
+                    </label>
+                  </div>
+
+                  {/* Learning */}
+                  <div className="profile-settings-section">
+                    <h4>O'rganish</h4>
+                    <label className="setting-control setting-select">
+                      <span>Matn kattaligi</span>
+                      <select value={settings.textSize} onChange={(e) => setSettings((p) => ({ ...p, textSize: e.target.value }))}>
+                        <option value="small">Kichik</option>
+                        <option value="medium">O'rtacha</option>
+                        <option value="large">Katta</option>
+                      </select>
+                    </label>
+                    <label className="setting-control setting-select">
+                      <span>Kunlik maqsad</span>
+                      <select value={settings.dailyGoal} onChange={(e) => setSettings((p) => ({ ...p, dailyGoal: Number(e.target.value) }))}>
+                        {[5, 10, 15, 20, 30].map((g) => <option key={g} value={g}>{g} ta so'z</option>)}
+                      </select>
+                    </label>
+                  </div>
+
+                  {/* Author */}
+                  <div className="profile-settings-section author-card">
+                    <h4>Muallif</h4>
+                    <p className="author-name">Ozodbek Nabiqo'ziyev</p>
+                    <p className="settings-description" style={{marginBottom:'10px',fontSize:'0.82rem'}}>Xato, taklif yoki talab bo'lsa, aloqaga chiqing!</p>
+                    <div className="contact-links">
+                      <a href="https://t.me/ozodbek_dc" target="_blank" rel="noreferrer">Telegram</a>
+                      <a href="https://www.instagram.com/ozodbek_dc/" target="_blank" rel="noreferrer">Instagram</a>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-
-            {/* Appearance */}
-            <div className="profile-settings-section">
-              <h4>Ko'rinish</h4>
-              <div className="setting-action-row">
-                <button type="button" className="setting-action-btn" onClick={() => setColorMode((m) => m === 'night' ? 'day' : 'night')}>
-                  <span>{colorMode === 'night' ? '☀️' : '🌙'}</span>
-                  {colorMode === 'night' ? 'Kunduzgi' : 'Tungi'}
-                </button>
-              </div>
-              <div className="theme-options" role="group" aria-label="Rangni tanlang">
-                {themes.map((option) => (
-                  <button key={option.id} type="button" className={`theme-option ${selectedTheme === option.id ? 'active' : ''}`} onClick={() => setSelectedTheme(option.id)}>
-                    <span className="theme-swatches" aria-hidden="true">
-                      <span style={{ backgroundColor: option.primary }} />
-                      <span style={{ backgroundColor: option.strong }} />
-                      <span style={{ backgroundColor: option.accent }} />
-                    </span>
-                    <span>{option.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Voice */}
-            <div className="profile-settings-section">
-              <h4>Ovoz</h4>
-              <label className="setting-control setting-toggle">
-                <span>Koreyscha talaffuz</span>
-                <input type="checkbox" checked={settings.speechEnabled} onChange={(e) => {
-                  if (!e.target.checked && 'speechSynthesis' in window) window.speechSynthesis.cancel()
-                  setSettings((p) => ({ ...p, speechEnabled: e.target.checked }))
-                }} />
-              </label>
-              <label className="setting-control" htmlFor="speech-rate-profile">
-                <span>Tezlik</span>
-                <span className="setting-value">{settings.speechRate}x</span>
-                <input id="speech-rate-profile" type="range" min="0.6" max="1.2" step="0.05" value={settings.speechRate} disabled={!settings.speechEnabled} onChange={(e) => setSettings((p) => ({ ...p, speechRate: Number(e.target.value) }))} />
-              </label>
-            </div>
-
-            {/* Learning */}
-            <div className="profile-settings-section">
-              <h4>O'rganish</h4>
-              <label className="setting-control setting-select">
-                <span>Matn kattaligi</span>
-                <select value={settings.textSize} onChange={(e) => setSettings((p) => ({ ...p, textSize: e.target.value }))}>
-                  <option value="small">Kichik</option>
-                  <option value="medium">O'rtacha</option>
-                  <option value="large">Katta</option>
-                </select>
-              </label>
-              <label className="setting-control setting-select">
-                <span>Kunlik maqsad</span>
-                <select value={settings.dailyGoal} onChange={(e) => setSettings((p) => ({ ...p, dailyGoal: Number(e.target.value) }))}>
-                  {[5, 10, 15, 20, 30].map((g) => <option key={g} value={g}>{g} ta so'z</option>)}
-                </select>
-              </label>
-            </div>
-
-            {/* Author */}
-            <div className="profile-settings-section author-card">
-              <h4>Muallif</h4>
-              <p className="author-name">Ozodbek Nabiqo'ziyev</p>
-              <p className="settings-description" style={{marginBottom:'10px',fontSize:'0.82rem'}}>Xato, taklif yoki talab bo'lsa, aloqaga chiqing!</p>
-              <div className="contact-links">
-                <a href="https://t.me/ozodbek_dc" target="_blank" rel="noreferrer">Telegram</a>
-                <a href="https://www.instagram.com/ozodbek_dc/" target="_blank" rel="noreferrer">Instagram</a>
-              </div>
-            </div>
-          </section>
+            </>
           )}
         </main>
       )}
@@ -2856,20 +2863,20 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                   <span className="ai-text-logo-large">AI</span>
                 </div>
                 <h3>Salom! Men Asiye AI ✨</h3>
-                <p>Koreys tilini o'rganish bo'yicha aqlli yordamchiman. Sizga qanday yordam bera olaman?</p>
+                <p>Koreys tilini o'rganish bo'yicha aqlli yordamchiman.</p>
                 <div className="ai-welcome-suggestions">
                   <button className="ai-suggestion-btn" onClick={() => {
                     setAiInput('Koreys tilini qanday o\'rganish kerak?')
-                  }}>📚 Koreys tilini qanday o'rganish kerak?</button>
+                  }}>📚 Qanday o'rganish?</button>
                   <button className="ai-suggestion-btn" onClick={() => {
                     setAiInput('TOPIK imtihoni haqida ma\'lumot ber')
-                  }}>📋 TOPIK imtihoni haqida</button>
+                  }}>📋 TOPIK haqida</button>
                   <button className="ai-suggestion-btn" onClick={() => {
                     setAiInput('안녕하세요 nima degani?')
-                  }}>📖 "안녕하세요" nima degani?</button>
+                  }}>📖 Tarjima</button>
                   <button className="ai-suggestion-btn" onClick={() => {
                     setAiInput('test savoli ber')
-                  }}>🧠 Test savoli ber</button>
+                  }}>🧠 Test</button>
                 </div>
               </div>
             ) : (
@@ -2959,7 +2966,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
             <input
               className="ai-input"
               type="text"
-              placeholder="Asiye AI ga savol bering..."
+              placeholder="Savol bering..."
               value={aiInput}
               onChange={(e) => setAiInput(e.target.value)}
               onKeyDown={(e) => {
@@ -3267,7 +3274,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
           onClick={() => setMainSection('ai')}
           aria-pressed={mainSection === 'ai'}
         >
-          <span aria-hidden="true">🌸</span>
+          <span className="nav-ai-icon">AI</span>
           <span>Asiye</span>
         </button>
         <button
