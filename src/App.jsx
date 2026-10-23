@@ -8,7 +8,13 @@ import githubResources from './githubResources.js'
 import libraryBooks from './libraryBooks.js'
 import grammarPoints from './grammarPoints.js'
 import { t as translate } from './translations.js'
+import * as pdfjsLib from 'pdfjs-dist'
 import './App.css'
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.mjs',
+  import.meta.url,
+).toString()
 
 const MAX_HEARTS = 5
 const HEART_REFILL_INTERVAL = 12 * 60 * 60 * 1000
@@ -1174,6 +1180,15 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [libraryCategory, setLibraryCategory] = useState('Hammasi')
   const [selectedBook, setSelectedBook] = useState(null)
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false)
+  const [pdfDoc, setPdfDoc] = useState(null)
+  const [pdfPage, setPdfPage] = useState(1)
+  const [pdfTotalPages, setPdfTotalPages] = useState(0)
+  const [pdfZoom, setPdfZoom] = useState(1.0)
+  const [pdfLoading, setPdfLoading] = useState(false)
+  const [pdfAnalyzing, setPdfAnalyzing] = useState(false)
+  const [pdfAnalysisResult, setPdfAnalysisResult] = useState('')
+  const [pdfShowAnalysis, setPdfShowAnalysis] = useState(false)
+  const pdfCanvasRef = useRef(null)
   const [githubSearch, setGithubSearch] = useState('')
   const [githubCategory, setGithubCategory] = useState('Hammasi')
   const [learningProgress, setLearningProgress] = useState(loadLearningProgress)
@@ -1482,6 +1497,103 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       .includes(query)
     return matchesLevel && matchesSearch
   })
+
+  // PDF Viewer functions
+  const loadPdfDocument = async (url) => {
+    setPdfLoading(true)
+    setPdfPage(1)
+    setPdfZoom(1.0)
+    setPdfShowAnalysis(false)
+    setPdfAnalysisResult('')
+    try {
+      const loadingTask = pdfjsLib.getDocument(url)
+      const pdf = await loadingTask.promise
+      setPdfDoc(pdf)
+      setPdfTotalPages(pdf.numPages)
+      renderPdfPage(pdf, 1, 1.0)
+    } catch (err) {
+      console.error('PDF yuklash xatosi:', err)
+    } finally {
+      setPdfLoading(false)
+    }
+  }
+
+  const renderPdfPage = async (pdf, pageNum, zoom) => {
+    if (!pdf || !pdfCanvasRef.current) return
+    try {
+      const page = await pdf.getPage(pageNum)
+      const canvas = pdfCanvasRef.current
+      const context = canvas.getContext('2d')
+      const viewport = page.getViewport({ scale: zoom * 1.5 })
+      canvas.height = viewport.height
+      canvas.width = viewport.width
+      await page.render({ canvasContext: context, viewport: viewport }).promise
+    } catch (err) {
+      console.error('PDF sahifa render xatosi:', err)
+    }
+  }
+
+  useEffect(() => {
+    if (pdfDoc && pdfViewerOpen) {
+      renderPdfPage(pdfDoc, pdfPage, pdfZoom)
+    }
+  }, [pdfDoc, pdfPage, pdfZoom, pdfViewerOpen])
+
+  const handleOpenPdf = (book) => {
+    setSelectedBook(book)
+    setPdfViewerOpen(true)
+    if (book.pdfUrl && book.pdfUrl !== '#') {
+      loadPdfDocument(book.pdfUrl)
+    }
+  }
+
+  const handleClosePdf = () => {
+    setPdfViewerOpen(false)
+    setPdfDoc(null)
+    setPdfShowAnalysis(false)
+    setPdfAnalysisResult('')
+  }
+
+  const handlePdfPrevPage = () => {
+    if (pdfPage > 1) setPdfPage(p => p - 1)
+  }
+
+  const handlePdfNextPage = () => {
+    if (pdfPage < pdfTotalPages) setPdfPage(p => p + 1)
+  }
+
+  const handlePdfZoomIn = () => {
+    setPdfZoom(z => Math.min(z + 0.25, 3.0))
+  }
+
+  const handlePdfZoomOut = () => {
+    setPdfZoom(z => Math.max(z - 0.25, 0.5))
+  }
+
+  const handleAnalyzePdf = async () => {
+    if (!pdfDoc) return
+    setPdfAnalyzing(true)
+    setPdfShowAnalysis(true)
+    try {
+      let fullText = ''
+      const maxPages = Math.min(pdfTotalPages, 10)
+      for (let i = 1; i <= maxPages; i++) {
+        const page = await pdfDoc.getPage(i)
+        const textContent = await page.getTextContent()
+        const pageText = textContent.items.map(item => item.str).join(' ')
+        fullText += pageText + '\n'
+      }
+      // AI tahlil qilish
+      const prompt = `Bu koreys tilini o'rganish kitobidan matn. Iltimos, o'zbek tilida tahlil qiling:\n\n${fullText.substring(0, 4000)}\n\nTahlil: asosiy mavzu, yangi so'zlar, grammatika qoidalari va qisqacha xulosa.`
+      const response = generateAIResponse(prompt, [])
+      setPdfAnalysisResult(response || 'Tahlil qilishda xatolik yuz berdi.')
+    } catch (err) {
+      console.error('PDF tahlil xatosi:', err)
+      setPdfAnalysisResult('PDF matnini o\'qishda xatolik yuz berdi.')
+    } finally {
+      setPdfAnalyzing(false)
+    }
+  }
 
   useEffect(() => {
     try {
@@ -4335,8 +4447,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                       className="github-item book-item-clickable"
                       onClick={() => {
                         if (book.pdfUrl && book.pdfUrl !== '#') {
-                          setSelectedBook(book)
-                          setPdfViewerOpen(true)
+                          handleOpenPdf(book)
                         }
                       }}
                       style={{ cursor: 'pointer' }}
@@ -4346,8 +4457,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault()
                           if (book.pdfUrl && book.pdfUrl !== '#') {
-                            setSelectedBook(book)
-                            setPdfViewerOpen(true)
+                            handleOpenPdf(book)
                           }
                         }
                       }}
@@ -4592,27 +4702,97 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       </nav>
 
       {pdfViewerOpen && selectedBook && (
-        <div className="pdf-viewer-overlay" onClick={() => setPdfViewerOpen(false)} role="dialog" aria-modal="true" aria-label="PDF ko'rish">
+        <div className="pdf-viewer-overlay" onClick={handleClosePdf} role="dialog" aria-modal="true" aria-label="PDF ko'rish">
           <div className="pdf-viewer-container" onClick={(e) => e.stopPropagation()}>
             <div className="pdf-viewer-header">
               <h3 className="pdf-viewer-title">{selectedBook.icon} {selectedBook.title}</h3>
+              <div className="pdf-viewer-actions">
+                <button
+                  type="button"
+                  className="pdf-viewer-action-btn"
+                  onClick={handleAnalyzePdf}
+                  disabled={pdfAnalyzing}
+                  title="AI bilan tahlil qilish"
+                >
+                  {pdfAnalyzing ? '⏳' : '🤖'} AI
+                </button>
+                <button
+                  type="button"
+                  className="pdf-viewer-close"
+                  onClick={handleClosePdf}
+                  aria-label="Yopish"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {pdfShowAnalysis && pdfAnalysisResult && (
+              <div className="pdf-analysis-panel">
+                <div className="pdf-analysis-header">
+                  <strong>🤖 AI Tahlil</strong>
+                  <button type="button" className="ghost-btn" onClick={() => setPdfShowAnalysis(false)}>✕</button>
+                </div>
+                <div className="pdf-analysis-content">
+                  {pdfAnalyzing ? 'Tahlil qilinmoqda...' : pdfAnalysisResult}
+                </div>
+              </div>
+            )}
+
+            <div className="pdf-viewer-body">
+              {pdfLoading && (
+                <div className="pdf-loading">
+                  <div className="pdf-spinner"></div>
+                  <p>PDF yuklanmoqda...</p>
+                </div>
+              )}
+              <canvas
+                ref={pdfCanvasRef}
+                className="pdf-viewer-canvas"
+                style={{ display: pdfLoading ? 'none' : 'block' }}
+              />
+            </div>
+
+            <div className="pdf-viewer-footer">
               <button
                 type="button"
-                className="pdf-viewer-close"
-                onClick={() => setPdfViewerOpen(false)}
-                aria-label="Yopish"
+                className="pdf-nav-btn"
+                onClick={handlePdfZoomOut}
+                disabled={pdfZoom <= 0.5}
+                title="Kichiklashtirish"
               >
-                ✕
+                🔍−
               </button>
-            </div>
-            <div className="pdf-viewer-body">
-              <iframe
-                src={selectedBook.pdfUrl}
-                title={selectedBook.title}
-                className="pdf-viewer-iframe"
-                frameBorder="0"
-                scrolling="auto"
-              />
+              <button
+                type="button"
+                className="pdf-nav-btn"
+                onClick={handlePdfPrevPage}
+                disabled={pdfPage <= 1}
+                title="Oldingi sahifa"
+              >
+                ◀
+              </button>
+              <span className="pdf-page-info">
+                {pdfPage} / {pdfTotalPages} ({Math.round(pdfZoom * 100)}%)
+              </span>
+              <button
+                type="button"
+                className="pdf-nav-btn"
+                onClick={handlePdfNextPage}
+                disabled={pdfPage >= pdfTotalPages}
+                title="Keyingi sahifa"
+              >
+                ▶
+              </button>
+              <button
+                type="button"
+                className="pdf-nav-btn"
+                onClick={handlePdfZoomIn}
+                disabled={pdfZoom >= 3.0}
+                title="Kattalashtirish"
+              >
+                🔍+
+              </button>
             </div>
           </div>
         </div>
