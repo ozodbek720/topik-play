@@ -4,6 +4,7 @@ import advancedWords from './advancedWords.js'
 import topik2Lugat from './topik2Lugat.js'
 import { addFriend, getAllProfiles, getRedirectResultAuth, loadAccountData, loadProfile, listenToFriends, listenToMessages, listenToProfiles, observeAuth, removeFriend, saveAccountData, saveProfile, sendMessage, signInWithGooglePopup, signInWithGoogleRedirect, signOutUser } from './firebase.js'
 import grammarPoints from './grammarPoints.js'
+import { t as translate } from './translations.js'
 import './App.css'
 
 const MAX_HEARTS = 5
@@ -692,7 +693,7 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
               Qurilmada davom etish
             </button>
             <p className="auth-privacy-note">Qurilmada saqlangan ma'lumotlar boshqa qurilmalarda ochilmaydi.</p>
-            {!skipProfile && <button type="button" className="ghost-btn auth-back-btn" onClick={() => setStep(1)}>← Orqaga</button>}
+            {!skipProfile && <button type="button" className="ghost-btn auth-back-btn" onClick={() => setStep(1)}>{t('back')}</button>}
           </>
         )}
       </section>
@@ -905,6 +906,16 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [aiInput, setAiInput] = useState('')
   const [aiTyping, setAiTyping] = useState(false)
   const aiEndRef = useRef(null)
+  // Language state
+  const [appLang, setAppLang] = useState(() => {
+    try {
+      return localStorage.getItem('topik-play-lang') || 'uz'
+    } catch {
+      return 'uz'
+    }
+  })
+  const lang = appLang
+  const t = (key) => translate(key, lang)
   const localDataRef = useRef({
     words,
     customGrammar,
@@ -2486,13 +2497,6 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
       {mainSection === 'profile' && (
         <main className="panel profile-panel">
-          {/* Profile Header - TOPIK Play Brand */}
-          <div className="profile-brand-header">
-            <img className="profile-brand-logo" src="/topik-play-logo.svg" alt="Topik Play" />
-            <button className="profile-settings-toggle" onClick={() => setShowSettings((s) => !s)} aria-label="Sozlamalar">
-              ⚙️
-            </button>
-          </div>
           {/* Profile Header - Instagram Style */}
           <section className="profile-header-glass">
             <button className="profile-settings-toggle" onClick={() => setShowSettings((s) => !s)} aria-label="Sozlamalar">
@@ -2560,22 +2564,22 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
             <div className="profile-stats">
               <div className="profile-stat-item">
                 <span className="profile-stat-value">{words.length}</span>
-                <span className="profile-stat-label">So'zlar</span>
+                <span className="profile-stat-label">{t('profileWords')}</span>
               </div>
               <div className="profile-stat-item">
                 <span className="profile-stat-value">{gameState?.streak || 0}</span>
-                <span className="profile-stat-label">Kunlar 🔥</span>
+                <span className="profile-stat-label">{t('profileDays')}</span>
               </div>
               <div className="profile-stat-item">
                 <span className="profile-stat-value">{gameState?.hearts ?? MAX_HEARTS}</span>
-                <span className="profile-stat-label">Yuraklar ❤️</span>
+                <span className="profile-stat-label">{t('profileHearts')}</span>
               </div>
             </div>
 
             {/* Progress Bar */}
             <div className="profile-progress">
               <div className="profile-progress-label">
-                <span>O'zlashtirilgan so'zlar</span>
+                <span>{t('profileLearned')}</span>
                 <span>{todayCompleted}/{settings.dailyGoal}</span>
               </div>
               <div className="profile-progress-bar">
@@ -2618,32 +2622,32 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
               <div className="settings-modal-overlay" onClick={() => setShowSettings(false)} />
               <div className="settings-modal">
                 <div className="settings-modal-header">
-                  <h3>⚙️ Sozlamalar</h3>
+                  <h3>{t('settingsTitle')}</h3>
                   <button className="settings-modal-close" onClick={() => setShowSettings(false)}>✕</button>
                 </div>
                 <div className="settings-modal-body">
                   {/* Account */}
                   <div className="profile-settings-section">
-                    <h4>Akkaunt</h4>
+                    <h4>{t('settingsAccount')}</h4>
                     <p className="settings-description">
                       {user
                         ? `Google: ${user.displayName || user.email}`
-                        : 'Qurilma xotirasida saqlanadi.'}
+                        : t('settingsLocal')}
                     </p>
                     <div className="setting-action-row">
                       {user
-                        ? <button type="button" className="setting-action-btn" onClick={() => signOutUser().catch((e) => console.error('Chiqish xatosi:', e))}>Chiqish</button>
-                        : <button type="button" className="setting-action-btn" onClick={onChooseLoginMode}>Kirish usulini o'zgartirish</button>}
+                        ? <button type="button" className="setting-action-btn" onClick={() => signOutUser().catch((e) => console.error('Chiqish xatosi:', e))}>{t('settingsSignOut')}</button>
+                        : <button type="button" className="setting-action-btn" onClick={onChooseLoginMode}>{t('settingsChangeLogin')}</button>}
                     </div>
                   </div>
 
                   {/* Appearance */}
                   <div className="profile-settings-section">
-                    <h4>Ko'rinish</h4>
+                    <h4>{t('settingsAppearance')}</h4>
                     <div className="setting-action-row">
                       <button type="button" className="setting-action-btn" onClick={() => setColorMode((m) => m === 'night' ? 'day' : 'night')}>
                         <span>{colorMode === 'night' ? '☀️' : '🌙'}</span>
-                        {colorMode === 'night' ? 'Kunduzgi' : 'Tungi'}
+                        {colorMode === 'night' ? t('settingsDayMode') : t('settingsNightMode')}
                       </button>
                     </div>
                     <div className="theme-options" role="group" aria-label="Rangni tanlang">
@@ -2662,45 +2666,61 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
                   {/* Voice */}
                   <div className="profile-settings-section">
-                    <h4>Ovoz</h4>
+                    <h4>{t('settingsVoice')}</h4>
                     <label className="setting-control setting-toggle">
-                      <span>Koreyscha talaffuz</span>
+                      <span>{t('settingsPronunciation')}</span>
                       <input type="checkbox" checked={settings.speechEnabled} onChange={(e) => {
                         if (!e.target.checked && 'speechSynthesis' in window) window.speechSynthesis.cancel()
                         setSettings((p) => ({ ...p, speechEnabled: e.target.checked }))
                       }} />
                     </label>
                     <label className="setting-control" htmlFor="speech-rate-profile">
-                      <span>Tezlik</span>
+                      <span>{t('settingsSpeed')}</span>
                       <span className="setting-value">{settings.speechRate}x</span>
                       <input id="speech-rate-profile" type="range" min="0.6" max="1.2" step="0.05" value={settings.speechRate} disabled={!settings.speechEnabled} onChange={(e) => setSettings((p) => ({ ...p, speechRate: Number(e.target.value) }))} />
                     </label>
                   </div>
 
+                  {/* Language */}
+                  <div className="profile-settings-section">
+                    <h4>{t('settingsLanguage')}</h4>
+                    <div className="setting-action-row">
+                      <button type="button" className={`setting-action-btn ${lang === 'uz' ? 'active' : ''}`} onClick={() => { setAppLang('uz'); localStorage.setItem('topik-play-lang', 'uz'); }}>
+                        {t('settingsLangUz')}
+                      </button>
+                      <button type="button" className={`setting-action-btn ${lang === 'en' ? 'active' : ''}`} onClick={() => { setAppLang('en'); localStorage.setItem('topik-play-lang', 'en'); }}>
+                        {t('settingsLangEn')}
+                      </button>
+                      <button type="button" className={`setting-action-btn ${lang === 'ru' ? 'active' : ''}`} onClick={() => { setAppLang('ru'); localStorage.setItem('topik-play-lang', 'ru'); }}>
+                        {t('settingsLangRu')}
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Learning */}
                   <div className="profile-settings-section">
-                    <h4>O'rganish</h4>
+                    <h4>{t('settingsLearning')}</h4>
                     <label className="setting-control setting-select">
-                      <span>Matn kattaligi</span>
+                      <span>{t('settingsTextSize')}</span>
                       <select value={settings.textSize} onChange={(e) => setSettings((p) => ({ ...p, textSize: e.target.value }))}>
-                        <option value="small">Kichik</option>
-                        <option value="medium">O'rtacha</option>
-                        <option value="large">Katta</option>
+                        <option value="small">{t('settingsTextSmall')}</option>
+                        <option value="medium">{t('settingsTextMedium')}</option>
+                        <option value="large">{t('settingsTextLarge')}</option>
                       </select>
                     </label>
                     <label className="setting-control setting-select">
-                      <span>Kunlik maqsad</span>
+                      <span>{t('settingsDailyGoal')}</span>
                       <select value={settings.dailyGoal} onChange={(e) => setSettings((p) => ({ ...p, dailyGoal: Number(e.target.value) }))}>
-                        {[5, 10, 15, 20, 30].map((g) => <option key={g} value={g}>{g} ta so'z</option>)}
+                        {[5, 10, 15, 20, 30].map((g) => <option key={g} value={g}>{g} {t('settingsWords')}</option>)}
                       </select>
                     </label>
                   </div>
 
                   {/* Author */}
                   <div className="profile-settings-section author-card">
-                    <h4>Muallif</h4>
+                    <h4>{t('settingsAuthor')}</h4>
                     <p className="author-name">Ozodbek Nabiqo'ziyev</p>
-                    <p className="settings-description" style={{marginBottom:'10px',fontSize:'0.82rem'}}>Xato, taklif yoki talab bo'lsa, aloqaga chiqing!</p>
+                    <p className="settings-description" style={{marginBottom:'10px',fontSize:'0.82rem'}}>{t('settingsContact')}</p>
                     <div className="contact-links">
                       <a href="https://t.me/ozodbek_dc" target="_blank" rel="noreferrer">Telegram</a>
                       <a href="https://www.instagram.com/ozodbek_dc/" target="_blank" rel="noreferrer">Instagram</a>
@@ -2783,7 +2803,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
             /* Chat Messages */
             <section className="chat-messages-view">
               <div className="chat-header">
-                <button className="ghost-btn chat-back-btn" onClick={() => setSelectedChatUser(null)}>← Orqaga</button>
+                <button className="ghost-btn chat-back-btn" onClick={() => setSelectedChatUser(null)}>{t('back')}</button>
                 <div className="chat-header-user">
                   <div className="chat-header-avatar">
                     {selectedChatUser.avatar ? <img src={selectedChatUser.avatar} alt="" /> : <span>{(selectedChatUser.firstName || 'U')[0]?.toUpperCase()}</span>}
@@ -2822,7 +2842,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                   <input
                     className="chat-input"
                     type="text"
-                    placeholder="Xabar yozing..."
+                    placeholder={t('chatInput')}
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') handleSendChatMessage() }}
@@ -2839,17 +2859,14 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
       {mainSection === 'ai' && (
         <main className="panel ai-chat-panel">
-          <div className="ai-brand-header">
-            <img className="ai-brand-logo" src="/topik-play-logo.svg" alt="Topik Play" />
-          </div>
           <div className="ai-chat-header">
             <div className="ai-chat-title">
               <div className="ai-avatar">
                 <span className="ai-text-logo">AI</span>
               </div>
               <div>
-                <h2>Asiye AI</h2>
-                <p className="ai-subtitle">Koreys tilini o'rganish bo'yicha yordamchi</p>
+                <h2>{t('aiTitle')}</h2>
+                <p className="ai-subtitle">{t('aiSubtitle')}</p>
               </div>
             </div>
             <button
@@ -2859,7 +2876,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                 setAiMessages([])
                 localStorage.removeItem('topik-play-ai-chat')
               }}
-              title="Chatni tozalash"
+              title={t('aiClear')}
             >
               🗑️
             </button>
@@ -2872,21 +2889,21 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                 <div className="ai-welcome-logo">
                   <span className="ai-text-logo-large">AI</span>
                 </div>
-                <h3>Salom! Men Asiye AI ✨</h3>
-                <p>Koreys tilini o'rganish bo'yicha aqlli yordamchiman.</p>
+                <h3>{t('aiWelcome')}</h3>
+                <p>{t('aiWelcomeDesc')}</p>
                 <div className="ai-welcome-suggestions">
                   <button className="ai-suggestion-btn" onClick={() => {
                     setAiInput('Koreys tilini qanday o\'rganish kerak?')
-                  }}>📚 Qanday o'rganish?</button>
+                  }}>{t('aiSuggestion1')}</button>
                   <button className="ai-suggestion-btn" onClick={() => {
                     setAiInput('TOPIK imtihoni haqida ma\'lumot ber')
-                  }}>📋 TOPIK haqida</button>
+                  }}>{t('aiSuggestion2')}</button>
                   <button className="ai-suggestion-btn" onClick={() => {
                     setAiInput('안녕하세요 nima degani?')
-                  }}>📖 Tarjima</button>
+                  }}>{t('aiSuggestion3')}</button>
                   <button className="ai-suggestion-btn" onClick={() => {
                     setAiInput('test savoli ber')
-                  }}>🧠 Test</button>
+                  }}>{t('aiSuggestion4')}</button>
                 </div>
               </div>
             ) : (
@@ -2930,8 +2947,8 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                         {msg.selectedAnswer !== undefined && (
                           <div className={`ai-test-result ${msg.selectedAnswer === msg.content.correctIndex ? 'ai-test-correct' : 'ai-test-wrong'}`}>
                             {msg.selectedAnswer === msg.content.correctIndex
-                              ? '✅ To\'g\'ri!'
-                              : `❌ Noto\'g\'ri. To\'g\'ri javob: ${msg.content.answers[msg.content.correctIndex]}`}
+                              ? t('aiCorrect')
+                              : `${t('aiWrong')} ${msg.content.answers[msg.content.correctIndex]}`}
                             <p className="ai-test-explanation">{msg.content.explanation}</p>
                           </div>
                         )}
@@ -2964,7 +2981,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                   <div className="ai-typing-dots">
                     <span></span><span></span><span></span>
                   </div>
-                  <span className="ai-typing-text">Asiye yozmoqda</span>
+                  <span className="ai-typing-text">{t('aiTyping')}</span>
                 </div>
               </div>
             )}
@@ -2976,7 +2993,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
             <input
               className="ai-input"
               type="text"
-              placeholder="Savol bering..."
+              placeholder={t('aiInput')}
               value={aiInput}
               onChange={(e) => setAiInput(e.target.value)}
               onKeyDown={(e) => {
@@ -3258,7 +3275,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
           aria-pressed={mainSection === 'topik1'}
         >
           <span aria-hidden="true">📘</span>
-          <span>TOPIK I</span>
+          <span>{t('navTopik1')}</span>
         </button>
         <button
           type="button"
@@ -3267,7 +3284,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
           aria-pressed={mainSection === 'topik2'}
         >
           <span aria-hidden="true">📚</span>
-          <span>TOPIK II</span>
+          <span>{t('navTopik2')}</span>
         </button>
         <button
           type="button"
@@ -3276,7 +3293,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
           aria-pressed={mainSection === 'chat'}
         >
           <span aria-hidden="true">💬</span>
-          <span>Chat</span>
+          <span>{t('navChat')}</span>
         </button>
         <button
           type="button"
@@ -3285,7 +3302,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
           aria-pressed={mainSection === 'ai'}
         >
           <span className="nav-ai-icon">AI</span>
-          <span>Asiye</span>
+          <span>{t('navAi')}</span>
         </button>
         <button
           type="button"
@@ -3294,7 +3311,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
           aria-pressed={mainSection === 'profile'}
         >
           <span aria-hidden="true">👤</span>
-          <span>Profil</span>
+          <span>{t('navProfile')}</span>
         </button>
       </nav>
     </div>

@@ -4848,34 +4848,6 @@ button:disabled {
   }
 }
 
-/* ===== Profile & AI Brand Headers ===== */
-
-.profile-brand-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px 6px;
-  margin-bottom: 4px;
-}
-
-.profile-brand-logo {
-  width: min(60vw, 200px);
-  height: auto;
-}
-
-.ai-brand-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 16px 4px;
-  margin-bottom: 6px;
-}
-
-.ai-brand-logo {
-  width: min(55vw, 180px);
-  height: auto;
-}
-
 /* ===== Navigation AI Icon ===== */
 
 .nav-ai-icon {
