@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react'
-import { generateGeminiResponse } from './aiChat.js'
+import { generateAIResponse, generateGeminiResponse } from './aiChat.js'
 import advancedWords from './advancedWords.js'
 import topik2Lugat from './topik2Lugat.js'
 import topik1CommonWords from './topik1Words.js'
@@ -25,6 +25,7 @@ const CUSTOM_GRAMMAR_STORAGE_KEY = 'topik-play-custom-grammar'
 const MISTAKES_STORAGE_KEY = 'topik-play-mistakes'
 const ACCOUNT_DATA_OWNER_KEY = 'topik-play-account-data-owner'
 const LOCAL_MODE_STORAGE_KEY = 'topik-play-local-mode'
+const SAVED_PASSWORD_KEY = 'topik-play-saved-password'
 const TOPIK_TWO_DAY_ONE_WORDS = [
   { korean: '필요하다', meaning: 'kerak bo‘lmoq' },
   { korean: '방법', meaning: 'usul' },
@@ -1037,6 +1038,8 @@ function App() {
     setAuthState((previous) => ({ ...previous, error: '' }))
     try {
       await createUserWithEmail(email, password)
+      // Parolni saqlash (sozlamalarda ko'rsatish uchun)
+      try { localStorage.setItem(SAVED_PASSWORD_KEY, password) } catch {}
       // Profilni saqlash onAuthStateChanged orqali avtomatik bo'ladi
       if (profileData && (profileData.firstName || profileData.lastName || profileData.bio)) {
         setPendingProfile(profileData)
@@ -1144,6 +1147,8 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [profileEditing, setProfileEditing] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '', bio: '', avatar: '' })
+  const [savedPassword, setSavedPassword] = useState(() => localStorage.getItem(SAVED_PASSWORD_KEY) || '')
+  const [showPassword, setShowPassword] = useState(false)
   // Chat state
   const [chatUsers, setChatUsers] = useState([])
   const [friends, setFriends] = useState([])
@@ -1726,22 +1731,6 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
     if (!text && !imageData && !aiImageBase64) return
     if (aiTyping) return
 
-    // Check if Gemini API key is set
-    if (!geminiApiKey) {
-      const noKeyMsg = {
-        id: Date.now(),
-        role: 'ai',
-        type: 'text',
-        content: '⚠️ Gemini AI ishlashi uchun API kalit kerak.\n\n🔗 API kalit olish: [aistudio.google.com](https://aistudio.google.com) → Get API key (bepul)',
-        timestamp: Date.now()
-      }
-      const userContent = text || '📷 Rasm'
-      setAiMessages(prev => [...prev, { id: Date.now() - 1, role: 'user', content: userContent, image: imageData || aiImageBase64 || null, timestamp: Date.now() - 1 }, noKeyMsg])
-      setAiInput('')
-      handleRemoveAiImage()
-      return
-    }
-
     const userMsg = {
       id: Date.now(),
       role: 'user',
@@ -1754,21 +1743,41 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
     handleRemoveAiImage()
     setAiTyping(true)
 
-    try {
-      const geminiResponse = await generateGeminiResponse(userMsg.content, geminiApiKey, aiMessages, userMsg.image)
-      let aiMsg = null
-      if (geminiResponse) {
-        aiMsg = { id: Date.now() + 1, role: 'ai', ...geminiResponse, timestamp: Date.now() + 1 }
+    // Try Gemini AI first if API key is set
+    if (geminiApiKey && text) {
+      try {
+        const geminiResponse = await generateGeminiResponse(userMsg.content, geminiApiKey, aiMessages, userMsg.image)
+        if (geminiResponse) {
+          const aiMsg = { id: Date.now() + 1, role: 'ai', ...geminiResponse, timestamp: Date.now() + 1 }
+          setAiMessages(prev => [...prev, aiMsg])
+          setAiTyping(false)
+          return
+        }
+      } catch (error) {
+        console.error('Gemini AI error, falling back to offline:', error)
       }
-      setAiMessages(prev => aiMsg ? [...prev, aiMsg] : prev)
-      setAiTyping(false)
+    }
+
+    // Fallback to offline AI
+    try {
+      const offlineResponse = generateAIResponse(text || '', aiMessages)
+      if (offlineResponse) {
+        const delay = 800 + Math.random() * 700
+        setTimeout(() => {
+          const aiMsg = { id: Date.now() + 1, role: 'ai', ...offlineResponse, timestamp: Date.now() + 1 }
+          setAiMessages(prev => [...prev, aiMsg])
+          setAiTyping(false)
+        }, delay)
+      } else {
+        setAiTyping(false)
+      }
     } catch (error) {
-      console.error('Gemini AI error:', error)
+      console.error('Offline AI error:', error)
       const errorMsg = {
         id: Date.now() + 1,
         role: 'ai',
         type: 'text',
-        content: '❌ Gemini AI bilan bog\'lanishda xatolik yuz berdi.\n\nInternet aloqangizni tekshiring.',
+        content: '❌ Xatolik yuz berdi. Qayta urinib ko\'ring.',
         timestamp: Date.now() + 1
       }
       setAiMessages(prev => [...prev, errorMsg])
@@ -3277,6 +3286,28 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                         ? `Google: ${user.displayName || user.email}`
                         : t('settingsLocal')}
                     </p>
+                    {/* Saved Password */}
+                    {savedPassword && (
+                      <div style={{marginTop:'10px',padding:'10px',borderRadius:'12px',background:'rgba(255,255,255,0.05)',backdropFilter:'blur(10px)',border:'1px solid rgba(255,255,255,0.1)'}}>
+                        <p style={{fontSize:'0.78rem',margin:'0 0 6px 0',color:'var(--text-secondary)'}}>🔑 Parolingiz</p>
+                        <div style={{display:'flex',gap:'6px',alignItems:'center'}}>
+                          <input
+                            type={showPassword ? 'text' : 'password'}
+                            value={savedPassword}
+                            readOnly
+                            style={{flex:1,'background':'transparent',border:'none',outline:'none',color:'var(--text-primary)',fontSize:'0.85rem',padding:'4px 0'}}
+                          />
+                          <button
+                            type="button"
+                            className="ghost-btn"
+                            onClick={() => setShowPassword(!showPassword)}
+                            style={{fontSize:'0.85rem',padding:'4px 8px',minWidth:'auto'}}
+                          >
+                            {showPassword ? '🙈' : '👁️'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     <div className="setting-action-row">
                       {user
                         ? <button type="button" className="setting-action-btn" onClick={() => signOutUser().catch((e) => console.error('Chiqish xatosi:', e))}>{t('settingsSignOut')}</button>
