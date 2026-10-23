@@ -785,8 +785,8 @@ Mavzular:
 - Suhbat mashqi
 - Umumiy savollar`
 
-async function generateGeminiResponse(message, apiKey, chatHistory = []) {
-  if (!apiKey || !message || !message.trim()) {
+async function generateGeminiResponse(message, apiKey, chatHistory = [], imageBase64 = null) {
+  if (!apiKey || (!message && !imageBase64)) {
     return null
   }
 
@@ -799,9 +799,23 @@ async function generateGeminiResponse(message, apiKey, chatHistory = []) {
         parts: [{ text: msg.content }]
       }))
 
+    // Build user message parts
+    const userParts = []
+    if (message) {
+      userParts.push({ text: message })
+    }
+    if (imageBase64) {
+      userParts.push({
+        inlineData: {
+          mimeType: 'image/jpeg',
+          data: imageBase64
+        }
+      })
+    }
+
     const contents = [
       ...historyMessages,
-      { role: 'user', parts: [{ text: message }] }
+      { role: 'user', parts: userParts.length > 0 ? userParts : [{ text: message || 'Rasmni tahlil qiling' }] }
     ]
 
     const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
@@ -822,7 +836,7 @@ async function generateGeminiResponse(message, apiKey, chatHistory = []) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
       console.error('Gemini API error:', errorData)
-      return null // Fall back to offline AI
+      throw new Error('Gemini API error')
     }
 
     const data = await response.json()
@@ -835,10 +849,10 @@ async function generateGeminiResponse(message, apiKey, chatHistory = []) {
       }
     }
 
-    return null // Fall back to offline AI
+    throw new Error('No response from Gemini')
   } catch (error) {
     console.error('Gemini AI error:', error)
-    return null // Fall back to offline AI
+    throw error
   }
 }
 

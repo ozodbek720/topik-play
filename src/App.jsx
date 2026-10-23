@@ -903,17 +903,31 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [chatMessages, setChatMessages] = useState([])
   const [chatInput, setChatInput] = useState('')
   const chatEndRef = useRef(null)
-  // AI Chat state
-  const [aiMessages, setAiMessages] = useState(() => {
+  // AI Chat state — multiple chats support
+  const [aiChats, setAiChats] = useState(() => {
     try {
-      const saved = localStorage.getItem('topik-play-ai-chat')
-      return saved ? JSON.parse(saved) : []
-    } catch {
-      return []
-    }
+      const saved = localStorage.getItem('topik-play-ai-chats')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed.length > 0) return parsed
+      }
+    } catch {}
+    // Default: one empty chat
+    return [{ id: Date.now(), title: 'Yangi chat', messages: [], createdAt: Date.now() }]
+  })
+  const [activeChatId, setActiveChatId] = useState(() => {
+    try {
+      const saved = localStorage.getItem('topik-play-ai-chats')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed.length > 0) return parsed[0].id
+      }
+    } catch {}
+    return Date.now()
   })
   const [aiInput, setAiInput] = useState('')
   const [aiTyping, setAiTyping] = useState(false)
+  const [aiShowChatList, setAiShowChatList] = useState(false) // Mobile: show chat list sidebar
   const [geminiApiKey, setGeminiApiKey] = useState(() => {
     try {
       return localStorage.getItem('topik-play-gemini-key') || ''
@@ -921,7 +935,77 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       return ''
     }
   })
+  const [isGeminiKeyVisible, setIsGeminiKeyVisible] = useState(false) // Toggle password visibility
   const aiEndRef = useRef(null)
+
+  // Derived: active chat messages
+  const aiMessages = useMemo(() => {
+    const chat = aiChats.find(c => c.id === activeChatId)
+    return chat ? chat.messages : []
+  }, [aiChats, activeChatId])
+
+  // Save chats to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('topik-play-ai-chats', JSON.stringify(aiChats))
+    } catch {}
+  }, [aiChats])
+
+  // Save active chat ID
+  useEffect(() => {
+    try {
+      localStorage.setItem('topik-play-ai-active-chat', String(activeChatId))
+    } catch {}
+  }, [activeChatId])
+
+  // Create new chat
+  const handleNewAiChat = () => {
+    const newChat = { id: Date.now(), title: 'Yangi chat', messages: [], createdAt: Date.now() }
+    setAiChats(prev => [newChat, ...prev])
+    setActiveChatId(newChat.id)
+    setAiShowChatList(false)
+  }
+
+  // Delete chat
+  const handleDeleteAiChat = (chatId) => {
+    setAiChats(prev => {
+      const filtered = prev.filter(c => c.id !== chatId)
+      if (filtered.length === 0) {
+        // Always keep at least one chat
+        const newChat = { id: Date.now(), title: 'Yangi chat', messages: [], createdAt: Date.now() }
+        setActiveChatId(newChat.id)
+        return [newChat]
+      }
+      if (chatId === activeChatId) {
+        setActiveChatId(filtered[0].id)
+      }
+      return filtered
+    })
+  }
+
+  // Rename chat
+  const handleRenameAiChat = (chatId, newTitle) => {
+    setAiChats(prev => prev.map(c => c.id === chatId ? { ...c, title: newTitle } : c))
+  }
+
+  // Update active chat messages
+  const setAiMessages = (updater) => {
+    setAiChats(prev => prev.map(c => {
+      if (c.id === activeChatId) {
+        const newMessages = typeof updater === 'function' ? updater(c.messages) : updater
+        // Auto-update title from first user message
+        let newTitle = c.title
+        if (newTitle === 'Yangi chat' && newMessages.length > 0) {
+          const firstUserMsg = newMessages.find(m => m.role === 'user')
+          if (firstUserMsg) {
+            newTitle = firstUserMsg.content.substring(0, 30) + (firstUserMsg.content.length > 30 ? '...' : '')
+          }
+        }
+        return { ...c, messages: newMessages, title: newTitle }
+      }
+      return c
+    }))
+  }
   // Language state
   const [appLang, setAppLang] = useState(() => {
     try {
@@ -1355,9 +1439,33 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       .catch((e) => console.error('Send message error:', e))
   }
 
-  // AI Chat handler — Gemini AI only
-  const handleSendAIMessage = async () => {
-    if (!aiInput.trim() || aiTyping) return
+  // AI Chat handler — Gemini AI only, with image support
+  const aiImageInput = useRef(null)
+  const [aiImagePreview, setAiImagePreview] = useState(null)
+  const [aiImageBase64, setAiImageBase64] = useState(null)
+
+  const handleAiImageSelect = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      setAiImagePreview(reader.result)
+      // Extract base64 data (without data: prefix)
+      setAiImageBase64(reader.result.split(',')[1])
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoveAiImage = () => {
+    setAiImagePreview(null)
+    setAiImageBase64(null)
+    if (aiImageInput.current) aiImageInput.current.value = ''
+  }
+
+  const handleSendAIMessage = async (imageData = null) => {
+    const text = aiInput.trim()
+    if (!text && !imageData && !aiImageBase64) return
+    if (aiTyping) return
 
     // Check if Gemini API key is set
     if (!geminiApiKey) {
@@ -1365,48 +1473,47 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         id: Date.now(),
         role: 'ai',
         type: 'text',
-        content: '⚠️ Gemini AI ishlashi uchun API kalit kerak.\n\n📋 Sozlamalardan API kalit qanday kiritish:\n1. 👤 Profil bo\'limiga o\'ting\n2. ⚙️ Sozlamalar tugmasini bosing\n3. "🤖 Gemini AI" bo\'limiga o\'ting\n4. API kalitni kiriting\n\n🔗 API kalit olish: [aistudio.google.com](https://aistudio.google.com) → Get API key (bepul)',
+        content: '⚠️ Gemini AI ishlashi uchun API kalit kerak.\n\n🔗 API kalit olish: [aistudio.google.com](https://aistudio.google.com) → Get API key (bepul)',
         timestamp: Date.now()
       }
-      const newMessages = [...aiMessages, { id: Date.now() - 1, role: 'user', content: aiInput.trim(), timestamp: Date.now() - 1 }, noKeyMsg]
-      setAiMessages(newMessages)
+      const userContent = text || '📷 Rasm'
+      setAiMessages(prev => [...prev, { id: Date.now() - 1, role: 'user', content: userContent, image: imageData || aiImageBase64 || null, timestamp: Date.now() - 1 }, noKeyMsg])
       setAiInput('')
-      try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(newMessages.slice(-100))) } catch {}
+      handleRemoveAiImage()
       return
     }
 
-    const userMsg = { id: Date.now(), role: 'user', content: aiInput.trim(), timestamp: Date.now() }
-    const currentMessages = [...aiMessages, userMsg]
-    setAiMessages(currentMessages)
+    const userMsg = {
+      id: Date.now(),
+      role: 'user',
+      content: text || '📷 Rasm',
+      image: imageData || aiImageBase64 || null,
+      timestamp: Date.now()
+    }
+    setAiMessages(prev => [...prev, userMsg])
     setAiInput('')
+    handleRemoveAiImage()
     setAiTyping(true)
 
-    // Save user message immediately
-    try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(currentMessages.slice(-100))) } catch {}
-
     try {
-      const geminiResponse = await generateGeminiResponse(userMsg.content, geminiApiKey, aiMessages)
+      const geminiResponse = await generateGeminiResponse(userMsg.content, geminiApiKey, aiMessages, userMsg.image)
       let aiMsg = null
       if (geminiResponse) {
         aiMsg = { id: Date.now() + 1, role: 'ai', ...geminiResponse, timestamp: Date.now() + 1 }
       }
-      const newMessages = aiMsg ? [...currentMessages, aiMsg] : currentMessages
-      setAiMessages(newMessages)
+      setAiMessages(prev => aiMsg ? [...prev, aiMsg] : prev)
       setAiTyping(false)
-      try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(newMessages.slice(-100))) } catch {}
     } catch (error) {
       console.error('Gemini AI error:', error)
       const errorMsg = {
         id: Date.now() + 1,
         role: 'ai',
         type: 'text',
-        content: '❌ Gemini AI bilan bog\'lanishda xatolik yuz berdi.\n\nInternet aloqangizni tekshiring yoki API kalitni qayta kiriting.\n📋 Sozlamalar → 🤖 Gemini AI',
+        content: '❌ Gemini AI bilan bog\'lanishda xatolik yuz berdi.\n\nInternet aloqangizni tekshiring.',
         timestamp: Date.now() + 1
       }
-      const newMessages = [...currentMessages, errorMsg]
-      setAiMessages(newMessages)
+      setAiMessages(prev => [...prev, errorMsg])
       setAiTyping(false)
-      try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(newMessages.slice(-100))) } catch {}
     }
   }
 
@@ -2972,36 +3079,46 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                     </div>
                   </div>
 
-                  {/* Gemini AI API Key */}
-                  <div className="profile-settings-section">
-                    <h4>{t('settingsGemini')}</h4>
-                    <p className="settings-description" style={{fontSize:'0.78rem',marginBottom:'10px'}}>{t('settingsGeminiDesc')}</p>
-                    <div className="gemini-key-input-row">
-                      <input
-                        type="password"
-                        className="gemini-key-input"
-                        placeholder={t('settingsGeminiPlaceholder')}
-                        value={geminiApiKey}
-                        onChange={(e) => setGeminiApiKey(e.target.value)}
-                        onBlur={() => { try { localStorage.setItem('topik-play-gemini-key', geminiApiKey) } catch {} }}
-                      />
-                      {geminiApiKey && (
+                  {/* Gemini AI API Key — only for admin (ozodbek) */}
+                  {user?.email?.includes('ozodbek') && (
+                    <div className="profile-settings-section">
+                      <h4>{t('settingsGemini')}</h4>
+                      <p className="settings-description" style={{fontSize:'0.78rem',marginBottom:'10px'}}>{t('settingsGeminiDesc')}</p>
+                      <div className="gemini-key-input-row">
+                        <input
+                          type={isGeminiKeyVisible ? 'text' : 'password'}
+                          className="gemini-key-input"
+                          placeholder={t('settingsGeminiPlaceholder')}
+                          value={geminiApiKey}
+                          onChange={(e) => setGeminiApiKey(e.target.value)}
+                          onBlur={() => { try { localStorage.setItem('topik-play-gemini-key', geminiApiKey) } catch {} }}
+                        />
                         <button
                           type="button"
                           className="ghost-btn"
-                          onClick={() => { setGeminiApiKey(''); try { localStorage.removeItem('topik-play-gemini-key') } catch {} }}
-                          style={{fontSize:'0.75rem',color:'var(--accent)'}}
+                          onClick={() => setIsGeminiKeyVisible(!isGeminiKeyVisible)}
+                          style={{fontSize:'0.75rem', padding: '4px 8px'}}
                         >
-                          {t('close')}
+                          {isGeminiKeyVisible ? '🙈' : '👁️'}
                         </button>
+                        {geminiApiKey && (
+                          <button
+                            type="button"
+                            className="ghost-btn"
+                            onClick={() => { setGeminiApiKey(''); try { localStorage.removeItem('topik-play-gemini-key') } catch {} }}
+                            style={{fontSize:'0.75rem',color:'var(--accent)'}}
+                          >
+                            {t('close')}
+                          </button>
+                        )}
+                      </div>
+                      {geminiApiKey && (
+                        <p className="settings-description" style={{fontSize:'0.72rem',color:'#4caf50',marginTop:'6px'}}>
+                          ✅ {t('settingsGeminiActive')}
+                        </p>
                       )}
                     </div>
-                    {geminiApiKey && (
-                      <p className="settings-description" style={{fontSize:'0.72rem',color:'#4caf50',marginTop:'6px'}}>
-                        ✅ {t('settingsGeminiActive')}
-                      </p>
-                    )}
-                  </div>
+                  )}
 
                   {/* Learning */}
                   <div className="profile-settings-section">
@@ -3165,156 +3282,222 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
       {mainSection === 'ai' && (
         <main className="panel ai-chat-panel">
-          <div className="ai-chat-header">
-            <div className="ai-chat-title">
-              <div className="ai-avatar">
-                <span className="ai-text-logo">AI</span>
-              </div>
-              <div>
-                <h2>{t('aiTitle')}</h2>
-                <p className="ai-subtitle">{t('aiSubtitle')}</p>
-              </div>
+          {/* Chat List Sidebar */}
+          <aside className={`ai-chat-sidebar ${aiShowChatList ? 'ai-chat-sidebar-open' : ''}`}>
+            <div className="ai-sidebar-header">
+              <h3>💬 Chatlar</h3>
+              <button type="button" className="ai-new-chat-btn" onClick={handleNewAiChat} title="Yangi chat">
+                ➕ Yangi chat
+              </button>
             </div>
-            <button
-              type="button"
-              className="ghost-btn ai-clear-btn"
-              onClick={() => {
-                setAiMessages([])
-                localStorage.removeItem('topik-play-ai-chat')
-              }}
-              title={t('aiClear')}
-            >
-              🗑️
-            </button>
-          </div>
-
-          {/* Messages */}
-          <div className="ai-messages-container">
-            {aiMessages.length === 0 ? (
-              <div className="ai-welcome">
-                <div className="ai-welcome-logo">
-                  <span className="ai-text-logo-large">AI</span>
-                </div>
-                <h3>{t('aiWelcome')}</h3>
-                <p>{t('aiWelcomeDesc')}</p>
-                <div className="ai-welcome-suggestions">
-                  <button className="ai-suggestion-btn" onClick={() => {
-                    setAiInput('Koreys tilini qanday o\'rganish kerak?')
-                  }}>{t('aiSuggestion1')}</button>
-                  <button className="ai-suggestion-btn" onClick={() => {
-                    setAiInput('TOPIK imtihoni haqida ma\'lumot ber')
-                  }}>{t('aiSuggestion2')}</button>
-                  <button className="ai-suggestion-btn" onClick={() => {
-                    setAiInput('안녕하세요 nima degani?')
-                  }}>{t('aiSuggestion3')}</button>
-                  <button className="ai-suggestion-btn" onClick={() => {
-                    setAiInput('test savoli ber')
-                  }}>{t('aiSuggestion4')}</button>
-                </div>
-              </div>
-            ) : (
-              aiMessages.map((msg) => (
-                <div key={msg.id} className={`ai-message ${msg.role === 'user' ? 'ai-message-user' : 'ai-message-ai'}`}>
-                  {msg.role === 'ai' && (
-                    <div className="ai-msg-avatar">
-                      <span className="ai-text-small">AI</span>
-                    </div>
-                  )}
-                  <div className="ai-bubble">
-                    {msg.type === 'test' ? (
-                      <div className="ai-test-question">
-                        <p className="ai-test-text">{msg.content.question}</p>
-                        <div className="ai-test-options">
-                          {msg.content.answers.map((answer, idx) => {
-                            let extraClass = ''
-                            if (msg.selectedAnswer !== undefined) {
-                              if (idx === msg.content.correctIndex) extraClass = 'ai-test-correct'
-                              else if (idx === msg.selectedAnswer && idx !== msg.content.correctIndex) extraClass = 'ai-test-wrong'
-                            }
-                            return (
-                              <button
-                                key={idx}
-                                type="button"
-                                className={`ai-test-option ${extraClass}`}
-                                disabled={msg.selectedAnswer !== undefined}
-                                onClick={() => {
-                                  const updated = aiMessages.map(m =>
-                                    m.id === msg.id ? { ...m, selectedAnswer: idx } : m
-                                  )
-                                  setAiMessages(updated)
-                                  try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(updated.slice(-100))) } catch {}
-                                }}
-                              >
-                                {answer}
-                              </button>
-                            )
-                          })}
-                        </div>
-                        {msg.selectedAnswer !== undefined && (
-                          <div className={`ai-test-result ${msg.selectedAnswer === msg.content.correctIndex ? 'ai-test-correct' : 'ai-test-wrong'}`}>
-                            {msg.selectedAnswer === msg.content.correctIndex
-                              ? t('aiCorrect')
-                              : `${t('aiWrong')} ${msg.content.answers[msg.content.correctIndex]}`}
-                            <p className="ai-test-explanation">{msg.content.explanation}</p>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="ai-bubble-text">{msg.content.split('\n').map((line, i) => (
-                        <span key={i}>
-                          {line.split(/(\*\*[^*]+\*\*)/).map((part, j) =>
-                            part.startsWith('**') && part.endsWith('**')
-                              ? <strong key={j}>{part.slice(2, -2)}</strong>
-                              : <span key={j}>{part}</span>
-                          )}
-                          {i < msg.content.split('\n').length - 1 && <br />}
-                        </span>
-                      ))}</p>
-                    )}
-                    <span className="ai-bubble-time">
-                      {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }) : ''}
+            <div className="ai-chat-list">
+              {aiChats.map((chat) => (
+                <div
+                  key={chat.id}
+                  className={`ai-chat-item ${chat.id === activeChatId ? 'active' : ''}`}
+                  onClick={() => { setActiveChatId(chat.id); setAiShowChatList(false); }}
+                >
+                  <div className="ai-chat-item-info">
+                    <span className="ai-chat-item-title">{chat.title || 'Yangi chat'}</span>
+                    <span className="ai-chat-item-time">
+                      {chat.createdAt ? new Date(chat.createdAt).toLocaleDateString('uz-UZ', { day: 'numeric', month: 'short' }) : ''}
                     </span>
                   </div>
+                  <button
+                    type="button"
+                    className="ai-chat-delete-btn"
+                    onClick={(e) => { e.stopPropagation(); handleDeleteAiChat(chat.id); }}
+                    title="O'chirish"
+                  >
+                    ✕
+                  </button>
                 </div>
-              ))
-            )}
-            {aiTyping && (
-              <div className="ai-message ai-message-ai">
-                <div className="ai-msg-avatar">
-                  <span className="ai-text-small">AI</span>
+              ))}
+            </div>
+          </aside>
+
+          {/* Main Chat Area */}
+          <div className="ai-chat-main">
+            <div className="ai-chat-header">
+              <button
+                type="button"
+                className="ai-menu-btn"
+                onClick={() => setAiShowChatList(!aiShowChatList)}
+                title="Chatlar ro'yxati"
+              >
+                ☰
+              </button>
+              <div className="ai-chat-title">
+                <div className="ai-avatar">
+                  <span className="ai-text-logo">AI</span>
                 </div>
-                <div className="ai-bubble ai-typing-bubble">
-                  <div className="ai-typing-dots">
-                    <span></span><span></span><span></span>
-                  </div>
-                  <span className="ai-typing-text">{t('aiTyping')}</span>
+                <div>
+                  <h2>{t('aiTitle')}</h2>
+                  <p className="ai-subtitle">{t('aiSubtitle')}</p>
                 </div>
               </div>
-            )}
-            <div ref={aiEndRef} />
-          </div>
+              <button
+                type="button"
+                className="ghost-btn ai-clear-btn"
+                onClick={() => setAiMessages([])}
+                title={t('aiClear')}
+              >
+                🗑️
+              </button>
+            </div>
 
-          {/* Input */}
-          <div className="ai-input-container">
-            <input
-              className="ai-input"
-              type="text"
-              placeholder={t('aiInput')}
-              value={aiInput}
-              onChange={(e) => setAiInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && aiInput.trim()) {
-                  handleSendAIMessage()
-                }
-              }}
-            />
-            <button
-              className="ai-send-btn"
-              onClick={handleSendAIMessage}
-              disabled={!aiInput.trim() || aiTyping}
-            >
-              ➤
-            </button>
+            {/* Image Preview */}
+            {aiImagePreview && (
+              <div className="ai-image-preview-container">
+                <img src={aiImagePreview} alt="Rasm" className="ai-image-preview" />
+                <button type="button" className="ai-image-remove" onClick={handleRemoveAiImage}>✕</button>
+              </div>
+            )}
+
+            {/* Messages */}
+            <div className="ai-messages-container">
+              {aiMessages.length === 0 ? (
+                <div className="ai-welcome">
+                  <div className="ai-welcome-logo">
+                    <span className="ai-text-logo-large">AI</span>
+                  </div>
+                  <h3>{t('aiWelcome')}</h3>
+                  <p>{t('aiWelcomeDesc')}</p>
+                  <div className="ai-welcome-suggestions">
+                    <button className="ai-suggestion-btn" onClick={() => {
+                      setAiInput('Koreys tilini qanday o\'rganish kerak?')
+                    }}>{t('aiSuggestion1')}</button>
+                    <button className="ai-suggestion-btn" onClick={() => {
+                      setAiInput('TOPIK imtihoni haqida ma\'lumot ber')
+                    }}>{t('aiSuggestion2')}</button>
+                    <button className="ai-suggestion-btn" onClick={() => {
+                      setAiInput('안녕하세요 nima degani?')
+                    }}>{t('aiSuggestion3')}</button>
+                    <button className="ai-suggestion-btn" onClick={() => {
+                      setAiInput('test savoli ber')
+                    }}>{t('aiSuggestion4')}</button>
+                  </div>
+                </div>
+              ) : (
+                aiMessages.map((msg) => (
+                  <div key={msg.id} className={`ai-message ${msg.role === 'user' ? 'ai-message-user' : 'ai-message-ai'}`}>
+                    {msg.role === 'ai' && (
+                      <div className="ai-msg-avatar">
+                        <span className="ai-text-small">AI</span>
+                      </div>
+                    )}
+                    <div className="ai-bubble">
+                      {msg.image && msg.role === 'user' && (
+                        <img src={`data:image/jpeg;base64,${msg.image}`} alt="Yuborilgan rasm" className="ai-message-image" />
+                      )}
+                      {msg.type === 'test' ? (
+                        <div className="ai-test-question">
+                          <p className="ai-test-text">{msg.content.question}</p>
+                          <div className="ai-test-options">
+                            {msg.content.answers.map((answer, idx) => {
+                              let extraClass = ''
+                              if (msg.selectedAnswer !== undefined) {
+                                if (idx === msg.content.correctIndex) extraClass = 'ai-test-correct'
+                                else if (idx === msg.selectedAnswer && idx !== msg.content.correctIndex) extraClass = 'ai-test-wrong'
+                              }
+                              return (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  className={`ai-test-option ${extraClass}`}
+                                  disabled={msg.selectedAnswer !== undefined}
+                                  onClick={() => {
+                                    setAiMessages(prev => prev.map(m =>
+                                      m.id === msg.id ? { ...m, selectedAnswer: idx } : m
+                                    ))
+                                  }}
+                                >
+                                  {answer}
+                                </button>
+                              )
+                            })}
+                          </div>
+                          {msg.selectedAnswer !== undefined && (
+                            <div className={`ai-test-result ${msg.selectedAnswer === msg.content.correctIndex ? 'ai-test-correct' : 'ai-test-wrong'}`}>
+                              {msg.selectedAnswer === msg.content.correctIndex
+                                ? t('aiCorrect')
+                                : `${t('aiWrong')} ${msg.content.answers[msg.content.correctIndex]}`}
+                              <p className="ai-test-explanation">{msg.content.explanation}</p>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="ai-bubble-text">{msg.content.split('\n').map((line, i) => (
+                          <span key={i}>
+                            {line.split(/(\*\*[^*]+\*\*)/).map((part, j) =>
+                              part.startsWith('**') && part.endsWith('**')
+                                ? <strong key={j}>{part.slice(2, -2)}</strong>
+                                : <span key={j}>{part}</span>
+                            )}
+                            {i < msg.content.split('\n').length - 1 && <br />}
+                          </span>
+                        ))}</p>
+                      )}
+                      <span className="ai-bubble-time">
+                        {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }) : ''}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+              {aiTyping && (
+                <div className="ai-message ai-message-ai">
+                  <div className="ai-msg-avatar">
+                    <span className="ai-text-small">AI</span>
+                  </div>
+                  <div className="ai-bubble ai-typing-bubble">
+                    <div className="ai-typing-dots">
+                      <span></span><span></span><span></span>
+                    </div>
+                    <span className="ai-typing-text">{t('aiTyping')}</span>
+                  </div>
+                </div>
+              )}
+              <div ref={aiEndRef} />
+            </div>
+
+            {/* Input */}
+            <div className="ai-input-container">
+              <button
+                type="button"
+                className="ai-image-btn"
+                onClick={() => aiImageInput.current?.click()}
+                title="Rasm yuborish"
+              >
+                📷
+              </button>
+              <input
+                ref={aiImageInput}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleAiImageSelect}
+              />
+              <input
+                className="ai-input"
+                type="text"
+                placeholder={t('aiInput')}
+                value={aiInput}
+                onChange={(e) => setAiInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (aiInput.trim() || aiImageBase64)) {
+                    handleSendAIMessage()
+                  }
+                }}
+              />
+              <button
+                className="ai-send-btn"
+                onClick={() => handleSendAIMessage()}
+                disabled={(!aiInput.trim() && !aiImageBase64) || aiTyping}
+              >
+                ➤
+              </button>
+            </div>
           </div>
         </main>
       )}
