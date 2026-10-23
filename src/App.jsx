@@ -217,6 +217,15 @@ function loadCustomGrammar() {
   return []
 }
 
+function loadTopikLevel() {
+  try {
+    const saved = localStorage.getItem('topik-play-selected-level')
+    return (saved === 'I' || saved === 'II') ? saved : null
+  } catch {
+    return null
+  }
+}
+
 function loadMistakes() {
   try {
     const saved = JSON.parse(localStorage.getItem(MISTAKES_STORAGE_KEY) ?? '[]')
@@ -1108,7 +1117,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [customGrammar, setCustomGrammar] = useState(loadCustomGrammar)
   const [mistakes, setMistakes] = useState(loadMistakes)
   const [mainSection, setMainSection] = useState('topik')
-  const [selectedTopikLevel, setSelectedTopikLevel] = useState(null)
+  const [selectedTopikLevel, setSelectedTopikLevel] = useState(loadTopikLevel)
   const [activeTab, setActiveTab] = useState('quiz')
   const [topikTwoSkill, setTopikTwoSkill] = useState('vocabulary')
   const [topikTwoDay, setTopikTwoDay] = useState(1)
@@ -1424,6 +1433,16 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       console.error('Sozlamalarni qurilmada saqlab bo‘lmadi:', error)
     }
   }, [settings])
+
+  useEffect(() => {
+    try {
+      if (selectedTopikLevel) {
+        localStorage.setItem('topik-play-selected-level', selectedTopikLevel)
+      }
+    } catch (error) {
+      console.error('TOPIK darajasini saqlab bo‘lmadi:', error)
+    }
+  }, [selectedTopikLevel])
 
   useEffect(() => {
     if (!user) return undefined
@@ -2315,6 +2334,16 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
       {mainSection === 'topik' && selectedTopikLevel === 'I' && activeTab === 'topik' && currentTopik && (
         <main className="panel topik-panel">
+          <button
+            type="button"
+            className="ghost-btn topik-back-btn"
+            onClick={() => {
+              setSelectedTopikLevel(null)
+              setActiveTab('quiz')
+            }}
+          >
+            ← Daraja tanlash
+          </button>
           <div className="topik-header">
             <span className="topik-tag">{t("navTopik1")} mashq</span>
             <span className="topik-counter">{t("quizQuestion")} {activeTopikIndex % topikExamples.length + 1}/{topikExamples.length}</span>
@@ -2461,6 +2490,16 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
       {mainSection === 'topik' && selectedTopikLevel === 'I' && activeTab === 'grammar' && (
         <main className="panel grammar-panel">
+          <button
+            type="button"
+            className="ghost-btn topik-back-btn"
+            onClick={() => {
+              setSelectedTopikLevel(null)
+              setActiveTab('quiz')
+            }}
+          >
+            ← Daraja tanlash
+          </button>
           <div className="grammar-header">
             <div>
               <p className="eyebrow">Koreys tili qoidalari</p>
@@ -2588,6 +2627,16 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
       {mainSection === 'topik' && selectedTopikLevel === 'I' && activeTab === 'hearts' && (
         <main className="panel hearts-panel">
+          <button
+            type="button"
+            className="ghost-btn topik-back-btn"
+            onClick={() => {
+              setSelectedTopikLevel(null)
+              setActiveTab('quiz')
+            }}
+          >
+            ← Daraja tanlash
+          </button>
           <div>
             <p className="eyebrow">{t('hearts')}</p>
             <h2>{t('heartsExchange')}</h2>
@@ -2617,6 +2666,16 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
       {mainSection === 'topik' && selectedTopikLevel === 'I' && activeTab === 'topik1words' && (
         <main className="panel topik-panel">
+          <button
+            type="button"
+            className="ghost-btn topik-back-btn"
+            onClick={() => {
+              setSelectedTopikLevel(null)
+              setActiveTab('quiz')
+            }}
+          >
+            ← Daraja tanlash
+          </button>
           <h2>📝 TOPIK 1 — Ko'p uchraydigan so'zlar</h2>
           <p className="settings-description">{topik1CommonWords.length} ta so'z · Test va eshitish mashqlari</p>
           <nav className="topik-words-tabs">
@@ -4072,6 +4131,16 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
       {mainSection === 'topik' && selectedTopikLevel === 'I' && activeTab === 'words' && (
         <main className="panel words-panel">
+          <button
+            type="button"
+            className="ghost-btn topik-back-btn"
+            onClick={() => {
+              setSelectedTopikLevel(null)
+              setActiveTab('quiz')
+            }}
+          >
+            ← Daraja tanlash
+          </button>
           <form className="word-form" onSubmit={handleSubmitWord}>
             <h3>{editingId ? 'Soʻzni tahrirlash' : 'Yangi soʻz qoʻshish'}</h3>
             <p className="storage-note">Lug‘at va o‘rganish jarayoningiz tanlangan saqlash usulida saqlanadi.</p>
@@ -4177,7 +4246,6 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
           className={mainSection === 'topik' ? 'active' : ''}
           onClick={() => {
             setMainSection('topik')
-            setSelectedTopikLevel(null)
           }}
           aria-pressed={mainSection === 'topik'}
         >
