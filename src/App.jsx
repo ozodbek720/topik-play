@@ -631,6 +631,21 @@ function getAuthErrorMessage(error) {
   if (error.code === 'auth/invalid-origin') {
     return '⚠️ Bu sayt Firebase\'da ruxsat etilmagan.\n\n📋 Firebase Console → Authentication → Settings → Authorized domains bo\'limiga kiring.'
   }
+  if (error.code === 'auth/invalid-phone-number') {
+    return '⚠️ Telefon raqami noto\'g\'ri formatda.\n\n📋 Mamlakat kodini qo\'shing. Masalan: +998901234567'
+  }
+  if (error.code === 'auth/missing-phone-number') {
+    return '⚠️ Telefon raqamini kiriting.'
+  }
+  if (error.code === 'auth/quota-exceeded') {
+    return '⚠️ SMS yuborish limiti oshib ketdi. Keyinroq qayta urinib ko\'ring.'
+  }
+  if (error.code === 'auth/code-expired') {
+    return '⚠️ SMS kod muddati tugadi. Yangi kod yuboring.'
+  }
+  if (error.code === 'auth/invalid-verification-code') {
+    return '⚠️ SMS kod noto\'g\'ri. Qayta kiriting.'
+  }
   if (error.code === 'auth/cancelled-popup-request') {
     return 'Kirish so\'rovi bekor qilindi. Qayta urinib ko\'ring.'
   }
@@ -650,7 +665,7 @@ function getAuthErrorMessage(error) {
     return '⚠️ Firebase sozlamalari noto\'g\'ri. API kalit yoki loyiha ID tekshiring.'
   }
   // Noma'lum xato — aniq xabar qaytarish
-  return `⚠️ Google orqali kirish xatosi: ${error.code || 'noma\'lum'}\n\n📋 Xabar: ${error.message || 'noma\'lum'}\n\nQurilmada davom etish tugmasini bosing.`
+  return `⚠️ Kirish xatosi: ${error.code || 'noma\'lum'}\n\n📋 Xabar: ${error.message || 'noma\'lum'}\n\nQurilmada davom etish tugmasini bosing.`
 }
 
 function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileReady, skipProfile, lang, onEmailSignUp, onEmailSignIn }) {
@@ -709,6 +724,17 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
     setAuthError('')
     if (!phoneNumber) {
       setAuthError(t('loginFillPhone'))
+      return
+    }
+    // Validate phone number format - must start with +
+    if (!phoneNumber.startsWith('+')) {
+      setAuthError('⚠️ Telefon raqami "+" belgisidan boshlanishi kerak.\n\nMasalan: +998901234567')
+      return
+    }
+    // Validate phone number length (min 8 digits after +)
+    const digits = phoneNumber.replace(/\D/g, '')
+    if (digits.length < 9) {
+      setAuthError('⚠️ Telefon raqami noto\'g\'ri. To\'liq raqamni kiriting.\n\nMasalan: +998901234567')
       return
     }
     try {
@@ -818,7 +844,7 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
                 {!smsSent ? (
                   <>
                     <p className="settings-description">{t('loginPhoneHint')}</p>
-                    <input type="tel" className="auth-input" placeholder={t('loginPhoneNumber')} value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
+                    <input type="tel" className="auth-input" placeholder="+998901234567" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
                     <button type="button" className="primary-btn" style={{marginTop:'8px'}} onClick={handlePhoneSendSms} disabled={busy}>
                       {busy ? t('loginSending') : t('loginSendSms')}
                     </button>
