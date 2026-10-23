@@ -1189,6 +1189,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [pdfAnalysisResult, setPdfAnalysisResult] = useState('')
   const [pdfShowAnalysis, setPdfShowAnalysis] = useState(false)
   const pdfCanvasRef = useRef(null)
+  const pdfTouchRef = useRef({ startX: 0, startY: 0 })
   const [githubSearch, setGithubSearch] = useState('')
   const [githubCategory, setGithubCategory] = useState('Hammasi')
   const [learningProgress, setLearningProgress] = useState(loadLearningProgress)
@@ -1499,9 +1500,9 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   })
 
   // PDF Viewer functions
-  const loadPdfDocument = async (url) => {
+  const loadPdfDocument = async (url, startPage = 1) => {
     setPdfLoading(true)
-    setPdfPage(1)
+    setPdfPage(startPage)
     setPdfZoom(1.0)
     setPdfShowAnalysis(false)
     setPdfAnalysisResult('')
@@ -1511,9 +1512,9 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       setPdfDoc(pdf)
       setPdfTotalPages(pdf.numPages)
       setPdfLoading(false)
-      // PDF yuklangandan so'ng birinchi sahifani render qilish
+      // PDF yuklangandan so'ng sahifani render qilish
       setTimeout(() => {
-        renderPdfPage(pdf, 1, 1.0)
+        renderPdfPage(pdf, startPage, 1.0)
       }, 150)
     } catch (err) {
       console.error('PDF yuklash xatosi:', err)
@@ -1549,11 +1550,20 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
     setSelectedBook(book)
     setPdfViewerOpen(true)
     if (book.pdfUrl && book.pdfUrl !== '#') {
-      loadPdfDocument(book.pdfUrl)
+      // localStorage dan oxirgi sahifani o'qish
+      const savedPage = localStorage.getItem('pdf_last_page_' + book.id)
+      const startPage = savedPage ? parseInt(savedPage, 10) : 1
+      loadPdfDocument(book.pdfUrl, startPage)
     }
   }
 
   const handleClosePdf = () => {
+    // Oxirgi sahifani saqlash
+    if (selectedBook) {
+      try {
+        localStorage.setItem('pdf_last_page_' + selectedBook.id, String(pdfPage))
+      } catch (e) { /* ignore */ }
+    }
     setPdfViewerOpen(false)
     setPdfDoc(null)
     setPdfShowAnalysis(false)
@@ -4720,7 +4730,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                   disabled={pdfAnalyzing}
                   title={`${pdfPage}-sahifani AI bilan tarjima qilish`}
                 >
-                  {pdfAnalyzing ? '⏳' : '🤖'} AI Tarjima
+                  {pdfAnalyzing ? '⏳' : '🤖'} AI
                 </button>
                 <button
                   type="button"
@@ -4733,33 +4743,8 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
               </div>
             </div>
 
-            {pdfShowAnalysis && pdfAnalysisResult && (
-              <div className="pdf-analysis-panel">
-                <div className="pdf-analysis-header">
-                  <strong>🤖 AI Tarjima ({pdfPage}-sahifa)</strong>
-                  <button type="button" className="ghost-btn" onClick={() => setPdfShowAnalysis(false)}>✕</button>
-                </div>
-                <div className="pdf-analysis-content">
-                  {pdfAnalyzing ? `${pdfPage}-sahifa tarjima qilinmoqda...` : pdfAnalysisResult}
-                </div>
-              </div>
-            )}
-
-            <div className="pdf-viewer-body">
-              {pdfLoading && (
-                <div className="pdf-loading">
-                  <div className="pdf-spinner"></div>
-                  <p>PDF yuklanmoqda...</p>
-                </div>
-              )}
-              <canvas
-                ref={pdfCanvasRef}
-                className="pdf-viewer-canvas"
-                style={{ display: pdfLoading ? 'none' : 'block' }}
-              />
-            </div>
-
-            <div className="pdf-viewer-footer">
+            {/* Sahifa boshqaruvi — tepada */}
+            <div className="pdf-viewer-nav-top">
               <button
                 type="button"
                 className="pdf-nav-btn"
@@ -4799,6 +4784,49 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
               >
                 🔍+
               </button>
+            </div>
+
+            {pdfShowAnalysis && pdfAnalysisResult && (
+              <div className="pdf-analysis-panel">
+                <div className="pdf-analysis-header">
+                  <strong>🤖 AI Tarjima ({pdfPage}-sahifa)</strong>
+                  <button type="button" className="ghost-btn" onClick={() => setPdfShowAnalysis(false)}>✕</button>
+                </div>
+                <div className="pdf-analysis-content">
+                  {pdfAnalyzing ? `${pdfPage}-sahifa tarjima qilinmoqda...` : pdfAnalysisResult}
+                </div>
+              </div>
+            )}
+
+            <div
+              className="pdf-viewer-body"
+              onTouchStart={(e) => {
+                pdfTouchRef.current = {
+                  startX: e.touches[0].clientX,
+                  startY: e.touches[0].clientY,
+                }
+              }}
+              onTouchEnd={(e) => {
+                const dx = e.changedTouches[0].clientX - pdfTouchRef.current.startX
+                const dy = e.changedTouches[0].clientY - pdfTouchRef.current.startY
+                // Gorizontal swipe ustunlik qiladi
+                if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+                  if (dx < 0) handlePdfNextPage() // chapga = keyingi
+                  else handlePdfPrevPage() // o'ngga = oldingi
+                }
+              }}
+            >
+              {pdfLoading && (
+                <div className="pdf-loading">
+                  <div className="pdf-spinner"></div>
+                  <p>PDF yuklanmoqda...</p>
+                </div>
+              )}
+              <canvas
+                ref={pdfCanvasRef}
+                className="pdf-viewer-canvas"
+                style={{ display: pdfLoading ? 'none' : 'block' }}
+              />
             </div>
           </div>
         </div>

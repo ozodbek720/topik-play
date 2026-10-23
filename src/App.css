@@ -6058,6 +6058,17 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.pdf-viewer-nav-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  flex-shrink: 0;
+}
+
 .pdf-viewer-footer {
   display: flex;
   align-items: center;
