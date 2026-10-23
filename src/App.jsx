@@ -3,7 +3,7 @@ import { generateGeminiResponse } from './aiChat.js'
 import advancedWords from './advancedWords.js'
 import topik2Lugat from './topik2Lugat.js'
 import topik1CommonWords from './topik1Words.js'
-import { addFriend, getAllProfiles, getRedirectResultAuth, loadAccountData, loadProfile, listenToFriends, listenToMessages, listenToProfiles, observeAuth, removeFriend, saveAccountData, saveProfile, sendMessage, signInWithGooglePopup, signInWithGoogleRedirect, signOutUser, createUserWithEmail, signInWithEmail, setupRecaptcha, signInWithPhone } from './firebase.js'
+import { addFriend, auth, getAllProfiles, getRedirectResultAuth, loadAccountData, loadProfile, listenToFriends, listenToMessages, listenToProfiles, observeAuth, removeFriend, saveAccountData, saveProfile, sendMessage, signInWithGooglePopup, signInWithGoogleRedirect, signOutUser, createUserWithEmail, signInWithEmail, setupRecaptcha, signInWithPhone } from './firebase.js'
 import grammarPoints from './grammarPoints.js'
 import { t as translate } from './translations.js'
 import './App.css'
@@ -633,7 +633,7 @@ function getAuthErrorMessage(error) {
   return 'Google akkaunt bilan kirib bo\'lmadi. Internet aloqasini tekshiring yoki qurilmada davom eting.'
 }
 
-function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileReady, skipProfile, lang, onEmailSignUp, onEmailSignIn, onPhoneSignIn, onPhoneSignUp }) {
+function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileReady, skipProfile, lang, onEmailSignUp, onEmailSignIn }) {
   const t = (key) => translate(key, lang || 'uz')
   const [step, setStep] = useState(skipProfile ? 2 : 1)
   const [pf, setPf] = useState({ firstName: '', lastName: '', bio: '', avatar: '' })
@@ -696,8 +696,8 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
       // Setup recaptcha
       let container = recaptchaRef.current
       if (!container) return
-      const verifier = setupRecaptcha(null, container, 'invisible')
-      const result = await onPhoneSignUp(phoneNumber, verifier)
+      const verifier = setupRecaptcha(auth, container, 'invisible')
+      const result = await signInWithPhone(phoneNumber, verifier)
       setConfirmationResult(result)
       setSmsSent(true)
     } catch (e) {
@@ -1002,21 +1002,7 @@ function App() {
     }
   }
 
-  // Telefon raqami orqali SMS yuborish
-  const handlePhoneSignUp = async (phoneNumber, verifier) => {
-    setSignInBusy(true)
-    setAuthState((previous) => ({ ...previous, error: '' }))
-    try {
-      const result = await signInWithPhone(phoneNumber, verifier)
-      return result
-    } catch (error) {
-      console.error('Telefon orqali kirish xatosi:', error)
-      setAuthState((previous) => ({ ...previous, error: getAuthErrorMessage(error) }))
-      throw error
-    } finally {
-      setSignInBusy(false)
-    }
-  }
+  // Telefon raqami orqali SMS yuborish — LoginScreen ichida to'g'ridan-to'g'ri ishlaydi
 
   if (authState.loading) {
     return (
@@ -1039,8 +1025,6 @@ function App() {
         lang={localStorage.getItem('topik-play-lang') || 'uz'}
         onEmailSignUp={handleEmailSignUp}
         onEmailSignIn={handleEmailSignIn}
-        onPhoneSignIn={handlePhoneSignUp}
-        onPhoneSignUp={handlePhoneSignUp}
       />
     )
   }
