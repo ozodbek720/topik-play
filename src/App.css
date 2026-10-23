@@ -5387,3 +5387,29 @@ button:disabled {
     font-size: 0.55rem;
   }
 }
+
+/* ===== AI Full Screen Mode ===== */
+
+.app-shell[data-section='ai'] .topbar {
+  display: none;
+}
+
+.app-shell[data-section='ai'] .main-section-nav {
+  display: none;
+}
+
+.app-shell[data-section='ai'] {
+  padding: 0;
+  max-width: 100%;
+}
+
+.app-shell[data-section='ai'] .ai-chat-panel {
+  height: 100vh;
+  min-height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+}

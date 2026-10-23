@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { generateGeminiResponse } from './aiChat.js'
 import advancedWords from './advancedWords.js'
 import topik2Lugat from './topik2Lugat.js'
@@ -1810,7 +1810,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
   return (
     <div
-      className="app-shell"
+      className="app-shell" data-section={mainSection}
       style={{
         '--primary': theme.primary,
         '--primary-strong': theme.strong,
