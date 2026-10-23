@@ -1473,9 +1473,19 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
         setCloudReady(true)
       } catch (error) {
-        console.error('Akkaunt ma’lumotlarini sinxronlab bo‘lmadi:', error)
+        console.error('Akkaunt ma’lumotlarini sinxronlab bo‘lmadi:', error.code, error.message)
         if (active) {
-          setCloudError('Bulutli saqlash ulanmagan. Firebase Firestore bazasi va xavfsizlik qoidalarini sozlang.')
+          let msg = 'Bulutli saqlash ulanmagan. '
+          if (error.code === 'permission-denied') {
+            msg += 'Firebase Firestore xavfsizlik qoidalari sozlanmagan. Firebase Console → Firestore Database → Rules bo\'limiga kiring va qoidalarni deploy qiling.'
+          } else if (error.code === 'unavailable') {
+            msg += 'Firebase Firestore mavjud emas. Internet aloqasini tekshiring.'
+          } else if (error.code === 'failed-precondition') {
+            msg += 'Firebase Firestore indeks yaratish kerak. Xabar bo\'yicha indeks yarating.'
+          } else {
+            msg += `Xato: ${error.code || 'noma\'lum'}. Firebase Console sozlamalarini tekshiring.`
+          }
+          setCloudError(msg)
           setCloudReady(true)
         }
       }

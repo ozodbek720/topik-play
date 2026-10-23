@@ -2,8 +2,22 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Foydalanuvchi ma'lumotlari (o'rganish progressi)
     match /users/{userId}/appData/{documentId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    // Dostlar ro'yxati
+    match /users/{userId}/friends/{friendId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    // Profillar — barcha foydalanuvchilar o'qiy oladi, faqat o'z profili yozadi
+    match /profiles/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    // Chat xabarlari — autentifikatsiya qilingan foydalanuvchilar o'qiy va yozadi
+    match /chats/{chatId}/messages/{messageId} {
+      allow read, write: if request.auth != null;
     }
   }
 }
