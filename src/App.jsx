@@ -1810,7 +1810,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
   return (
     <div
-      className="app-shell"
+      className="app-shell" data-section={mainSection}
       style={{
         '--primary': theme.primary,
         '--primary-strong': theme.strong,
