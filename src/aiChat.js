@@ -762,7 +762,7 @@ export { generateAIResponse, detectIntent, searchWord, searchGrammar, generateTe
 // ========================
 // Gemini AI Integration
 // ========================
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
 
 const GEMINI_SYSTEM_PROMPT = `Sen Asiye AI — koreys tilini o'rganish bo'yicha aqlli yordamchisan. Sen O'zbekistonlik Ozodbek tomonidan yaratilgan.
 
