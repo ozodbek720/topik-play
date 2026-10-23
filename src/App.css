@@ -5448,3 +5448,132 @@ button:disabled {
   }
 }
 
+/* ===== PDF Viewer ===== */
+
+.pdf-viewer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+.pdf-viewer-container {
+  width: 95vw;
+  height: 95vh;
+  max-width: 1200px;
+  background: var(--panel, #1e1e2e);
+  border-radius: 16px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.pdf-viewer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  flex-shrink: 0;
+}
+
+.pdf-viewer-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text, #e1e1e6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pdf-viewer-close {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text, #e1e1e6);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.pdf-viewer-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.pdf-viewer-body {
+  flex: 1;
+  position: relative;
+  background: #333;
+}
+
+.pdf-viewer-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Book item clickable hover */
+.book-item-clickable {
+  transition: all 0.2s ease;
+}
+
+.book-item-clickable:hover {
+  border-color: var(--primary, #7dd7fc) !important;
+  background: rgba(125, 211, 252, 0.08) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(125, 211, 252, 0.15);
+}
+
+.github-item-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Responsive PDF viewer */
+@media (max-width: 768px) {
+  .pdf-viewer-container {
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    border-radius: 0;
+  }
+
+  .pdf-viewer-header {
+    padding: 10px 12px;
+  }
+
+  .pdf-viewer-title {
+    font-size: 0.9rem;
+  }
+
+  .pdf-viewer-close {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+}
+

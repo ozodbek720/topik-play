@@ -1132,6 +1132,8 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [libraryTab, setLibraryTab] = useState('books')
   const [librarySearch, setLibrarySearch] = useState('')
   const [libraryCategory, setLibraryCategory] = useState('Hammasi')
+  const [selectedBook, setSelectedBook] = useState(null)
+  const [pdfViewerOpen, setPdfViewerOpen] = useState(false)
   const [githubSearch, setGithubSearch] = useState('')
   const [githubCategory, setGithubCategory] = useState('Hammasi')
   const [learningProgress, setLearningProgress] = useState(loadLearningProgress)
@@ -3958,24 +3960,42 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                     return matchesCategory && matchesSearch
                   })
                   .map((book) => (
-                    <div key={book.id} className="github-item">
+                    <div
+                      key={book.id}
+                      className="github-item book-item-clickable"
+                      onClick={() => {
+                        if (book.pdfUrl && book.pdfUrl !== '#') {
+                          setSelectedBook(book)
+                          setPdfViewerOpen(true)
+                        }
+                      }}
+                      style={{ cursor: 'pointer' }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          if (book.pdfUrl && book.pdfUrl !== '#') {
+                            setSelectedBook(book)
+                            setPdfViewerOpen(true)
+                          }
+                        }
+                      }}
+                    >
                       <div className="github-item-header">
                         <span className="github-item-icon">{book.icon}</span>
                         <div className="github-item-info">
-                          <a
-                            href={book.pdfUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="github-item-name"
-                          >
+                          <span className="github-item-name">
                             {book.title}
-                          </a>
+                          </span>
                           <p className="github-item-description">{book.description}</p>
                         </div>
                       </div>
                       <div className="github-item-meta">
                         <span className="github-item-category">{book.category}</span>
                         <span className="github-item-stars">{book.level} · {book.pages} bet</span>
+                        {book.pdfUrl === '#' && <span className="github-item-badge" style={{ backgroundColor: '#ffc107', color: '#000' }}>🔒 Tez orada</span>}
+                        {book.pdfUrl && book.pdfUrl !== '#' && <span className="github-item-badge" style={{ backgroundColor: '#28a745', color: '#fff' }}>📖 O'qish</span>}
                       </div>
                     </div>
                   ))}
@@ -4201,6 +4221,33 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
           <span>{t('navProfile')}</span>
         </button>
       </nav>
+
+      {pdfViewerOpen && selectedBook && (
+        <div className="pdf-viewer-overlay" onClick={() => setPdfViewerOpen(false)} role="dialog" aria-modal="true" aria-label="PDF ko'rish">
+          <div className="pdf-viewer-container" onClick={(e) => e.stopPropagation()}>
+            <div className="pdf-viewer-header">
+              <h3 className="pdf-viewer-title">{selectedBook.icon} {selectedBook.title}</h3>
+              <button
+                type="button"
+                className="pdf-viewer-close"
+                onClick={() => setPdfViewerOpen(false)}
+                aria-label="Yopish"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="pdf-viewer-body">
+              <iframe
+                src={selectedBook.pdfUrl}
+                title={selectedBook.title}
+                className="pdf-viewer-iframe"
+                frameBorder="0"
+                scrolling="auto"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
