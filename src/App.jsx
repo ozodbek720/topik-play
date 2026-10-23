@@ -1510,10 +1510,9 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       const pdf = await loadingTask.promise
       setPdfDoc(pdf)
       setPdfTotalPages(pdf.numPages)
-      renderPdfPage(pdf, 1, 1.0)
+      setPdfLoading(false)
     } catch (err) {
       console.error('PDF yuklash xatosi:', err)
-    } finally {
       setPdfLoading(false)
     }
   }
@@ -1534,10 +1533,13 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   }
 
   useEffect(() => {
-    if (pdfDoc && pdfViewerOpen) {
+    if (!pdfDoc || !pdfViewerOpen || pdfLoading) return
+    // Canvas DOM da tayyor bo'lishini kutish
+    const timer = setTimeout(() => {
       renderPdfPage(pdfDoc, pdfPage, pdfZoom)
-    }
-  }, [pdfDoc, pdfPage, pdfZoom, pdfViewerOpen])
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [pdfDoc, pdfPage, pdfZoom, pdfViewerOpen, pdfLoading])
 
   const handleOpenPdf = (book) => {
     setSelectedBook(book)
@@ -4463,7 +4465,11 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                       }}
                     >
                       <div className="github-item-header">
-                        <span className="github-item-icon">{book.icon}</span>
+                        {book.coverUrl ? (
+                          <img className="github-item-cover" src={book.coverUrl} alt={book.title} />
+                        ) : (
+                          <span className="github-item-icon">{book.icon}</span>
+                        )}
                         <div className="github-item-info">
                           <span className="github-item-name">
                             {book.title}
@@ -4473,7 +4479,6 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                       </div>
                       <div className="github-item-meta">
                         <span className="github-item-category">{book.category}</span>
-                        <span className="github-item-stars">{book.level}</span>
                         {book.pdfUrl === '#' && <span className="github-item-badge" style={{ backgroundColor: '#ffc107', color: '#000' }}>🔒 {t('libraryComingSoon')}</span>}
                         {book.pdfUrl && book.pdfUrl !== '#' && <span className="github-item-badge" style={{ backgroundColor: '#28a745', color: '#fff' }}>📖 {t('libraryRead')}</span>}
                       </div>

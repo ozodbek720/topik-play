@@ -20,8 +20,8 @@ export default [
     author: 'StarTOPIK',
     description: 'TOPIK imtihonining yozish qismiga to\'liq tayyorgarlik ko\'rish uchun eng qulay kitob. Barcha yozish turlari, namuna javoblar va foydali iboralar.',
     category: 'TOPIK',
-    level: 'B1-B2',
     icon: '📖',
+    coverUrl: '/pdf/cover.png',
     pdfUrl: '/pdf/ssugui-modom-get.pdf',
   },
 ]
