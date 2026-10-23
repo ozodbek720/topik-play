@@ -5,6 +5,7 @@ import topik2Lugat from './topik2Lugat.js'
 import topik1CommonWords from './topik1Words.js'
 import { addFriend, auth, getAllProfiles, getRedirectResultAuth, loadAccountData, loadProfile, listenToFriends, listenToMessages, listenToProfiles, observeAuth, removeFriend, saveAccountData, saveProfile, sendMessage, signInWithGooglePopup, signInWithGoogleRedirect, signOutUser, createUserWithEmail, signInWithEmail, setupRecaptcha, signInWithPhone } from './firebase.js'
 import githubResources from './githubResources.js'
+import libraryBooks from './libraryBooks.js'
 import grammarPoints from './grammarPoints.js'
 import { t as translate } from './translations.js'
 import './App.css'
@@ -1128,6 +1129,9 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [selectedCategory, setSelectedCategory] = useState('Hammasi')
   const [grammarLevel, setGrammarLevel] = useState('Hammasi')
   const [grammarSearch, setGrammarSearch] = useState('')
+  const [libraryTab, setLibraryTab] = useState('books')
+  const [librarySearch, setLibrarySearch] = useState('')
+  const [libraryCategory, setLibraryCategory] = useState('Hammasi')
   const [githubSearch, setGithubSearch] = useState('')
   const [githubCategory, setGithubCategory] = useState('Hammasi')
   const [learningProgress, setLearningProgress] = useState(loadLearningProgress)
@@ -3887,74 +3891,162 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         </main>
       )}
 
-      {mainSection === 'github' && (
+      {mainSection === 'library' && (
         <main className="panel github-panel">
-          <p className="eyebrow">Ochiq manbalar</p>
-          <h2 className="panel-title">🔍 GitHub Explorer</h2>
+          <p className="eyebrow">O'quv materiallari</p>
+          <h2 className="panel-title">📚 Kutubxona</h2>
           <p className="settings-description">
-            GitHub'da koreys tilini o'rganish uchun foydali resurslar — so'zliklar, grammatika, darslar va boshqalar.
+            Koreys tilini o'rganish uchun PDF kitoblar va GitHub resurslar.
           </p>
 
-          <input
-            className="word-search"
-            type="search"
-            value={githubSearch}
-            onChange={(event) => setGithubSearch(event.target.value)}
-            placeholder="Resurs nomida yoki tavsifda qidirish..."
-            aria-label="GitHub resurslaridan qidirish"
-          />
-
-          <div className="word-categories" aria-label="GitHub resurslar turkumlari">
-            {['Hammasi', ...new Set(githubResources.map((r) => r.category))].map((category) => (
-              <button
-                key={category}
-                type="button"
-                className={`category-btn ${githubCategory === category ? 'active' : ''}`}
-                onClick={() => setGithubCategory(category)}
-              >
-                {category}
-                <span>
-                  {category === 'Hammasi'
-                    ? githubResources.length
-                    : githubResources.filter((r) => r.category === category).length}
-                </span>
-              </button>
-            ))}
+          <div className="library-tabs" aria-label="Kutubxona bo'limlari">
+            <button
+              type="button"
+              className={`category-btn ${libraryTab === 'books' ? 'active' : ''}`}
+              onClick={() => setLibraryTab('books')}
+            >
+              📖 PDF Kitoblar
+              <span>{libraryBooks.length}</span>
+            </button>
+            <button
+              type="button"
+              className={`category-btn ${libraryTab === 'github' ? 'active' : ''}`}
+              onClick={() => setLibraryTab('github')}
+            >
+              🔍 GitHub Explorer
+              <span>{githubResources.length}</span>
+            </button>
           </div>
 
-          <div className="github-list">
-            {githubResources
-              .filter((resource) => {
-                const matchesCategory = githubCategory === 'Hammasi' || resource.category === githubCategory
-                const matchesSearch =
-                  !githubSearch ||
-                  resource.name.toLowerCase().includes(githubSearch.toLowerCase()) ||
-                  resource.description.toLowerCase().includes(githubSearch.toLowerCase())
-                return matchesCategory && matchesSearch
-              })
-              .map((resource) => (
-                <div key={resource.id} className="github-item">
-                  <div className="github-item-header">
-                    <span className="github-item-icon">{resource.icon}</span>
-                    <div className="github-item-info">
-                      <a
-                        href={resource.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="github-item-name"
-                      >
-                        {resource.name}
-                      </a>
-                      <p className="github-item-description">{resource.description}</p>
+          {libraryTab === 'books' && (
+            <div className="library-books-section">
+              <input
+                className="word-search"
+                type="search"
+                value={librarySearch}
+                onChange={(event) => setLibrarySearch(event.target.value)}
+                placeholder="Kitob nomida yoki tavsifda qidirish..."
+                aria-label="Kitoblardan qidirish"
+              />
+
+              <div className="word-categories" aria-label="Kitoblar turkumlari">
+                {['Hammasi', ...new Set(libraryBooks.map((b) => b.category))].map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    className={`category-btn ${libraryCategory === category ? 'active' : ''}`}
+                    onClick={() => setLibraryCategory(category)}
+                  >
+                    {category}
+                    <span>
+                      {category === 'Hammasi'
+                        ? libraryBooks.length
+                        : libraryBooks.filter((b) => b.category === category).length}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="github-list">
+                {libraryBooks
+                  .filter((book) => {
+                    const matchesCategory = libraryCategory === 'Hammasi' || book.category === libraryCategory
+                    const matchesSearch =
+                      !librarySearch ||
+                      book.title.toLowerCase().includes(librarySearch.toLowerCase()) ||
+                      book.description.toLowerCase().includes(librarySearch.toLowerCase())
+                    return matchesCategory && matchesSearch
+                  })
+                  .map((book) => (
+                    <div key={book.id} className="github-item">
+                      <div className="github-item-header">
+                        <span className="github-item-icon">{book.icon}</span>
+                        <div className="github-item-info">
+                          <a
+                            href={book.pdfUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="github-item-name"
+                          >
+                            {book.title}
+                          </a>
+                          <p className="github-item-description">{book.description}</p>
+                        </div>
+                      </div>
+                      <div className="github-item-meta">
+                        <span className="github-item-category">{book.category}</span>
+                        <span className="github-item-stars">{book.level} · {book.pages} bet</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="github-item-meta">
-                    <span className="github-item-category">{resource.category}</span>
-                    <span className="github-item-stars">⭐ {resource.stars}</span>
-                  </div>
-                </div>
-              ))}
-          </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {libraryTab === 'github' && (
+            <div className="library-github-section">
+              <input
+                className="word-search"
+                type="search"
+                value={githubSearch}
+                onChange={(event) => setGithubSearch(event.target.value)}
+                placeholder="Resurs nomida yoki tavsifda qidirish..."
+                aria-label="GitHub resurslaridan qidirish"
+              />
+
+              <div className="word-categories" aria-label="GitHub resurslar turkumlari">
+                {['Hammasi', ...new Set(githubResources.map((r) => r.category))].map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    className={`category-btn ${githubCategory === category ? 'active' : ''}`}
+                    onClick={() => setGithubCategory(category)}
+                  >
+                    {category}
+                    <span>
+                      {category === 'Hammasi'
+                        ? githubResources.length
+                        : githubResources.filter((r) => r.category === category).length}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="github-list">
+                {githubResources
+                  .filter((resource) => {
+                    const matchesCategory = githubCategory === 'Hammasi' || resource.category === githubCategory
+                    const matchesSearch =
+                      !githubSearch ||
+                      resource.name.toLowerCase().includes(githubSearch.toLowerCase()) ||
+                      resource.description.toLowerCase().includes(githubSearch.toLowerCase())
+                    return matchesCategory && matchesSearch
+                  })
+                  .map((resource) => (
+                    <div key={resource.id} className="github-item">
+                      <div className="github-item-header">
+                        <span className="github-item-icon">{resource.icon}</span>
+                        <div className="github-item-info">
+                          <a
+                            href={resource.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="github-item-name"
+                          >
+                            {resource.name}
+                          </a>
+                          <p className="github-item-description">{resource.description}</p>
+                        </div>
+                      </div>
+                      <div className="github-item-meta">
+                        <span className="github-item-category">{resource.category}</span>
+                        <span className="github-item-stars">⭐ {resource.stars}</span>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
         </main>
       )}
 
@@ -4074,12 +4166,12 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         </button>
         <button
           type="button"
-          className={mainSection === 'github' ? 'active' : ''}
-          onClick={() => setMainSection('github')}
-          aria-pressed={mainSection === 'github'}
+          className={mainSection === 'library' ? 'active' : ''}
+          onClick={() => setMainSection('library')}
+          aria-pressed={mainSection === 'library'}
         >
-          <span aria-hidden="true">🔍</span>
-          <span>GitHub</span>
+          <span aria-hidden="true">📚</span>
+          <span>Kutubxona</span>
         </button>
         <button
           type="button"

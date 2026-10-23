@@ -2988,6 +2988,13 @@ button:disabled {
   gap: 2px;
 }
 
+/* Library tabs */
+.library-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 /* GitHub Explorer */
 .github-panel {
   display: flex;
