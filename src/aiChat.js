@@ -30,8 +30,24 @@ const generalKnowledge = [
     response: `**TOPIK (Test of Proficiency in Korean)** — koreys tilini bilish darajasini tasdiqlovchi rasmiy imtihon. 📋\n\n**Darajalar:**\n- **TOPIK I** (Boshlang'ich)\n  - TOPIK I-1: Eshitish (듣기)\n  - TOPIK I-2: O'qish (읽기)\n  - Daraja: 1-2\n\n- **TOPIK II** (O'rta va yuqori)\n  - TOPIK II-1: Eshitish (듣기)\n  - TOPIK II-2: O'qish (읽기)\n  - TOPIK II-3: Yozish (쓰기)\n  - Daraja: 3-6\n\n**Topik Play ilovasi** sizga TOPIK imtihoniga tayyorlanishda yordam beradi:\n- Lug'at so'zlar\n- Grammatika qoidalari\n- Test savollari\n- Eshitish mashqlari\n\nQaysi qism bo'yicha yordam kerak?`
   },
   {
-    patterns: ['koreys alifbo', 'hangul', '한글', 'koreys harflar'],
-    response: `**Hangul (한글)** — koreys alifbosi, 1443-yilda Sejong the Great tomonidan yaratilgan. 📝\n\n**Asosiy undoshlar (14 ta):**\nㄱ (g/k), ㄴ (n), ㄷ (d/t), ㄹ (r/l), ㅁ (m), ㅂ (b/p), ㅅ (s), ㅇ (ng), ㅈ (j), ㅊ (ch), ㅋ (k), ㅌ (t), ㅍ (p), ㅎ (h)\n\n**Asosiy unli harflar (10 ta):**\nㅏ (a), ㅑ (ya), ㅓ (eo), ㅕ (yeo), ㅗ (o), ㅛ (yo), ㅜ (u), ㅠ (yu), ㅡ (eu), ㅣ (i)\n\n**Misol:**\n- 한국 (han-guk) — Koreya\n- 사랑 (sa-rang) — Muhabbat\n- 안녕하세요 (ann-yeong-ha-se-yo) — Salom\n\nHangul — dunyodagi eng ilohiy va oson o'zlashtiriladigan yozuv tizimlaridan biri!`
+    patterns: ['koreys alifbo', 'hangul', '한글', 'koreys harflar', 'harflarni o\'rgat', 'harflarni oyrat', 'alifbo', 'koreys harf'],
+    response: `**Hangul (한글)** — koreys alifbosi, 1443-yilda Sejong the Great tomonidan yaratilgan. 📝\n\nHangul 14 ta asosiy undosh va 10 ta asosiy unli harfdan iborat.\n\n**Asosiy undoshlar (14 ta):**\n\n| Harf | O'qilishi | Misol |\n|------|-----------|-------|\n| ㄱ | g/k | 가 (ga) |\n| ㄴ | n | 나 (na) |\n| ㄷ | d/t | 다 (da) |\n| ㄹ | r/l | 라 (ra) |\n| ㅁ | m | 마 (ma) |\n| ㅂ | b/p | 바 (ba) |\n| ㅅ | s | 사 (sa) |\n| ㅇ | ng/— | 아 (a) |\n| ㅈ | j | 자 (ja) |\n| ㅊ | ch | 차 (cha) |\n| ㅋ | k (kuchli) | 카 (ka) |\n| ㅌ | t (kuchli) | 타 (ta) |\n| ㅍ | p (kuchli) | 파 (pa) |\n| ㅎ | h | 하 (ha) |\n\n**Asosiy unli harflar (10 ta):**\n\n| Harf | O'qilishi | Misol |\n|------|-----------|-------|\n| ㅏ | a | 가 (ga) |\n| ㅑ | ya | 야 (ya) |\n| ㅓ | eo | 서 (seo) |\n| ㅕ | yeo | 여 (yeo) |\n| ㅗ | o | 고 (go) |\n| ㅛ | yo | 요 (yo) |\n| ㅜ | u | 구 (gu) |\n| ㅠ | yu | 유 (yu) |\n| ㅡ | eu | 수 (su) |\n| ㅣ | i | 기 (gi) |\n\n**Qanday o'qiladi?**\nKoreys harflari bloklar shaklida yoziladi:\n- **Undosh + Unli** = Silaba\n- Misol: ㄱ + ㅏ = 가 (ga)\n\n**Misol so'zlar:**\n- 한국 (han-guk) — Koreya\n- 사랑 (sa-rang) — Muhabbat\n- 안녕하세요 (ann-yeong-ha-se-yo) — Salom\n- 감사합니다 (gam-sa-ham-ni-da) — Rahmat\n\n💡 **Maslahat:** Har kuni 2-3 ta harfni o'rganing va ular bilan oddiy so'zlar yarating!\n\nBatafsilroq biror harf haqida bilmoqchimisiz?`
+  },
+  {
+    patterns: ['undosh', 'undoshlar', 'consonant', 'koreys undosh'],
+    response: `**Koreys undosh harflari (자음):** 🔤\n\n**Asosiy undoshlar (14 ta):**\n\n1. **ㄱ** (giyeok) — g/k\n   - 가 (ga), 고 (go), 구 (gu)\n\n2. **ㄴ** (nieun) — n\n   - 나 (na), 노 (no), 누 (nu)\n\n3. **ㄷ** (digeut) — d/t\n   - 다 (da), 도 (do), 두 (du)\n\n4. **ㄹ** (rieul) — r/l\n   - 라 (ra), 로 (ro), 루 (ru)\n\n5. **ㅁ** (mieum) — m\n   - 마 (ma), 모 (mo), 무 (mu)\n\n6. **ㅂ** (bieup) — b/p\n   - 바 (ba), 보 (bo), 부 (bu)\n\n7. **ㅅ** (siot) — s\n   - 사 (sa), 소 (so), 수 (su)\n\n8. **ㅇ** (ieung) — ng/—\n   - 아 (a), 오 (o), 우 (u)\n\n9. **ㅈ** (jieut) — j\n   - 자 (ja), 조 (jo), 주 (ju)\n\n10. **ㅊ** (chieut) — ch\n    - 차 (cha), 초 (cho), 추 (chu)\n\n11. **ㅋ** (kieuk) — k (kuchli)\n    - 카 (ka), 코 (ko), 쿠 (ku)\n\n12. **ㅌ** (tieut) — t (kuchli)\n    - 타 (ta), 토 (to), 투 (tu)\n\n13. **ㅍ** (pieup) — p (kuchli)\n    - 파 (pa), 포 (po), 푸 (pu)\n\n14. **ㅎ** (hieut) — h\n    - 하 (ha), 호 (ho), 후 (hu)\n\n💡 **Eslatma:** ㅇ harfi so'z boshida o'qilmaydi, faqat so'z oxirida "ng" deb o'qiladi.`
+  },
+  {
+    patterns: ['unli', 'unlilar', 'vowel', 'koreys unli'],
+    response: `**Koreys unli harflari (모음):** 🔤\n\n**Asosiy unli harflar (10 ta):**\n\n1. **ㅏ** (a) — "a" deb o'qiladi\n   - 가 (ga), 나 (na), 다 (da)\n\n2. **ㅑ** (ya) — "ya" deb o'qiladi\n   - 야 (ya), nya (nya)\n\n3. **ㅓ** (eo) — "o" ga yaqin\n   - 서 (seo), 너 (neo)\n\n4. **ㅕ** (yeo) — "yo" ga yaqin\n   - 여 (yeo)\n\n5. **ㅗ** (o) — "o" deb o'qiladi\n   - 고 (go), 노 (no)\n\n6. **ㅛ** (yo) — "yo" deb o'qiladi\n   - 요 (yo)\n\n7. **ㅜ** (u) — "u" deb o'qiladi\n   - 구 (gu), 무 (mu)\n\n8. **ㅠ** (yu) — "yu" deb o'qiladi\n   - 유 (yu)\n\n9. **ㅡ** (eu) — "e" ga yaqin\n   - 수 (su), 루 (ru)\n\n10. **ㅣ** (i) — "i" deb o'qiladi\n    - 기 (gi), 니 (ni)\n\n**Qo'shimcha unli harflar (11 ta):**\n- ㅐ (ae), ㅔ (e), ㅚ (we), ㅟ (wi)\n- ㅘ (wa), ㅙ (wae), ㅝ (wo), ㅞ (weo)\n- ㅢ (ui), ㅢ (eu+i), ㅢ (wi)\n\n💡 **Maslahat:** Avval 10 ta asosiy unlini o'rganing, keyin qo'shimchalarga o'ting.`
+  },
+  {
+    patterns: ['hangul tarix', 'hangul qachon', 'sejong', 'sejong the great', 'alifbo tarix'],
+    response: `**Hangul tarixi:** 📜\n\n**Sejong the Great (세종대왕)** — 1443-yilda Hangul alifbosini yaratgan.\n\n**Nima uchun yaratildi?**\n- Xitoy harflari (한자) juda murakkab edi\n- Oddiy xalq o'qish-yozishni o'rganolmas edi\n- Sejong xalqqa oson yozuv tizimi berishni xohladi\n\n**Hangulning ajoyib tomonlari:**\n- 🧠 Ilmiy asosda yaratilgan\n- 👅 Til harakatini aks ettiradi\n- ⏰ 1-2 haftada o'zlashtirish mumkin\n- 🌍 UNESCO butun dunyo merosi e'tirof etilgan\n\n**Hangul kun (한글날)** — Har yili 15-oktyabr kuni Koreyada nishonlanadi!\n\nSejong the Great — Koreya tarixidagi eng hurmatli podshohlardan biri.`
+  },
+  {
+    patterns: ['koreys so\'z qanday yoziladi', 'koreys qanday o\'qiladi', 'koreys yozuv', 'koreys o\'qish'],
+    response: `**Koreys tilida so'zlar qanday yoziladi va o'qiladi?** 📖\n\n**Asosiy qoidalar:**\n\n1. **Bloklar shaklida yoziladi**\n   - Undosh + Unli = Silaba\n   - Misol: ㄱ + ㅏ = 가 (ga)\n\n2. **Uch xil blok tuzilishi:**\n   - **Undosh + Unli**: 가 (ga), 나 (na)\n   - **Undosh + Unli + Undosh**: 각 (gak), 반 (ban)\n   - **Undosh + Unli + Undosh + Undosh**: 각 (gak)\n\n3. **O'qish tartibi:**\n   - Chapdan o'ngga\n   - Yuqoridan pastga\n\n**Misol:**\n- 한국 (한-국) = han-guk (Koreya)\n- 사랑 (사-랑) = sa-rang (Muhabbat)\n- 학교 (학-교) = hak-gyo (Maktab)\n\n💡 **Maslahat:** Avval harflarni yaxshi o'rganing, keyin oddiy so'zlarni yozishni boshlang!\n\nQaysi harf yoki so'z haqida batafsil bilmoqchisiz?`
   },
   {
     patterns: ['koreya', 'koreya haqida', 'janubiy koreya', 'seul', 'koreys madaniyat'],
@@ -56,6 +72,46 @@ const generalKnowledge = [
   {
     patterns: ['oilа', 'oila', 'otam', 'onam', 'aka', 'opa', 'koreysda oila'],
     response: `**Koreys tilida oila a'zolari:** 👨‍👩‍👧‍👦\n\n- 👨 **아버지** (abeoji) — Ota\n- 👩 **어머니** (eomeoni) — Ona\n- 👦 **형/오빠** (hyeong/oppa) — Akka (erkak uchun)\n- 👧 **언니** (eonni) — Opa (erkak uchun)\n- 👦 **남동생** (namdongsaeng) — Uka\n- 👧 **여동생** (yeodongsaeng) — Singil\n- 👴 **할아버지** (harabeoji) — Bobo\n- 👵 **할머니** (halmeoni) — Buvi\n\n**Muhim:** Koreys tilida qarindoshlik atamalari yoshga qarab farq qiladi!\n\n**Misol:**\n- 아버지는 선생님이에요 — Otam o'qituvchi`
+  },
+  {
+    patterns: ['koreys vaqt', 'vaqt', 'soat', 'koreysda soat', 'saat', 'koreysda vaqt'],
+    response: `**Koreys tilida vaqt:** ⏰\n\n**Soat so'rash:**\n- **지금 몇 시예요?** (jigeum myeot siyeyo?) — Hozir nechachi?\n- **지금 몇 시예요?** — Hozir soat nechachi?\n\n**Javob berish:**\n- **지금 오후 세 시예요** (jigeum ohu se siyeyo) — Hozir soat 3\n\n**Koreys raqamlari bilan vaqt:**\n- 한 시 (han si) — Soat 1\n- 두 시 (du si) — Soat 2\n- 세 시 (se si) — Soat 3\n- 네 시 (ne si) — Soat 4\n- 다섯 시 (daseot si) — Soat 5\n\n**Daqiqa:**\n- 분 (bun) — daqiqa\n- 오후 세 시 오십 분 — Soat 3:50\n\n**Kunlar:**\n- 요일 (yoil) — Hafta kuni\n- 월요일 (woryoil) — Dushanba\n- 화요일 (hwayoil) — Seshanba\n- 수요일 (suyoil) — Chorshanba\n- 목요일 (mogyoil) — Payshanba\n- 금요일 (geumyoil) — Juma\n- 토요일 (toyoil) — Shanba\n- 일요일 (ilyoil) — Yakshanba\n\n**Oylar:**\n- 월 (wol) — oy\n- 1월 (ilwol) — Yanvar\n- 2월 (iwol) — Fevral\n- 12월 (sip iwol) — Dekabr`
+  },
+  {
+    patterns: ['koreys kunlar', 'hafta', 'hafta kunlari', 'kunlar', 'koreysda hafta'],
+    response: `**Koreys tilida hafta kunlari:** 📅\n\n| Koreyscha | O'zbekcha |\n|-----------|-----------|\n| 월요일 (woryoil) | Dushanba |\n| 화요일 (hwayoil) | Seshanba |\n| 수요일 (suyoil) | Chorshanba |\n| 목요일 (mogyoil) | Payshanba |\n| 금요일 (geumyoil) | Juma |\n| 토요일 (toyoil) | Shanba |\n| 일요일 (ilyoil) | Yakshanba |\n\n**Foydali gaplar:**\n- **오늘은 무슨 요일이에요?** — Bugun nima kuni?\n- **오늘은 월요일이에요** — Bugun dushanba\n- **내일은 화요일이에요** — Ertaga seshanba\n\n💡 **Eslatma:** Koreys tilida "요일" (yoil) so'zi "hafta kuni" degan ma'noni beradi.`
+  },
+  {
+    patterns: ['koreys oy', 'oylar', 'koreysda oy', 'yil', 'koreysda yil'],
+    response: `**Koreys tilida oylar:** 📆\n\n| Koreyscha | O'zbekcha |\n|-----------|-----------|\n| 1월 (ilwol) | Yanvar |\n| 2월 (iwol) | Fevral |\n| 3월 (samwol) | Mart |\n| 4월 (sawol) | Aprel |\n| 5월 (owol) | May |\n| 6월 (yukwol) | Iyun |\n| 7월 (chilwol) | Iyul |\n| 8월 (palwol) | Avgust |\n| 9월 (guwol) | Sentabr |\n| 10월 (sipwol) | Oktabr |\n| 11월 (sip iwol) | Noyabr |\n| 12월 (sip iwol) | Dekabr |\n\n**Foydali gaplar:**\n- **오늘은 몇 월이에요?** — Bugun nechi oy?\n- **오늘은 10월이에요** — Bugun oktyabr\n- **생일이 언제예요?** — Tug'ilgan kuningiz qachon?\n\n💡 **Eslatma:** Koreys tilida oy raqamlari xitoy-koreys raqamlari bilan aytiladi.`
+  },
+  {
+    patterns: ['koreys ranglar', 'ranglar', 'colors korean'],
+    response: `**Koreys tilidagi ranglar:** 🎨\n\n| Koreyscha | O'zbekcha |\n|-----------|-----------|\n| 빨간색 (ppalgansaek) | 🔴 Qizil |\n| 파란색 (paransaek) | 🔵 Ko'k |\n| 초록색 (choroksaek) | 🟢 Yashil |\n| 노란색 (noransaek) | 🟡 Sariq |\n| 흰색 (hwinsek) | ⚪ Oq |\n| 검은색 (geomeunsaek) | ⚫ Qora |\n| 갈색 (galsaek) | 🟤 Jigarrang |\n| 분홍색 (bunhongsae) | 💗 Pushti |\n| 보라색 (borasaek) | 💜 Binafsha |\n| 주황색 (juhwangsaek) | 🟠 To'q sariq |\n\n**Foydali gaplar:**\n- **이 꽃은 무슨 색깔이에요?** — Bu gul qanday rangda?\n- **이 꽃은 빨간색이에요** — Bu gul qizil rangda\n- **하늘은 파란색이에요** — Osmon ko'k rangda\n\n💡 **Eslatma:** "색" (saek) so'zi "rang" degan ma'noni beradi.`
+  },
+  {
+    patterns: ['koreys raqamlar', 'raqamlar', 'sonlar', 'koreysda nechachi'],
+    response: `Koreys tilida **2 ta raqam tizimi** mavjud: 🔢\n\n**1. Koreys raqamlari (한국어 숫자):**\n1 — 하나 (hana)\n2 — 둘 (dul)\n3 — 셋 (set)\n4 — 넷 (net)\n5 — 다섯 (daseot)\n6 — 여섯 (yeoseot)\n7 — 일곱 (ilgop)\n8 — 여덟 (yeodeol)\n9 — 아홉 (ahop)\n10 — 열 (yeol)\n\n**2. Xitoy-koreys raqamlari (한자 숫자):**\n1 — 일 (il)\n2 — 이 (i)\n3 — 삼 (sam)\n4 — 사 (sa)\n5 — 오 (o)\n6 — 육 (yuk)\n7 — 칠 (chil)\n8 — 팔 (pal)\n9 — 구 (gu)\n10 — 십 (sip)\n\n**Qachon qaysi ishlatiladi?**\n- **Koreys raqamlari**: narsalarni sanash, yosh, soat\n- **Xitoy-koreys**: sana, pul, telefon raqam, oy\n\n**Misol:**\n- 나이가 스물다섯이에요 — Mening yoshim 25 (koreys)\n- 가격은 오천원이에요 — Narxi 5000 won (xitoy-koreys)\n- 10월 5일 — 5-oktyabr (xitoy-koreys)`
+  },
+  {
+    patterns: ['koreys taom', 'taomlar', 'koreys ovqat', 'kimchi', 'koreys oshxona'],
+    response: `**Koreys oshxonasi:** 🍜\n\n**Mashhur taomlar:**\n\n1. **김치 (kimchi)** — Fermentlangan sabzavot, milliy taom\n2. **비빔밥 (bibimbap)** — Aralash plov, sabzavot va go'sht bilan\n3. **불고기 (bulgogi)** — Marinadlangan go'sht\n4. **김밥 (gimbap)** — Nori bilan o'ralgan plov\n5. **떡볶이 (tteokbokki)** — Acchiq kartoshka\n6. **된장찌개 (doenjang jjigae)** — Soy sousi sho'rvasi\n7. **김치찌개 (kimchi jjigae)** — Kimchi sho'rvasi\n8. **순두부 (sundubu)** — Yumshoq tofu sho'rvasi\n9. **冷면 (naengmyeon)** — Sovuq noodle\n10. **炸鸡 (yangnyeom chicken)** — Qovurilgan tovuq\n\n**Foydali gaplar:**\n- **맛있어요** (masisseyo) — Mazali!\n- **배가 고파요** (baega gopayo) — Och bo'ldim\n- **이거 뭐예요?** (igeo moyeyo?) — Bu nima?\n\n💡 **Maslahat:** Koreys taomlarini tatib ko'rish orqali til o'rganish juda qiziqarli!`
+  },
+  {
+    patterns: ['koreys tilini qanday organish', 'koreys tilini o\'rganish', 'koreys o\'rganish', 'koreys tilini o\'rganish usullari'],
+    response: `**Koreys tilini o'rganish usullari:** 📚\n\n**1-qadam: Asoslarni o'rganing**\n- 📝 Hangul alifbosini yodlang (1-2 hafta)\n- 🔢 Asosiy raqamlarni o'rganing\n- 🎨 Ranglar, kunlar, oylar\n\n**2-qadam: So'z boyligini oshiring**\n- 📖 Har kuni 5-10 ta yangi so'z o'rganing\n- 📝 So'zlarni misol gaplar bilan yodlang\n- 🧠 Test qilib, bilimingizni tekshiring\n\n**3-qadam: Grammatika**\n- 📋 Asosiy grammatika qoidalarini o'rganing\n- 💬 Oddiy gaplar tuzing\n- ✏️ Yozish mashqi qiling\n\n**4-qadam: Eshitish**\n- 🎧 Koreys qo'shiqlar tinglang\n- 📺 K-drama va filmlar tomosha qiling\n- 🎙️ Koreys podkastlar tinglang\n\n**5-qadam: Suhbat mashqi**\n- 💬 Men bilan koreys tilida suhbatlashing\n- 👥 Koreys tilida gaplashadigan do'stlar toping\n- 🗣️ O'zingiz bilan koreyscha gaplashing\n\n**Foydali resurslar:**\n- Topik Play ilovasi\n- YouTube: KoreanClass101, Talk To Me In Korean\n- Kitoblar: TOPIK prep materials\n\n💡 **Eng muhimi:** Har kuni mashq qiling! Kuniga 30 daqiqa ham yetarli.`
+  },
+  {
+    patterns: ['koreys gaplar', 'foydali gaplar', 'koreyscha gap', 'koreyscha nima deb'],
+    response: `**Foydali koreys gaplari:** 💬\n\n**Salomlashish:**\n- 안녕하세요 (annyeonghaseyo) — Salom\n- 만나서 반갑습니다 (mannaseo bangapseumnida) — Tanishganimdan xursandman\n- 안녕히 가세요 (annyeonghi gaseyo) — Xayr (ketayotgan kishi uchun)\n- 안녕히 계세요 (annyeonghi gyeseyo) — Xayr (qolayotgan kishi uchun)\n\n**Rahmat:**\n- 감사합니다 (gamsahamnida) — Rahmat\n- 천만에요 (cheonmaneyo) — Arzimaydi\n\n**So'rash:**\n- 어떻게 지내세요? (otteoke jinaeseyo?) — Qalaysiz?\n- 이름이 뭐예요? (ireumi moyeyo?) — Ismingiz nima?\n- 어디에서 왔어요? (eodieseo wasseoyo?) — Qayerdan keldingiz?\n- 한국어가 잘 해요! (hangugeo ga jal hayo!) — Koreys tilingiz yaxshi!\n\n**Kundalik:**\n- 네 (ne) — Ha\n- 아니요 (aniyo) — Yo'q\n- 죄송합니다 (joesonghamnida) — Kechirasiz\n- 도와주세요 (dowajuseyo) — Yordam bering\n- 이해하지 못했어요 (ihaehaji motasseoyo) — Tushunmadim\n- 다시 한번 말해 주세요 (dasi hanbeun malhae juseyo) — Qayta ayting\n\n💡 **Maslahat:** Har kuni bitta yangi gap yodlang va ishlatib ko'ring!`
+  },
+  {
+    patterns: ['koreys madaniyat', 'koreys an\'ana', 'koreys urf odat', 'k-pop', 'k-drama'],
+    response: `**Koreys madaniyati:** 🇰🇷\n\n**K-pop (Korean Pop):**\n- BTS, BLACKPINK, TWICE, Stray Kids va boshqa guruhlar\n- Koreys pop musiqasi dunyoga mashhur\n- Koreys tilini o'rganish uchun yaxshi vosita\n\n**K-drama (Korean Drama):**\n- "Crash Landing on You", "Squid Game", "Goblin"\n- Subtitle bilan tomosha qilib, til o'rganing\n- Kundalik koreys tilini eshitish imkonini beradi\n\n**An'anaviy kiyim:**\n- 한복 (hanbok) — Koreys an'anaviy kiyimi\n- Bayramlarda kiyiladi\n\n**Taom madaniyati:**\n- Kimchi — har bir ovqatda\n- Choy ichish madaniyati\n- Birga ovqatlanish an'anasi\n\n**Bayramlar:**\n- 설날 (Seollal) — Koreys yangi yili\n- 추석 (Chuseok) — Hosil bayrami\n- 한글날 (Hangul kun) — 15-oktyabr\n\n💡 **Maslahat:** K-pop va K-drama orqali koreys tilini o'rganish juda qiziq va samarali!`
+  },
+  {
+    patterns: ['koreys so\'zlar', 'koreys so\'z', 'koreys lugat', 'koreyscha so\'zlar'],
+    response: `**Eng ko'p ishlatiladigan koreys so'zlar:** 📝\n\n**Asosiy so'zlar:**\n- 사람 (saram) — Kishi\n- 물 (mul) — Suv\n- 밥 (bap) — Ovqat/plov\n- 집 (jip) — Uy\n- 학교 (hyeogyo) — Maktab\n- 친구 (chingu) — Do'st\n- 사랑 (sarang) — Muhabbat\n- 가족 (gajok) — Oila\n- 일 (il) — Ish\n- 돈 (don) — Pul\n\n**Feyllar:**\n- 좋아요 (joayo) — Yaxshi / Yoqadi\n- 크다 (keuda) — Katta\n- 작다 (jakda) — Kichik\n- 덥다 (deuptda) — Issiq\n- 춥다 (chuptda) — Sovuq\n- 맛있어요 (masisseyo) — Mazali\n- 예뻐요 (yeppeoyo) — Chiroyli\n- 멋있어요 (meosisseoyo) — Ajoyib\n\n**Vaqt so'zlari:**\n- 오늘 (oneul) — Bugun\n- 내일 (naeil) — Ertaga\n- 어제 (eoje) — Kecha\n- 지금 (jigeum) — Hozir\n- 빨리 (ppalli) — Tez\n- 천천히 (cheoncheonhi) — Sekin\n\n💡 **Maslahat:** Har kuni 5 ta yangi so'z o'rganing va ular bilan gap tuzing!`
   }
 ]
 
@@ -268,34 +324,20 @@ function detectIntent(message) {
   const grammarKeywords = ['grammatika', 'qoida', 'qanday ishlatiladi', 'qanday yoziladi', 'grammar', '문법']
   if (grammarKeywords.some(kw => msg.includes(kw))) return 'grammar'
 
-  // Translation keywords
-  const translationKeywords = ['tarjima', 'nima degani', 'nima degan', 'ma\'no', 'ma\'nosi', 'tarjimasi', 'translate', '번역', '뜻']
+  // Translation keywords - ONLY explicit translation requests
+  const translationKeywords = ['tarjimasi', 'tarjima qilib', 'tarjima qiling', 'tarjima qilingan', 'nima degani', 'nima degan', 'ma\'nosi', 'ma\'no', 'translate', '번역', '뜻']
   if (translationKeywords.some(kw => msg.includes(kw))) return 'translation'
 
   // Help keywords
   const helpKeywords = ['yordam', 'help', 'nima qila olasiz', 'yordam bering', '도움', 'qanday yordam']
   if (helpKeywords.some(kw => msg.includes(kw))) return 'help'
 
-  // Check if message contains Korean characters — could be translation or conversation
-  const hasKorean = /[가-힣]/.test(message)
-
   // Check general knowledge
   for (const entry of generalKnowledge) {
     if (entry.patterns.some(p => msg.includes(p))) return 'general'
   }
 
-  // Check if it's a simple word that might need translation
-  if (hasKorean && msg.length < 20) return 'translation'
-
-  // Check if message is a single word or short phrase — likely translation
-  if (msg.split(/\s+/).length <= 3 && !hasKorean) {
-    // Check if it's in our dictionary
-    for (const key of Object.keys(translationDict)) {
-      if (msg.includes(key) || key.includes(msg)) return 'translation'
-    }
-  }
-
-  // Default: try to handle as general conversation or translation
+  // Default: handle as conversation (no auto-translation)
   return 'conversation'
 }
 
@@ -567,22 +609,22 @@ function generateConversationReply(message) {
   // Greetings
   if (msg.includes('salom') || msg.includes('assalom') || msg.includes('hello') || msg.includes('hi') || msg.includes('안녕')) {
     const greetings = [
-      `안녕하세요! 👋 Salom! Men **Asiye AI** — koreys tilini o'rganish bo'yicha aqlli yordamchiman. 🌸\n\nSizga qanday yordam bera olaman? Istalgan savol bering!`,
-      `안녕하세요! 👋 Assalomu alaykum! Men Asiye AI, koreys tilini o'rganishda yordam berishdan xursandman! 🌸`,
-      `Salom! 😊 Men Asiye AI. Koreys tilida suhbatlashishni boshlaymizmi?`
+      `안녕하세요! 👋 Salom! Men **Asiye AI** — koreys tilini o'rganish bo'yicha aqlli yordamchiman.\n\nSizga qanday yordam bera olaman?\n- So'z tarjimasi uchun "**so'z tarjimasi**" deb yozing\n- Grammatika haqida so'rashingiz mumkin\n- Koreys tilida suhbatlashish\n- Test savollari\n- Hangul alifbo haqida\n- Koreys madaniyati haqida\n\nBemalol savol bering! 😊`,
+      `안녕하세요! 👋 Assalomu alaykum! Men Asiye AI, koreys tilini o'rganishda yordam berishdan xursandman!\n\nQaysi mavzuda yordam kerak? 😊`,
+      `Salom! 😊 Men Asiye AI. Koreys tilida suhbatlashishni boshlaymizmi?\n\nMisol: "Koreys alifbo haqida aytib bering" yoki "test" deb yozing!`
     ]
     return greetings[Math.floor(Math.random() * greetings.length)]
   }
 
   // How are you
-  if (msg.includes('qalaysiz') || msg.includes('yashasiz') || msg.includes('어떻게')) {
-    return `저는 잘 있어요! 😊 Men yaxshiman, rahmat! Siz qalaysiz?\n\nKoreys tilida "Qalaysiz?" deb so'rash uchun: **어떻게 지내세요?** (otteoke jinaeseyo?)`
+  if (msg.includes('qalaysiz') || msg.includes('yashasiz') || msg.includes('어떻게 지내')) {
+    return `저는 잘 있어요! 😊 Men yaxshiman, rahmat! Siz qalaysiz?\n\nKoreys tilida "Qalaysiz?" deb so'rash uchun:\n- **어떻게 지내세요?** (otteoke jinaeseyo?) — Qalaysiz?\n- **잘 지내세요?** (jal jinaeseyo?) — Yaxshimisiz?\n\nJavob:\n- **잘 있어요** (jal isseoyo) — Yaxshiman\n- **괜찮아요** (gwaenchayo) — Yaxshi`
   }
 
   // Thank you
   if (msg.includes('rahmat') || msg.includes('tashakkur') || msg.includes('감사') || msg.includes('thank')) {
     const thanks = [
-      `천만에요! 😊 Arzimaydi! Yana savollaringiz bo'lsa, bemalol so'rashingiz mumkin! 🌸`,
+      `천만에요! 😊 Arzimaydi! Yana savollaringiz bo'lsa, bemalol so'rashingiz mumkin!`,
       `도와드릴 수 있어서 기뻐요! 😊 Yordam bera olganimdan xursandman!`
     ]
     return thanks[Math.floor(Math.random() * thanks.length)]
@@ -590,35 +632,59 @@ function generateConversationReply(message) {
 
   // Korean phrases explanation
   if (msg.includes('감사합니다') || msg.includes('고마워')) {
-    return `**감사합니다** (gamsahamnida) — "Rahmat" degan ma'noni beradi. Rasmiy uslubda ishlatiladi.\n\n**고마워** (gomawo) — "Rahmat" degan ma'noni beradi. Norasmiy uslubda, do'stlar bilan ishlatiladi.`
+    return `**감사합니다** (gamsahamnida) — "Rahmat" degan ma'noni beradi. Rasmiy uslubda ishlatiladi.\n\n**고마워** (gomawo) — "Rahmat" degan ma'noni beradi. Norasmiy uslubda, do'stlar bilan ishlatiladi.\n\nBoshqa variantlar:\n- **감사해요** (gamsaheyo) — Rahmat (o'rta uslub)\n- **정말 고마워요** (jeongmal gomawoyo) — Juda rahmat`
   }
 
   if (msg.includes('안녕하세요')) {
-    return `**안녕하세요** (annyeonghaseyo) — "Salom" degan ma'noni beradi. Bu eng keng tarqalgan salomlashish usuli.\n\nBoshqa salomlashish usullari:\n- **안녕** (annyeong) — norasmiy "Salom"\n- **반갑습니다** (bangapseumnida) — "Tanishganimdan xursandman"`
+    return `**안녕하세요** (annyeonghaseyo) — "Salom" degan ma'noni beradi. Bu eng keng tarqalgan salomlashish usuli.\n\nBoshqa salomlashish usullari:\n- **안녕** (annyeong) — norasmiy "Salom"\n- **반갑습니다** (bangapseumnida) — "Tanishganimdan xursandman"\n- **안녕히 가세요** (annyeonghi gaseyo) — "Xayr" (ketayotgan kishi uchun)`
   }
 
-  // Try auto-translate for Korean text
+  // Check if message contains Korean - try to explain
   const hasKorean = /[가-힣]/.test(message)
   if (hasKorean) {
-    const autoResult = tryAutoTranslate(message)
-    if (autoResult) return autoResult
+    // Search in word databases
+    const wordResults = searchWord(message)
+    if (wordResults.length > 0) {
+      const word = wordResults[0]
+      let response = `📖 **${word.korean}** — ${word.meaning}`
+      if (word.example) {
+        response += `\n\n💡 Misol: ${word.example}`
+      }
+      return response
+    }
+    // Search in dictionary
+    for (const [key, value] of Object.entries(translationDict)) {
+      if (message.includes(key) || key.includes(message)) {
+        return `📖 **${key}** — ${value}\n\nBu so'zni yodlash uchun misol gap tuzib ko'ring!`
+      }
+    }
   }
 
-  // Try auto-translate for short Uzbek words
-  if (msg.split(/\s+/).length <= 3) {
-    const autoResult = tryAutoTranslate(message)
-    if (autoResult) return autoResult
-  }
-
-  // Check general knowledge
+  // Check general knowledge first
   const generalResult = generateGeneralResponse(message)
   if (generalResult) return generalResult
 
-  // Default conversation replies
+  // Try to find relevant info in word databases
+  if (msg.split(/\s+/).length <= 5) {
+    const wordResults = allWords.filter(w =>
+      w.meaning.toLowerCase().includes(msg) || msg.includes(w.meaning.toLowerCase())
+    )
+    if (wordResults.length > 0 && wordResults.length <= 3) {
+      let response = `Siz so'ragan so'zlar:\n\n`
+      wordResults.forEach((word, i) => {
+        response += `${i + 1}. **${word.korean}** — ${word.meaning}`
+        if (word.example) response += `\n   💡 ${word.example}`
+        response += `\n`
+      })
+      return response
+    }
+  }
+
+  // Default conversation replies - more helpful
   const defaultReplies = [
-    `Yaxshi savol! 🤔\n\nMen **Asiye AI** — koreys tilini o'rganish bo'yicha aqlli yordamchiman. 🌸\n\nSizga quyidagilar yordam bera olaman:\n\n📖 **Tarjima** — Istalgan so'z yoki gap yozing, tarjima qilib beraman\n📝 **Grammatika** — "grammatika: qoida" deb yozing\n🧠 **Test** — "test" deb yozing\n💬 **Suhbat** — koreys tilida yozing\n\nMisol:\n- "사랑 nima degani?"\n- "grammatika: 은/는"\n- "test"\n- "seni kim yaratgan?"`,
-    `Men **Asiye AI**! 🌸\n\nSavolingizni tushundim, lekin aniqroq javob berish uchun quyidagilardan foydalanishingiz mumkin:\n\n📖 So'z tarjimasi uchun so'zni yozing\n📝 Grammatika haqida so'rashingiz mumkin\n🧠 Test savollari uchun "test" deb yozing\n\nQanday yordam bera olaman?`,
-    `Koreys tilini o'rganish ajoyib! 💪\n\nMen **Asiye AI** — sizning shaxsiy koreys o'qituvchingiz. 🌸\n\nMen 455+ koreys so'zi va 100+ grammatika qoidasi haqida bilaman. Shuningdek, koreys madaniyati, TOPIK imtihoni va boshqa mavzularda ham yordam bera olaman.\n\nQaysi mavzuda yordam kerak?`
+    `Yaxshi savol! 🤔\n\nMen **Asiye AI** — koreys tilini o'rganish bo'yicha aqlli yordamchiman.\n\nSizga quyidagilar yordam bera olaman:\n\n📖 **Tarjima** — "so'z tarjimasi" deb yozing\n📝 **Grammatika** — "grammatika: qoida" deb yozing\n🧠 **Test** — "test" deb yozing\n💬 **Suhbat** — koreys tilida yozing\n📚 **Hangul** — alifbo haqida so'rashingiz mumkin\n🌍 **Madaniyat** — koreys madaniyati haqida\n\nMisol savollar:\n- "사랑 tarjimasi"\n- "koreys alifbo"\n- "koreys raqamlar"\n- "test"\n- "koreys taomlar"`,
+    `Men **Asiye AI**! Koreys tilini o'rganishda yordam beraman.\n\nSavolingizni tushundim. Quyidagi mavzularda yordam bera olaman:\n\n📚 Hangul alifbo va harflar\n📖 So'zlar tarjimasi\n📝 Grammatika qoidalari\n🧠 Test savollari\n🌍 Koreys madaniyati va urf-odatlari\n⏰ Vaqt, kunlar, oylar\n🎨 Ranglar, raqamlar\n🍜 Koreys taomlari\n\nQaysi mavzuda yordam kerak?`,
+    `Koreys tilini o'rganish ajoyib! 💪\n\nMen **Asiye AI** — sizning shaxsiy koreys o'qituvchingiz.\n\nMen 455+ koreys so'zi va 100+ grammatika qoidasi haqida bilaman. Shuningdek, koreys madaniyati, TOPIK imtihoni, Hangul alifbo va boshqa mavzularda ham yordam bera olaman.\n\nMisol savollar:\n- "koreys alifbo haqida"\n- "koreys tilini qanday o'rganish?"\n- "foydali koreys gaplar"\n- "test"\n\nQaysi mavzuda yordam kerak?`
   ]
 
   return defaultReplies[Math.floor(Math.random() * defaultReplies.length)]

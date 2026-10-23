@@ -2828,21 +2828,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
           <div className="ai-chat-header">
             <div className="ai-chat-title">
               <div className="ai-avatar">
-                <svg viewBox="0 0 40 40" width="28" height="28">
-                  <defs>
-                    <linearGradient id="asiyeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#7dd3fc" />
-                      <stop offset="50%" stopColor="#a78bfa" />
-                      <stop offset="100%" stopColor="#f9a8d4" />
-                    </linearGradient>
-                  </defs>
-                  <circle cx="20" cy="20" r="18" fill="url(#asiyeGrad)" opacity="0.2" />
-                  <circle cx="20" cy="20" r="12" fill="url(#asiyeGrad)" opacity="0.4" />
-                  <circle cx="16" cy="17" r="2" fill="#7dd3fc" />
-                  <circle cx="24" cy="17" r="2" fill="#a78bfa" />
-                  <path d="M15 24 Q20 28 25 24" stroke="#f9a8d4" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-                  <circle cx="20" cy="10" r="1.5" fill="#7dd3fc" opacity="0.6" />
-                </svg>
+                <span className="ai-text-logo">AI</span>
               </div>
               <div>
                 <h2>Asiye AI</h2>
@@ -2867,24 +2853,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
             {aiMessages.length === 0 ? (
               <div className="ai-welcome">
                 <div className="ai-welcome-logo">
-                  <svg viewBox="0 0 80 80" width="80" height="80">
-                    <defs>
-                      <linearGradient id="asiyeWelcomeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#7dd3fc" />
-                        <stop offset="50%" stopColor="#a78bfa" />
-                        <stop offset="100%" stopColor="#f9a8d4" />
-                      </linearGradient>
-                    </defs>
-                    <circle cx="40" cy="40" r="36" fill="url(#asiyeWelcomeGrad)" opacity="0.15" />
-                    <circle cx="40" cy="40" r="28" fill="url(#asiyeWelcomeGrad)" opacity="0.25" />
-                    <circle cx="40" cy="40" r="20" fill="url(#asiyeWelcomeGrad)" opacity="0.4" />
-                    <circle cx="32" cy="35" r="3.5" fill="#7dd3fc" />
-                    <circle cx="48" cy="35" r="3.5" fill="#a78bfa" />
-                    <path d="M30 48 Q40 56 50 48" stroke="#f9a8d4" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-                    <circle cx="40" cy="20" r="3" fill="#7dd3fc" opacity="0.7" />
-                    <circle cx="25" cy="28" r="2" fill="#a78bfa" opacity="0.5" />
-                    <circle cx="55" cy="28" r="2" fill="#f9a8d4" opacity="0.5" />
-                  </svg>
+                  <span className="ai-text-logo-large">AI</span>
                 </div>
                 <h3>Salom! Men Asiye AI ✨</h3>
                 <p>Koreys tilini o'rganish bo'yicha aqlli yordamchiman. Sizga qanday yordam bera olaman?</p>
@@ -2908,20 +2877,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                 <div key={msg.id} className={`ai-message ${msg.role === 'user' ? 'ai-message-user' : 'ai-message-ai'}`}>
                   {msg.role === 'ai' && (
                     <div className="ai-msg-avatar">
-                      <svg viewBox="0 0 40 40" width="20" height="20">
-                        <defs>
-                          <linearGradient id="asiyeMsgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#7dd3fc" />
-                            <stop offset="50%" stopColor="#a78bfa" />
-                            <stop offset="100%" stopColor="#f9a8d4" />
-                          </linearGradient>
-                        </defs>
-                        <circle cx="20" cy="20" r="18" fill="url(#asiyeMsgGrad)" opacity="0.2" />
-                        <circle cx="20" cy="20" r="12" fill="url(#asiyeMsgGrad)" opacity="0.4" />
-                        <circle cx="16" cy="17" r="2" fill="#7dd3fc" />
-                        <circle cx="24" cy="17" r="2" fill="#a78bfa" />
-                        <path d="M15 24 Q20 28 25 24" stroke="#f9a8d4" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-                      </svg>
+                      <span className="ai-text-small">AI</span>
                     </div>
                   )}
                   <div className="ai-bubble">
@@ -2985,20 +2941,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
             {aiTyping && (
               <div className="ai-message ai-message-ai">
                 <div className="ai-msg-avatar">
-                  <svg viewBox="0 0 40 40" width="20" height="20">
-                    <defs>
-                      <linearGradient id="asiyeTypingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#7dd3fc" />
-                        <stop offset="50%" stopColor="#a78bfa" />
-                        <stop offset="100%" stopColor="#f9a8d4" />
-                      </linearGradient>
-                    </defs>
-                    <circle cx="20" cy="20" r="18" fill="url(#asiyeTypingGrad)" opacity="0.2" />
-                    <circle cx="20" cy="20" r="12" fill="url(#asiyeTypingGrad)" opacity="0.4" />
-                    <circle cx="16" cy="17" r="2" fill="#7dd3fc" />
-                    <circle cx="24" cy="17" r="2" fill="#a78bfa" />
-                    <path d="M15 24 Q20 28 25 24" stroke="#f9a8d4" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-                  </svg>
+                  <span className="ai-text-small">AI</span>
                 </div>
                 <div className="ai-bubble ai-typing-bubble">
                   <div className="ai-typing-dots">
