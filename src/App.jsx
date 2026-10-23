@@ -2609,8 +2609,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         </main>
       )}
 
-<<<<<<< Updated upstream
-      {mainSection === 'topik1' && activeTab === 'topik1words' && (
+      {mainSection === 'topik' && selectedTopikLevel === 'I' && activeTab === 'topik1words' && (
         <main className="panel topik-panel">
           <h2>📝 TOPIK 1 — Ko'p uchraydigan so'zlar</h2>
           <p className="settings-description">{topik1CommonWords.length} ta so'z · Test va eshitish mashqlari</p>

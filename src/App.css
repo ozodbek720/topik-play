@@ -2187,7 +2187,6 @@ button:disabled {
   }
 }
 
-<<<<<<< Updated upstream
 /* ===== iOS 26 Liquid Glass Animations ===== */
 
 @keyframes glassShimmer {
@@ -3034,7 +3033,6 @@ button:disabled {
   min-width: 0;
 }
 
-<<<<<<< Updated upstream
 .private-chat-info strong {
   font-size: 0.95rem;
   color: var(--text);
