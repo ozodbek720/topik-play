@@ -2486,6 +2486,13 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
       {mainSection === 'profile' && (
         <main className="panel profile-panel">
+          {/* Profile Header - TOPIK Play Brand */}
+          <div className="profile-brand-header">
+            <img className="profile-brand-logo" src="/topik-play-logo.svg" alt="Topik Play" />
+            <button className="profile-settings-toggle" onClick={() => setShowSettings((s) => !s)} aria-label="Sozlamalar">
+              ⚙️
+            </button>
+          </div>
           {/* Profile Header - Instagram Style */}
           <section className="profile-header-glass">
             <button className="profile-settings-toggle" onClick={() => setShowSettings((s) => !s)} aria-label="Sozlamalar">
@@ -2832,6 +2839,9 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
       {mainSection === 'ai' && (
         <main className="panel ai-chat-panel">
+          <div className="ai-brand-header">
+            <img className="ai-brand-logo" src="/topik-play-logo.svg" alt="Topik Play" />
+          </div>
           <div className="ai-chat-header">
             <div className="ai-chat-title">
               <div className="ai-avatar">
