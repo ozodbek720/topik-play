@@ -2017,7 +2017,7 @@ button:disabled {
 
 @media (max-width: 720px) {
   .app-shell {
-    padding: 14px 12px 112px;
+    padding: 14px 12px 140px;
   }
 
   .topbar {
@@ -2073,20 +2073,22 @@ button:disabled {
   .main-section-nav {
     width: calc(100% - 12px);
     bottom: max(8px, env(safe-area-inset-bottom));
-    padding: 8px;
-    gap: 6px;
+    padding: 6px;
+    gap: 4px;
     border-radius: 18px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
   .main-section-nav button {
-    min-height: 54px;
-    font-size: 0.72rem;
-    padding: 6px 3px;
+    min-height: 50px;
+    font-size: 0.65rem;
+    padding: 4px 2px;
     border-radius: 12px;
+    gap: 2px;
   }
 
   .main-section-nav button > span:first-child {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
   }
 
   .topik-two-skills {
@@ -2115,8 +2117,29 @@ button:disabled {
   }
 
   .panel {
-    padding: 16px;
-    border-radius: 18px;
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .home-links-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .home-link-card {
+    padding: 16px 10px;
+  }
+
+  .home-link-icon {
+    font-size: 1.6rem;
+  }
+
+  .home-link-title {
+    font-size: 0.85rem;
+  }
+
+  .home-link-desc {
+    font-size: 0.7rem;
   }
 
   .auth-card {
@@ -3393,50 +3416,101 @@ button:disabled {
 
 @media (max-width: 360px) {
   .app-shell {
-    padding-right: 10px;
-    padding-left: 10px;
+    padding: 10px 8px 140px;
   }
 
   .nav-tabs button {
-    font-size: 0.74rem;
+    font-size: 0.7rem;
+  }
+
+  .main-section-nav {
+    padding: 4px;
+    gap: 3px;
+  }
+
+  .main-section-nav button {
+    min-height: 46px;
+    font-size: 0.6rem;
+    padding: 3px 1px;
+  }
+
+  .main-section-nav button > span:first-child {
+    font-size: 1rem;
   }
 
   .difficulty-btn {
     padding: 8px 5px;
-    font-size: 0.76rem;
+    font-size: 0.72rem;
   }
 
   .difficulty-btn small {
-    font-size: 0.62rem;
+    font-size: 0.6rem;
   }
 
   .profile-avatar-wrapper {
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
   }
 
   .profile-avatar,
   .profile-avatar-placeholder {
-    width: 64px;
-    height: 64px;
-    font-size: 1.6rem;
+    width: 56px;
+    height: 56px;
+    font-size: 1.4rem;
   }
 
   .chat-input-form .primary-btn {
-    padding: 10px 12px;
-    font-size: 0.85rem;
+    padding: 8px 10px;
+    font-size: 0.8rem;
   }
 
   .github-item {
-    padding: 12px;
+    padding: 10px;
   }
 
   .github-item-icon {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
   }
 
   .github-item-name {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+  }
+
+  .home-links-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .home-link-card {
+    padding: 12px 8px;
+  }
+
+  .home-link-icon {
+    font-size: 1.4rem;
+  }
+
+  .home-link-title {
+    font-size: 0.78rem;
+  }
+
+  .home-link-desc {
+    font-size: 0.65rem;
+  }
+
+  .panel {
+    padding: 10px;
+  }
+
+  .auth-card {
+    padding: 18px 14px;
+  }
+
+  .question-box h2 {
+    font-size: 1.6rem;
+  }
+
+  .topik-korean {
+    font-size: 1.5rem;
   }
 }
 
@@ -5239,15 +5313,15 @@ button:disabled {
 
 @media (max-width: 768px) {
   .ai-chat-panel {
-    height: calc(100vh - 160px);
-    min-height: 300px;
+    height: calc(100vh - 180px);
+    min-height: 250px;
     flex-direction: column;
   }
   .ai-chat-sidebar {
     position: fixed;
     top: 0;
     left: 0;
-    width: 280px;
+    width: 260px;
     height: 100vh;
     z-index: 1000;
     transform: translateX(-100%);
@@ -5262,89 +5336,89 @@ button:disabled {
     display: flex;
   }
   .ai-bubble {
-    max-width: 88%;
-  }
-  .ai-chat-header {
-    padding: 10px 12px;
-    border-radius: 16px;
-  }
-  .ai-avatar {
-    width: 32px;
-    height: 32px;
-  }
-  .ai-avatar svg {
-    width: 20px;
-    height: 20px;
-  }
-  .ai-chat-title h2 {
-    font-size: 0.85rem;
-  }
-  .ai-messages-container {
-    padding: 12px;
-  }
-  .ai-input-container {
-    padding: 8px 10px;
-    gap: 6px;
-  }
-  .ai-welcome-suggestions {
-    grid-template-columns: 1fr;
-  }
-  .ai-welcome-logo svg {
-    width: 60px;
-    height: 60px;
-  }
-}
-
-@media (max-width: 480px) {
-  .ai-chat-panel {
-    height: calc(100vh - 150px);
-    min-height: 300px;
+    max-width: 90%;
   }
   .ai-chat-header {
     padding: 8px 10px;
-    border-radius: 12px;
-    gap: 8px;
+    border-radius: 14px;
   }
   .ai-avatar {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
   }
   .ai-avatar svg {
     width: 18px;
     height: 18px;
   }
   .ai-chat-title h2 {
-    font-size: 0.8rem;
-  }
-  .ai-subtitle {
-    font-size: 0.65rem;
+    font-size: 0.82rem;
   }
   .ai-messages-container {
-    padding: 8px;
-    gap: 8px;
-  }
-  .ai-bubble {
-    padding: 8px 10px;
-    max-width: 90%;
-  }
-  .ai-bubble-text {
-    font-size: 0.78rem;
-  }
-  .ai-bubble-time {
-    font-size: 0.6rem;
+    padding: 10px;
   }
   .ai-input-container {
     padding: 6px 8px;
     gap: 6px;
   }
+  .ai-welcome-suggestions {
+    grid-template-columns: 1fr;
+  }
+  .ai-welcome-logo svg {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ai-chat-panel {
+    height: calc(100vh - 170px);
+    min-height: 200px;
+  }
+  .ai-chat-header {
+    padding: 6px 8px;
+    border-radius: 12px;
+    gap: 6px;
+  }
+  .ai-avatar {
+    width: 26px;
+    height: 26px;
+  }
+  .ai-avatar svg {
+    width: 16px;
+    height: 16px;
+  }
+  .ai-chat-title h2 {
+    font-size: 0.75rem;
+  }
+  .ai-subtitle {
+    font-size: 0.6rem;
+  }
+  .ai-messages-container {
+    padding: 6px;
+    gap: 6px;
+  }
+  .ai-bubble {
+    padding: 6px 8px;
+    max-width: 92%;
+  }
+  .ai-bubble-text {
+    font-size: 0.75rem;
+  }
+  .ai-bubble-time {
+    font-size: 0.55rem;
+  }
+  .ai-input-container {
+    padding: 4px 6px;
+    gap: 4px;
+  }
   .ai-input {
-    padding: 8px 12px;
-    font-size: 0.8rem;
+    padding: 6px 10px;
+    font-size: 0.75rem;
   }
   .ai-send-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 0.9rem;
+    width: 34px;
+    height: 34px;
+    font-size: 0.85rem;
   }
   .ai-test-question {
     padding: 10px;
