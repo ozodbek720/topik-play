@@ -431,9 +431,9 @@ const wordCategories = [
 ]
 
 const quizDifficulties = [
-  { id: 'easy', label: 'Oson so‘zlar', points: 1 },
-  { id: 'medium', label: 'O‘rta so‘zlar', points: 2 },
-  { id: 'hard', label: 'Qiyin so‘zlar', points: 3 },
+  { id: 'easy', label: t('quizEasy'), points: 1 },
+  { id: 'medium', label: t('quizMedium'), points: 2 },
+  { id: 'hard', label: t('quizHard'), points: 3 },
 ]
 
 const initialCategoryIds = {
@@ -632,7 +632,8 @@ function getAuthErrorMessage(error) {
   return 'Google akkaunt bilan kirib bo\'lmadi. Internet aloqasini tekshiring yoki qurilmada davom eting.'
 }
 
-function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileReady, skipProfile }) {
+function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileReady, skipProfile, lang }) {
+  const t = (key) => translate(key, lang || 'uz')
   const [step, setStep] = useState(skipProfile ? 2 : 1)
   const [pf, setPf] = useState({ firstName: '', lastName: '', bio: '', avatar: '' })
   const [av, setAv] = useState('')
@@ -651,23 +652,23 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
     <main className="auth-shell">
       <section className="auth-card">
         <img className="auth-logo" src="/topik-play-logo.svg" alt="Topik Play" />
-        <p className="eyebrow">Koreys tilini o'rganish o'yini</p>
+        <p className="eyebrow">{t('loginGame')}</p>
         {step === 1 ? (
           <>
-            <h1 style={{fontSize:'1.3rem',marginBottom:'4px'}}>Profil (ixtiyoriy)</h1>
-            <p className="settings-description">Ismingizni kiriting yoki o'tkazib yuboring.</p>
+            <h1 style={{fontSize:'1.3rem',marginBottom:'4px'}}>{t('loginProfileOptional')}</h1>
+            <p className="settings-description">{t('loginNameHint')}</p>
             {error && <p className="auth-error" role="alert">{error}</p>}
             <div className="profile-setup-avatar" style={{marginBottom:'12px'}}>
               <label className="profile-setup-avatar-label">
-                {av ? <img className="profile-setup-avatar-img" src={av} alt="Avatar" /> : <div className="profile-setup-avatar-placeholder"><span>📷</span><span>Rasm yuklash</span></div>}
+                {av ? <img className="profile-setup-avatar-img" src={av} alt="Avatar" /> : <div className="profile-setup-avatar-placeholder"><span>📷</span><span>{t('loginUploadPhoto')}</span></div>}
                 <input type="file" accept="image/*" onChange={handleAvatarChange} hidden />
               </label>
             </div>
-            <input type="text" className="auth-input" placeholder="Ism" value={pf.firstName} onChange={(e) => setPf((p) => ({ ...p, firstName: e.target.value }))} />
-            <input type="text" className="auth-input" placeholder="Familiya" value={pf.lastName} onChange={(e) => setPf((p) => ({ ...p, lastName: e.target.value }))} />
-            <textarea className="auth-input auth-textarea" placeholder="Bio (ixtiyoriy)" rows={2} value={pf.bio} onChange={(e) => setPf((p) => ({ ...p, bio: e.target.value }))} />
-            <button type="button" className="primary-btn auth-next-btn" onClick={handleSubmit}>Davom etish →</button>
-            <button type="button" className="ghost-btn" style={{fontSize:'0.85rem'}} onClick={() => { setStep(2); if(onProfileReady) onProfileReady(pf) }}>O'tkazib yuborish</button>
+            <input type="text" className="auth-input" placeholder={t('loginFirstName')} value={pf.firstName} onChange={(e) => setPf((p) => ({ ...p, firstName: e.target.value }))} />
+            <input type="text" className="auth-input" placeholder={t('loginLastName')} value={pf.lastName} onChange={(e) => setPf((p) => ({ ...p, lastName: e.target.value }))} />
+            <textarea className="auth-input auth-textarea" placeholder={t('loginBio')} rows={2} value={pf.bio} onChange={(e) => setPf((p) => ({ ...p, bio: e.target.value }))} />
+            <button type="button" className="primary-btn auth-next-btn" onClick={handleSubmit}>{t('loginContinue')}</button>
+            <button type="button" className="ghost-btn" style={{fontSize:'0.85rem'}} onClick={() => { setStep(2); if(onProfileReady) onProfileReady(pf) }}>{t('loginSkip')}</button>
           </>
         ) : (
           <>
@@ -678,21 +679,21 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
                 {pf.bio && <p className="profile-setup-preview-bio">{pf.bio}</p>}
               </div>
             )}
-            <h1 style={{fontSize:'1.3rem',marginBottom:'4px'}}>Kirish usuli</h1>
-            <p className="settings-description">Google bilan sinxronlang yoki qurilmada saqlang.</p>
+            <h1 style={{fontSize:'1.3rem',marginBottom:'4px'}}>{t('loginMethod')}</h1>
+            <p className="settings-description">{t('loginSyncHint')}</p>
             {error && <p className="auth-error" role="alert">{error}</p>}
             <button type="button" className="google-sign-in-btn" onClick={onGoogleSignIn} disabled={busy}>
               <span className="google-mark" aria-hidden="true">G</span>
-              {busy ? 'Kirilmoqda...' : 'Google orqali kirish'}
+              {busy ? t('loginSigningIn') : t('loginGoogle')}
             </button>
             <p className="auth-help-note" style={{fontSize:'0.75rem',color:'var(--muted)',marginTop:'8px',textAlign:'center',marginBottom:'0'}}>
-              Google orqali kirish ishlamasa, "Qurilmada davom etish" tugmasini bosing.
+              {t('loginGoogleHelp')}
             </p>
-            <div className="auth-divider"><span>yoki</span></div>
+            <div className="auth-divider"><span>{t('loginOr')}</span></div>
             <button type="button" className="local-sign-in-btn" onClick={onLocalContinue} disabled={busy}>
-              Qurilmada davom etish
+              {t('loginLocal')}
             </button>
-            <p className="auth-privacy-note">Qurilmada saqlangan ma'lumotlar boshqa qurilmalarda ochilmaydi.</p>
+            <p className="auth-privacy-note">{t('loginPrivacy')}</p>
             {!skipProfile && <button type="button" className="ghost-btn auth-back-btn" onClick={() => setStep(1)}>{t('back')}</button>}
           </>
         )}
@@ -823,7 +824,7 @@ function App() {
     return (
       <main className="auth-shell">
         <img className="auth-logo" src="/topik-play-logo.svg" alt="Topik Play" />
-        <p className="settings-description">Kirish holati tekshirilmoqda...</p>
+        <p className="settings-description">{translate('loading', 'uz')}</p>
       </main>
     )
   }
@@ -837,6 +838,7 @@ function App() {
         onLocalContinue={handleLocalContinue}
         onProfileReady={handleProfileReady}
         skipProfile={skipProfile}
+        lang={localStorage.getItem('topik-play-lang') || 'uz'}
       />
     )
   }
@@ -1688,7 +1690,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
               Grammatika
             </button>
             <button className={activeTab === 'hearts' ? 'active' : ''} onClick={() => setActiveTab('hearts')}>
-              Do‘kon
+              {t('quizMistakes')}
             </button>
           </nav>
         )}
@@ -1697,11 +1699,11 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       {mainSection === 'topik1' && !['words', 'grammar'].includes(activeTab) && (
         <section className="stats-grid">
           <article className="stat-card accent">
-            <span>Ball</span>
+            <span>{t('quizScore')}</span>
             <strong>{gameState.score}</strong>
           </article>
           <article className="stat-card heart-stat">
-            <span>Yuraklar</span>
+            <span>{t('hearts')}</span>
             <strong aria-label={`${gameState.hearts} ta yurak`}>{'❤️'.repeat(gameState.hearts)}{'🖤'.repeat(MAX_HEARTS - gameState.hearts)}</strong>
             <small>{gameState.hearts}/{MAX_HEARTS}</small>
           </article>
@@ -1717,7 +1719,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
               onClick={() => handleQuizModeChange('words')}
               aria-pressed={quizMode === 'words'}
             >
-              So‘z testi
+              {t('quizWords')}
             </button>
             <button
               type="button"
@@ -1725,7 +1727,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
               onClick={() => handleQuizModeChange('grammar')}
               aria-pressed={quizMode === 'grammar'}
             >
-              Grammatika testi
+              {t('quizGrammar')}
             </button>
             <button
               type="button"
@@ -1733,7 +1735,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
               onClick={() => handleQuizModeChange('mistakes')}
               aria-pressed={quizMode === 'mistakes'}
             >
-              Xatolarim · {mistakeQueue.length}
+              {t('quizMistakes')} · {mistakeQueue.length}
             </button>
           </div>
 
@@ -1761,17 +1763,17 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                   : `Keyingi 5 ta yurak: ${String(refillHours).padStart(2, '0')}:${String(refillMinutes).padStart(2, '0')} dan so‘ng`}
               </p>
               <div className="progress-row">
-                <span>{quizMode === 'mistakes' ? `Xato ${mistakeIndex + 1}/${mistakeQueue.length}` : `So‘z ${currentIndex + 1}/${quizWords.length}`}</span>
+                <span>{quizMode === 'mistakes' ? `${t('quizWrong')} ${mistakeIndex + 1}/${mistakeQueue.length}` : `${t('quizQuestion')} ${currentIndex + 1}/${quizWords.length}`}</span>
                 <button type="button" className="ghost-btn" onClick={handleNextWord}>
                   {quizMode === 'mistakes' && isAnswered && selectedAnswer === activeWord.meaning
-                    ? 'Keyingisiga o‘tish'
-                    : quizMode === 'mistakes' ? 'O‘tkazib yuborish' : 'Keyingisiga o‘tkazib yuborish'}
+                    ? t('quizNext')
+                    : quizMode === 'mistakes' ? t('loginSkip') : t('quizNext')}
                 </button>
               </div>
 
               <div className="question-box">
                 <p className="label">
-                  {quizMode === 'mistakes' ? 'Xato qilingan so‘z' : `Koreyscha so‘z · ${activeQuizDifficulty.label} · ${activeQuizDifficulty.points} ball`}
+                  {quizMode === 'mistakes' ? t('quizMistakes') : `Koreyscha so'z · ${activeQuizDifficulty.label} · ${activeQuizDifficulty.points} ${t('quizScore')}`}
                 </p>
                 <div className="pronunciation-row">
                   <h2>{activeWord.korean}</h2>
@@ -1783,15 +1785,15 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                       aria-label={`${activeWord.korean} so‘zini talaffuz qilish`}
                       title="Koreyscha talaffuzni eshitish"
                     >
-                      🔊 Eshitish
+                      {t('topik1Speak')}
                     </button>
                   )}
                 </div>
                 {isAnswered && (
                   <p className={`result ${selectedAnswer === activeWord.meaning ? 'success' : 'error'}`}>
                     {selectedAnswer === activeWord.meaning
-                      ? `To'g'ri! Bu so'z - ${activeWord.meaning} (+${activeQuizDifficulty.points} ball)`
-                      : `Noto'g'ri. To'g'ri javob: ${activeWord.meaning} · 1 yurak yo'qotdingiz.`}
+                      ? `${t('aiCorrect')} ${activeWord.meaning} (+${activeQuizDifficulty.points} ${t('quizScore')})`
+                      : `${t('aiWrong')} ${activeWord.meaning}`}
                   </p>
                 )}
               </div>
@@ -1814,17 +1816,17 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
               {isAnswered && (
                 <div className="explanation-box">
-                  {activeWord.example && <p><strong>Masalan:</strong> {activeWord.example}</p>}
+                  {activeWord.example && <p><strong>Misol:</strong> {activeWord.example}</p>}
                   <button type="button" className="primary-btn" onClick={handleNextWord}>
                     {quizMode === 'mistakes' && selectedAnswer === activeWord.meaning
-                      ? 'Xatodan chiqarib keyingisiga o‘tish'
-                      : 'Keyingi so‘zga o‘tish'}
+                      ? t('quizNext')
+                      : t('quizNext')}
                   </button>
                 </div>
               )}
               {speechMessage && <p className="speech-status" role="status">{speechMessage}</p>}
               {gameState.hearts === 0 && !isAnswered && (
-                <p className="empty-words">Yuraklaringiz tugadi. Do‘kondan ballga yurak almashtiring yoki yangilanishini kuting.</p>
+                <p className="empty-words">t('hearts') + ' ' + t('quizRetry')</p>
               )}
             </>
           ) : activeGrammarQuestion ? (
@@ -1848,22 +1850,22 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                 ))}
               </div>
               <div className="progress-row">
-                <span>{quizMode === 'mistakes' ? `Xato ${mistakeIndex + 1}/${mistakeQueue.length}` : `Grammatika ${grammarIndex + 1}/${quizGrammar.length}`}</span>
+                <span>{quizMode === 'mistakes' ? `${t('quizWrong')} ${mistakeIndex + 1}/${mistakeQueue.length}` : `${t('quizGrammar')} ${grammarIndex + 1}/${quizGrammar.length}`}</span>
                 <button type="button" className="ghost-btn" onClick={handleNextGrammarQuestion}>
                   {quizMode === 'mistakes' && grammarAnswered && grammarSelectedAnswer === activeGrammarQuestion.pattern
-                    ? 'Keyingisiga o‘tish'
-                    : quizMode === 'mistakes' ? 'O‘tkazib yuborish' : 'Keyingisiga o‘tish'}
+                    ? t('quizNext')
+                    : quizMode === 'mistakes' ? t('loginSkip') : t('quizNext')}
                 </button>
               </div>
               <div className="question-box">
-                <p className="label">{quizMode === 'mistakes' ? 'Xato qilingan grammatika' : 'Qaysi koreyscha qoida bu ma’noga mos?'}</p>
+                <p className="label">{quizMode === 'mistakes' ? t('quizMistakes') : t('quizQuestion')}</p>
                 <h2 className="grammar-quiz-title">{activeGrammarQuestion.title}</h2>
                 <p className="grammar-quiz-description">{activeGrammarQuestion.explanation}</p>
                 {grammarAnswered && (
                   <p className={`result ${grammarSelectedAnswer === activeGrammarQuestion.pattern ? 'success' : 'error'}`}>
                     {grammarSelectedAnswer === activeGrammarQuestion.pattern
-                      ? 'To‘g‘ri! Siz 2 ball oldingiz.'
-                      : `Noto‘g‘ri. To‘g‘ri javob: ${activeGrammarQuestion.pattern} · 1 yurak yo‘qotdingiz.`}
+                      ? t('aiCorrect')
+                      : `${t('aiWrong')} ${activeGrammarQuestion.pattern}`}
                   </p>
                 )}
               </div>
@@ -1919,8 +1921,8 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       {mainSection === 'topik1' && activeTab === 'topik' && currentTopik && (
         <main className="panel topik-panel">
           <div className="topik-header">
-            <span className="topik-tag">TOPIK I mashq</span>
-            <span className="topik-counter">Savol {activeTopikIndex % topikExamples.length + 1}/{topikExamples.length}</span>
+            <span className="topik-tag">{t("navTopik1")} mashq</span>
+            <span className="topik-counter">{t("quizQuestion")} {activeTopikIndex % topikExamples.length + 1}/{topikExamples.length}</span>
           </div>
 
           <div className="quiz-mode-tabs topik-mode-tabs" role="group" aria-label="TOPIK mashq turini tanlang">
@@ -2220,8 +2222,8 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
       {mainSection === 'topik2' && (
         <main className="panel topik-two-panel">
-          <p className="eyebrow">Ikkinchi daraja</p>
-          <h1>TOPIK II ga tayyorgarlik</h1>
+          <p className="eyebrow">{t('navTopik2')}</p>
+          <h1>{t('navTopik2')}</h1>
           <nav className="topik-two-skills" aria-label="TOPIK II ko‘nikmalari">
             <button
               type="button"
@@ -2591,11 +2593,11 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
             <div className="profile-highlights">
               <div className="profile-highlight-item" onClick={() => setMainSection('topik1')}>
                 <div className="profile-highlight-icon">📘</div>
-                <span>TOPIK I</span>
+                <span>{t('profileHighlightTopik1')}</span>
               </div>
               <div className="profile-highlight-item" onClick={() => { setMainSection('topik2'); setTopikTwoSkill('vocabulary'); }}>
                 <div className="profile-highlight-icon">📖</div>
-                <span>Lug'at</span>
+                <span>{t('profileHighlightVocab')}</span>
               </div>
               <div className="profile-highlight-item" onClick={() => { setMainSection('topik2'); setTopikTwoSkill('sigi'); }}>
                 <div className="profile-highlight-icon">✍️</div>
@@ -2611,7 +2613,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
               </div>
               <div className="profile-highlight-item" onClick={() => setMainSection('chat')}>
                 <div className="profile-highlight-icon">💬</div>
-                <span>Chat</span>
+                <span>{t('profileHighlightChat')}</span>
               </div>
             </div>
           </section>
@@ -2738,15 +2740,15 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
           {!selectedChatUser ? (
             /* User List */
             <section className="chat-user-list">
-              <h2 className="chat-title">💬 Xabarlar</h2>
+              <h2 className="chat-title">{t('chatTitle')}</h2>
               {user && !localMode ? (
                 <>
                   <nav className="chat-tabs" aria-label="Chat bo'limlari">
                     <button className={chatTab === 'friends' ? 'active' : ''} onClick={() => setChatTab('friends')}>
-                      👥 Dostlar {friendProfiles.length > 0 && `(${friendProfiles.length})`}
+                      {t('chatFriends')} {friendProfiles.length > 0 && `(${friendProfiles.length})`}
                     </button>
                     <button className={chatTab === 'all' ? 'active' : ''} onClick={() => setChatTab('all')}>
-                      🌐 Hamma ({allProfiles.length})
+                      {t('chatEveryone')} ({allProfiles.length})
                     </button>
                   </nav>
                   {chatTab === 'friends' ? (
@@ -2786,7 +2788,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                             {isFriend ? (
                               <button className="chat-remove-friend-btn" onClick={() => handleRemoveFriend(u.id)} title="Dostlardan o'chirish">✕</button>
                             ) : (
-                              <button className="chat-add-friend-btn" onClick={() => handleAddFriend(u)}>+ Dost</button>
+                              <button className="chat-add-friend-btn" onClick={() => handleAddFriend(u)}>{t('chatAddFriend')}</button>
                             )}
                             <span className="chat-arrow" onClick={() => setSelectedChatUser(u)}>›</span>
                           </div>
@@ -2833,7 +2835,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                     <div ref={chatEndRef} />
                   </>
                 ) : (
-                  <p className="chat-no-messages">Chat uchun Google orqali kiring.</p>
+                  <p className="chat-no-messages">{t('chatLocalMode')}.</p>
                 )}
               </div>
 
