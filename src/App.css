@@ -5394,8 +5394,9 @@ button:disabled {
   display: none;
 }
 
+/* Navigation visible in AI mode - allows user to switch away */
 .app-shell[data-section='ai'] .main-section-nav {
-  display: none;
+  display: flex;
 }
 
 .app-shell[data-section='ai'] {
