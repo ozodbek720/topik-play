@@ -17,9 +17,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 ).toString()
 
 const MAX_HEARTS = 5
-const HEART_REFILL_INTERVAL = 12 * 60 * 60 * 1000
+const HEART_REFILL_INTERVAL = 24 * 60 * 60 * 1000
 const HEARTS_PER_REFILL = 5
-const HEART_EXCHANGE_COST = 30
+const HEART_EXCHANGE_COST = 40
 const UNVERIFIED_WORD_ID_START = 121
 const UNVERIFIED_WORD_ID_END = 2000
 const ADVANCED_WORDS_MIGRATION_KEY = 'topik-play-advanced-words-v1'
@@ -1190,6 +1190,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [pdfShowAnalysis, setPdfShowAnalysis] = useState(false)
   const pdfCanvasRef = useRef(null)
   const pdfTouchRef = useRef({ startX: 0, startY: 0 })
+  const pdfPinchRef = useRef({ startDist: 0, startZoom: 1 })
   const [githubSearch, setGithubSearch] = useState('')
   const [githubCategory, setGithubCategory] = useState('Hammasi')
   const [learningProgress, setLearningProgress] = useState(loadLearningProgress)
@@ -1252,6 +1253,14 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   // Messages tab: 'ai' or 'chat'
   const [messagesTab, setMessagesTab] = useState('news')
 
+  // News read tracking
+  const [newsReadToday, setNewsReadToday] = useState(() => {
+    try {
+      const saved = localStorage.getItem('topik-play-news-read-date')
+      return saved === getLocalDateKey() ? true : false
+    } catch { return false }
+  })
+
   // News section state
   const [expandedNews, setExpandedNews] = useState(null)
   const [expandedComments, setExpandedComments] = useState(null)
@@ -1273,6 +1282,17 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
   // Sample news data (translated per language)
   const homeNews = [
+    {
+      id: 5,
+      title: { uz: '🚀 Ilovaga yangi funksiyalar qo\'shildi!', en: '🚀 New features added!', ru: '🚀 Добавлены новые функции!' },
+      date: '24-oktyabr 2026',
+      image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&h=400&fit=crop',
+      text: {
+        uz: 'Kutubxona bo\'limiga PDF kitoblar qo\'shildi, AI tarjima funksiyasi ishga tushirildi, chat va yangiliklar yaxshilandi. Kunlik maqsad tizimi yangilandi — har 24 soatda yangilanadi, bajarilganda ball olasiz!',
+        en: 'PDF books added to library, AI translation launched, chat and news improved. Daily goal system updated — resets every 24 hours, earn points when completed!',
+        ru: 'В библиотеку добавлены PDF книги, запущен AI перевод, улучшены чат и новости. Система ежедневных целей обновлена — сбрасывается каждые 24 часа, получайте баллы за выполнение!'
+      }
+    },
     {
       id: 1,
       title: { uz: '🎉 Topik Play ilovasi yangilandi!', en: '🎉 Topik Play app updated!', ru: '🎉 Приложение Topik Play обновлено!' },
@@ -1929,6 +1949,13 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
   }, [chatMessages])
 
   // Auto-scroll AI chat
+  // Mark news as read when entering messages section
+  useEffect(() => {
+    if (mainSection === 'messages' && !newsReadToday) {
+      setNewsReadToday(true)
+      try { localStorage.setItem('topik-play-news-read-date', getLocalDateKey()) } catch {}
+    }
+  }, [mainSection, newsReadToday])
   useEffect(() => {
     aiEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [aiMessages, aiTyping])
@@ -2178,11 +2205,18 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
       const difficulty = quizDifficulties.find((item) => item.id === activeWord.difficulty) ?? quizDifficulties[0]
       setGameState((previous) => ({ ...previous, score: previous.score + difficulty.points }))
       const answerDate = getLocalDateKey()
-      setSettings((previous) => ({
-        ...previous,
-        dailyDate: answerDate,
-        dailyCompleted: (previous.dailyDate === answerDate ? previous.dailyCompleted : 0) + 1,
-      }))
+      setSettings((previous) => {
+        const newCompleted = (previous.dailyDate === answerDate ? previous.dailyCompleted : 0) + 1
+        // Kunlik plan bajarilganda ball berish
+        if (newCompleted === previous.dailyGoal) {
+          setGameState((gs) => ({ ...gs, score: gs.score + previous.dailyGoal }))
+        }
+        return {
+          ...previous,
+          dailyDate: answerDate,
+          dailyCompleted: newCompleted,
+        }
+      })
       if (quizMode !== 'mistakes') clearMistake('word', activeWord.id)
     } else {
       recordMistake('word', activeWord.id)
@@ -4729,6 +4763,7 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
           aria-pressed={mainSection === 'messages'}
         >
           <span aria-hidden="true">💌</span>
+          {!newsReadToday && <span className="nav-badge">!</span>}
           <span>{t('navAi')}</span>
         </button>
         <button
@@ -4826,18 +4861,44 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
             <div
               className="pdf-viewer-body"
               onTouchStart={(e) => {
-                pdfTouchRef.current = {
-                  startX: e.touches[0].clientX,
-                  startY: e.touches[0].clientY,
+                if (e.touches.length === 2) {
+                  // Pinch start
+                  const dx = e.touches[0].clientX - e.touches[1].clientX
+                  const dy = e.touches[0].clientY - e.touches[1].clientY
+                  pdfPinchRef.current = {
+                    startDist: Math.sqrt(dx * dx + dy * dy),
+                    startZoom: pdfZoom,
+                  }
+                } else if (e.touches.length === 1) {
+                  pdfTouchRef.current = {
+                    startX: e.touches[0].clientX,
+                    startY: e.touches[0].clientY,
+                  }
+                }
+              }}
+              onTouchMove={(e) => {
+                if (e.touches.length === 2 && pdfDoc) {
+                  e.preventDefault()
+                  const dx = e.touches[0].clientX - e.touches[1].clientX
+                  const dy = e.touches[0].clientY - e.touches[1].clientY
+                  const dist = Math.sqrt(dx * dx + dy * dy)
+                  const scale = dist / pdfPinchRef.current.startDist
+                  const newZoom = Math.min(3.0, Math.max(0.5, pdfPinchRef.current.startZoom * scale))
+                  setPdfZoom(newZoom)
                 }
               }}
               onTouchEnd={(e) => {
-                const dx = e.changedTouches[0].clientX - pdfTouchRef.current.startX
-                const dy = e.changedTouches[0].clientY - pdfTouchRef.current.startY
-                // Gorizontal swipe ustunlik qiladi
-                if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
-                  if (dx < 0) handlePdfNextPage() // chapga = keyingi
-                  else handlePdfPrevPage() // o'ngga = oldingi
+                if (e.touches.length < 2) {
+                  // Pinch ended, reset
+                  pdfPinchRef.current = { startDist: 0, startZoom: 1 }
+                }
+                if (e.changedTouches.length === 1 && e.touches.length === 0) {
+                  const dx = e.changedTouches[0].clientX - pdfTouchRef.current.startX
+                  const dy = e.changedTouches[0].clientY - pdfTouchRef.current.startY
+                  if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+                    if (dx < 0) handlePdfNextPage()
+                    else handlePdfPrevPage()
+                  }
                 }
               }}
             >

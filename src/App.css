@@ -6113,6 +6113,30 @@ button:disabled {
   text-align: center;
 }
 
+/* Navigation badge — red dot for unread messages */
+.nav-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 18px;
+  height: 18px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+  animation: badge-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
 /* AI Analysis Panel */
 .pdf-analysis-panel {
   background: rgba(102, 126, 234, 0.1);
