@@ -14,4 +14,15 @@
 // },
 
 export default [
+  {
+    id: 1,
+    title: '쓰기의 모든 것 — TOPIK Yozish Qismi',
+    author: 'StarTOPIK',
+    description: 'TOPIK imtihonining yozish qismiga to\'liq tayyorgarlik ko\'rish uchun eng qulay kitob. Barcha yozish turlari, namuna javoblar va foydali iboralar.',
+    category: 'TOPIK',
+    level: 'B1-B2',
+    pages: 150,
+    icon: '✏️',
+    pdfUrl: '/pdf/ssugui-modom-get.pdf',
+  },
 ]
