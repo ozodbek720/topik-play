@@ -798,6 +798,22 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
       // Device UID saqlash — chat ishlashi uchun
       const deviceUid = 'device-' + usernameLower
       localStorage.setItem('topik-play-device-uid', deviceUid)
+      
+      // Profilni Supabase'ga ham saqlash — boshqa foydalanuvchilar ko'rishi uchun
+      try {
+        saveProfile(deviceUid, {
+          uid: deviceUid,
+          firstName: deviceUsername.trim(),
+          lastName: '',
+          bio: '',
+          avatar: '',
+          email: '',
+          displayName: deviceUsername.trim(),
+        }).catch((e) => console.error('Device profil saqlash xatosi:', e))
+      } catch(e) {
+        console.error('Device profil saqlash xatosi:', e)
+      }
+      
       onLocalContinue()
     }
   }

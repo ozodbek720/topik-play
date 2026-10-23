@@ -62,7 +62,9 @@ CREATE INDEX idx_friends_myUid ON friends(myUid);
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Profiles are viewable by everyone" ON profiles FOR SELECT USING (true);
 CREATE POLICY "Profiles are insertable by authenticated users" ON profiles FOR INSERT WITH CHECK (auth.uid() = uid);
+CREATE POLICY "Profiles are insertable by anyone (device users)" ON profiles FOR INSERT WITH CHECK (true);
 CREATE POLICY "Profiles are updatable by owners" ON profiles FOR UPDATE USING (auth.uid() = uid);
+CREATE POLICY "Profiles are updatable by uid" ON profiles FOR UPDATE USING (uid = uid);
 
 -- Accounts
 ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
