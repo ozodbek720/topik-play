@@ -1818,11 +1818,13 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       }}
     >
       <header className="topbar">
-        <div className="brand-row">
-          <div>
-            <img className="brand-logo" src="/topik-play-logo.svg" alt="Topik Play — Koreys tilini o‘rganish o‘yini" />
+        {mainSection !== 'ai' && (
+          <div className="brand-row">
+            <div>
+              <img className="brand-logo" src="/topik-play-logo.svg" alt="Topik Play — Koreys tilini o'rganish o'yini" />
+            </div>
           </div>
-        </div>
+        )}
         {cloudError && <p className="account-sync-error" role="alert">{cloudError}</p>}
         {mainSection === 'topik1' && (
           <nav className="nav-tabs" aria-label="TOPIK I bo‘limi">
