@@ -1250,7 +1250,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [aiShowChatList, setAiShowChatList] = useState(false) // Mobile: show chat list sidebar
   const aiEndRef = useRef(null)
   // Messages tab: 'ai' or 'chat'
-  const [messagesTab, setMessagesTab] = useState('ai')
+  const [messagesTab, setMessagesTab] = useState('news')
 
   // News section state
   const [expandedNews, setExpandedNews] = useState(null)
@@ -2434,78 +2434,6 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
               <strong aria-label={`${gameState.hearts} ta yurak`}>{'❤️'.repeat(gameState.hearts)}{'🖤'.repeat(MAX_HEARTS - gameState.hearts)}</strong>
               <small>{gameState.hearts}/{MAX_HEARTS}</small>
             </article>
-          </section>
-
-          {/* ===== YANGILIKLAR BO'LIMI ===== */}
-          <section className="news-section">
-            <h2 className="news-section-title">📢 {t('newsTitle')}</h2>
-            <div className="news-feed">
-              {homeNews.map((news) => {
-                const comments = newsComments[news.id] || []
-                const isExpanded = expandedNews === news.id
-                return (
-                  <article key={news.id} className="news-card glass-card">
-                    {news.image && (
-                      <div className="news-image-wrapper">
-                        <img src={news.image} alt={news.title} className="news-image" />
-                      </div>
-                    )}
-                    <div className="news-content">
-                      <h3 className="news-title">{typeof news.title === 'object' ? (news.title[lang] || news.title.uz) : news.title}</h3>
-                      <p className="news-date">{news.date}</p>
-                      {(() => {
-                        const newsText = typeof news.text === 'object' ? (news.text[lang] || news.text.uz) : news.text
-                        return (
-                          <>
-                            <p className="news-text" style={{display: isExpanded ? 'block' : '-webkit-box'}}>{newsText}</p>
-                            {newsText.length > 200 && (
-                              <button type="button" className="news-expand-btn" onClick={() => setExpandedNews(isExpanded ? null : news.id)}>
-                                {isExpanded ? t('newsLess') : t('newsMore')}
-                              </button>
-                            )}
-                          </>
-                        )
-                      })()}
-                      {/* Fikrlar */}
-                      <div className="news-comments">
-                        <button type="button" className="news-comment-toggle" onClick={() => setExpandedComments(expandedComments === news.id ? null : news.id)}>
-                          💬 {t('newsComments')} ({comments.length})
-                        </button>
-                        {expandedComments === news.id && (
-                          <>
-                            <div className="news-comments-list">
-                              {comments.length === 0 ? (
-                                <p className="news-no-comments">{t('newsNoComments')}</p>
-                              ) : (
-                                comments.map((c, i) => (
-                                  <div key={i} className="news-comment-item">
-                                    <span className="news-comment-author">{c.author}</span>
-                                    <span className="news-comment-text">{c.text}</span>
-                                    <span className="news-comment-date">{c.date}</span>
-                                  </div>
-                                ))
-                              )}
-                            </div>
-                            <form className="news-comment-form" onSubmit={(e) => { e.preventDefault(); handleAddComment(news.id) }}>
-                              <input
-                                type="text"
-                                className="news-comment-input glass-input"
-                                placeholder={t('newsCommentPlaceholder')}
-                                value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
-                              />
-                              <button type="submit" className="news-comment-btn" disabled={!newComment.trim()}>
-                                {t('newsSendComment')}
-                              </button>
-                            </form>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </article>
-                )
-              })}
-            </div>
           </section>
 
           <div className="home-quick-links">
@@ -3906,6 +3834,90 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
       {mainSection === 'messages' && (
         <main className="panel messages-panel">
           <div className="chat-panel">
+          {/* Tablar: Yangiliklar / Chat */}
+          <nav className="chat-tabs" aria-label="Xabarlar bo'limlari" style={{marginBottom:'12px'}}>
+            <button className={messagesTab === 'news' ? 'active' : ''} onClick={() => { setMessagesTab('news'); setSelectedChatUser(null); }}>
+              📢 {t('newsTitle')}
+            </button>
+            <button className={messagesTab === 'chat' ? 'active' : ''} onClick={() => { setMessagesTab('chat'); setSelectedChatUser(null); }}>
+              💬 {t('chatTitle')}
+            </button>
+          </nav>
+
+          {messagesTab === 'news' ? (
+            /* YANGILIKLAR BO'LIMI */
+            <section className="news-section">
+              <div className="news-feed">
+                {homeNews.map((news) => {
+                  const comments = newsComments[news.id] || []
+                  const isExpanded = expandedNews === news.id
+                  return (
+                    <article key={news.id} className="news-card glass-card">
+                      {news.image && (
+                        <div className="news-image-wrapper">
+                          <img src={news.image} alt={news.title} className="news-image" />
+                        </div>
+                      )}
+                      <div className="news-content">
+                        <h3 className="news-title">{typeof news.title === 'object' ? (news.title[lang] || news.title.uz) : news.title}</h3>
+                        <p className="news-date">{news.date}</p>
+                        {(() => {
+                          const newsText = typeof news.text === 'object' ? (news.text[lang] || news.text.uz) : news.text
+                          return (
+                            <>
+                              <p className="news-text" style={{display: isExpanded ? 'block' : '-webkit-box'}}>{newsText}</p>
+                              {newsText.length > 200 && (
+                                <button type="button" className="news-expand-btn" onClick={() => setExpandedNews(isExpanded ? null : news.id)}>
+                                  {isExpanded ? t('newsLess') : t('newsMore')}
+                                </button>
+                              )}
+                            </>
+                          )
+                        })()}
+                        {/* Fikrlar */}
+                        <div className="news-comments">
+                          <button type="button" className="news-comment-toggle" onClick={() => setExpandedComments(expandedComments === news.id ? null : news.id)}>
+                            💬 {t('newsComments')} ({comments.length})
+                          </button>
+                          {expandedComments === news.id && (
+                            <>
+                              <div className="news-comments-list">
+                                {comments.length === 0 ? (
+                                  <p className="news-no-comments">{t('newsNoComments')}</p>
+                                ) : (
+                                  comments.map((c, i) => (
+                                    <div key={i} className="news-comment-item">
+                                      <span className="news-comment-author">{c.author}</span>
+                                      <span className="news-comment-text">{c.text}</span>
+                                      <span className="news-comment-date">{c.date}</span>
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                              <form className="news-comment-form" onSubmit={(e) => { e.preventDefault(); handleAddComment(news.id) }}>
+                                <input
+                                  type="text"
+                                  className="news-comment-input glass-input"
+                                  placeholder={t('newsCommentPlaceholder')}
+                                  value={newComment}
+                                  onChange={(e) => setNewComment(e.target.value)}
+                                />
+                                <button type="submit" className="news-comment-btn" disabled={!newComment.trim()}>
+                                  {t('newsSendComment')}
+                                </button>
+                              </form>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            </section>
+          ) : (
+            /* CHAT BO'LIMI */
+            <>
           {!selectedChatUser ? (
             /* User List */
             <section className="chat-user-list">
@@ -4045,6 +4057,8 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
                 </button>
               </div>
             </section>
+          )}
+            </>
           )}
           </div>
         </main>
