@@ -5,8 +5,8 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 
-const pdfPath = path.resolve(__dirname, 'public', 'pdf', 'topik-30-days-vocabulary.pdf');
-const outputPath = path.resolve(__dirname, 'public', 'pdf', 'cover-30days-vocab.png');
+const pdfPath = path.resolve(__dirname, 'public', 'pdf', 'ssugui-modom-get.pdf');
+const outputPath = path.resolve(__dirname, 'public', 'pdf', 'cover-part2.png');
 
 async function extractCover() {
   try {
@@ -36,7 +36,7 @@ async function extractCover() {
         width: coverWidth,
         height: coverHeight,
         channels: 4,
-        background: { r: 102, g: 126, b: 234, alpha: 255 }
+        background: { r: 118, g: 75, b: 162, alpha: 255 }
       }
     })
     .composite([
@@ -63,14 +63,14 @@ function createSVG(width, height) {
   <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
-        <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+        <stop offset="0%" style="stop-color:#764ba2;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#667eea;stop-opacity:1" />
       </linearGradient>
     </defs>
     <rect width="${width}" height="${height}" fill="url(#bg)" rx="20"/>
     <text x="${width/2}" y="${height/2 - 40}" font-family="Arial" font-size="80" fill="white" text-anchor="middle" font-weight="bold">📖</text>
-    <text x="${width/2}" y="${height/2 + 40}" font-family="Arial" font-size="26" fill="white" text-anchor="middle">30 Kunda TOPIK</text>
-    <text x="${width/2}" y="${height/2 + 80}" font-family="Arial" font-size="22" fill="rgba(255,255,255,0.8)" text-anchor="middle">Intermediate Vocabulary</text>
+    <text x="${width/2}" y="${height/2 + 40}" font-family="Arial" font-size="26" fill="white" text-anchor="middle">TOPIK Yozish</text>
+    <text x="${width/2}" y="${height/2 + 80}" font-family="Arial" font-size="22" fill="rgba(255,255,255,0.8)" text-anchor="middle">2-qism (151-301 bet)</text>
   </svg>`;
 }
 

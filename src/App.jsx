@@ -1180,6 +1180,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [libraryCategory, setLibraryCategory] = useState('Hammasi')
   const [selectedBook, setSelectedBook] = useState(null)
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false)
+  const [showsVideoOpen, setShowsVideoOpen] = useState(false)
   const [pdfDoc, setPdfDoc] = useState(null)
   const [pdfPage, setPdfPage] = useState(1)
   const [pdfTotalPages, setPdfTotalPages] = useState(0)
@@ -1574,9 +1575,11 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
     setSelectedBook(book)
     setPdfViewerOpen(true)
     if (book.pdfUrl && book.pdfUrl !== '#') {
+      // Agar kitobda startPage belgilangan bo'lsa, shundan boshlash
+      const bookStart = book.startPage || 1
       // localStorage dan oxirgi sahifani o'qish
       const savedPage = localStorage.getItem('pdf_last_page_' + book.id)
-      const startPage = savedPage ? parseInt(savedPage, 10) : 1
+      const startPage = savedPage ? parseInt(savedPage, 10) : bookStart
       loadPdfDocument(book.pdfUrl, startPage)
     }
   }
@@ -1595,11 +1598,14 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   }
 
   const handlePdfPrevPage = () => {
-    if (pdfPage > 1) setPdfPage(p => p - 1)
+    const bookStart = selectedBook?.startPage || 1
+    if (pdfPage > bookStart) setPdfPage(p => p - 1)
   }
 
   const handlePdfNextPage = () => {
-    if (pdfPage < pdfTotalPages) setPdfPage(p => p + 1)
+    const bookEnd = selectedBook?.endPage || pdfTotalPages
+    const maxPage = Math.min(bookEnd, pdfTotalPages)
+    if (pdfPage < maxPage) setPdfPage(p => p + 1)
   }
 
   const handlePdfZoomIn = () => {
@@ -2498,12 +2504,76 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
                 <span className="home-link-title">{t('chat')}</span>
                 <span className="home-link-desc">{t('homeChatDesc')}</span>
               </button>
+              <button type="button" className="home-link-card" onClick={() => setMainSection('shows')}>
+                <span className="home-link-icon">🎬</span>
+                <span className="home-link-title">{t('homeShowsTitle')}</span>
+                <span className="home-link-desc">{t('homeShowsDesc')}</span>
+              </button>
               <button type="button" className="home-link-card" onClick={() => setMainSection('profile')}>
                 <span className="home-link-icon">👤</span>
                 <span className="home-link-title">{t('profile')}</span>
                 <span className="home-link-desc">{t('settings')}</span>
               </button>
             </div>
+          </div>
+        </main>
+      )}
+
+      {/* ===== KORSA TVLAR BO'LIMI ===== */}
+      {mainSection === 'shows' && (
+        <main className="panel shows-panel">
+          <div className="shows-header">
+            <button type="button" className="ghost-btn" onClick={() => setMainSection('home')}>← Orqaga</button>
+            <h2>🎬 {t('homeShowsTitle')}</h2>
+          </div>
+          <p className="settings-description" style={{marginBottom:'16px'}}>
+            AI yordamida yaratilgan koreyscha suhbatlar. Har bir video koreys tilini o'rganishga yordam beradi.
+          </p>
+          <div className="shows-grid">
+            <article className="show-card glass-card" onClick={() => {
+              const video = document.querySelector('.show-video-overlay video');
+              if (video) {
+                video.src = 'https://www.youtube.com/embed/dQw4w9WgXcQ';
+                setShowsVideoOpen(true);
+              }
+            }}>
+              <div className="show-thumbnail">
+                <div className="show-thumbnail-bg show-bg-1">
+                  <span className="show-avatar">👨</span>
+                  <span className="show-avatar">👩</span>
+                </div>
+                <div className="show-play-btn">▶</div>
+                <span className="show-duration">5:30</span>
+              </div>
+              <div className="show-info">
+                <h3 className="show-title">Kundalik suhbat — Salomlashish</h3>
+                <p className="show-desc">이름이 뭐예요? — Menim ismim... Koreyscha salomlashish va tanishish.</p>
+                <div className="show-meta">
+                  <span>🟢 Boshlang'ich</span>
+                  <span>👁️ 1.2K</span>
+                </div>
+              </div>
+            </article>
+            <article className="show-card glass-card" onClick={() => {
+              setShowsVideoOpen(true);
+            }}>
+              <div className="show-thumbnail">
+                <div className="show-thumbnail-bg show-bg-2">
+                  <span className="show-avatar">👦</span>
+                  <span className="show-avatar">👧</span>
+                </div>
+                <div className="show-play-btn">▶</div>
+                <span className="show-duration">7:15</span>
+              </div>
+              <div className="show-info">
+                <h3 className="show-title">Do'konda xarid qilish</h3>
+                <p className="show-desc">이것 얼마예요? — Narxi qancha? Do'konda koreyscha gapirish.</p>
+                <div className="show-meta">
+                  <span>🟡 O'rta</span>
+                  <span>👁️ 890</span>
+                </div>
+              </div>
+            </article>
           </div>
         </main>
       )}
@@ -4889,8 +4959,8 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
               }}
               onTouchEnd={(e) => {
                 if (e.touches.length < 2) {
-                  // Pinch ended, reset
-                  pdfPinchRef.current = { startDist: 0, startZoom: 1 }
+                  // Pinch ended, keep current zoom for next pinch
+                  pdfPinchRef.current = { startDist: 0, startZoom: pdfZoom }
                 }
                 if (e.changedTouches.length === 1 && e.touches.length === 0) {
                   const dx = e.changedTouches[0].clientX - pdfTouchRef.current.startX
@@ -4915,6 +4985,25 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
               />
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Video overlay for shows */}
+      {showsVideoOpen && (
+        <div className="show-video-overlay" onClick={() => setShowsVideoOpen(false)}>
+          <iframe
+            src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+            allow="autoplay; encrypted-media"
+            allowFullScreen
+            title="Koreyscha suhbat videosi"
+          ></iframe>
+          <button
+            type="button"
+            className="show-video-close"
+            onClick={() => setShowsVideoOpen(false)}
+          >
+            ✕ Yopish
+          </button>
         </div>
       )}
     </div>

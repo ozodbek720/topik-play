@@ -76,6 +76,8 @@ const translations = {
     homeAiTitle: 'AI yordamchi',
     homeAiDesc: 'Savol bering',
     homeChatDesc: 'Do\'stlar bilan',
+    homeShowsTitle: 'Korsatuvlar',
+    homeShowsDesc: 'Koreyscha suhbatlar',
 
     // Library
     library: 'Kutubxona',
@@ -323,6 +325,8 @@ const translations = {
     homeAiTitle: 'AI assistant',
     homeAiDesc: 'Ask a question',
     homeChatDesc: 'With friends',
+    homeShowsTitle: 'Shows',
+    homeShowsDesc: 'Korean conversations',
 
     // Library
     library: 'Library',
@@ -557,6 +561,8 @@ const translations = {
     homeAiTitle: 'AI помощник',
     homeAiDesc: 'Задать вопрос',
     homeChatDesc: 'С друзьями',
+    homeShowsTitle: 'Шоу',
+    homeShowsDesc: 'Корейские диалоги',
 
     // Library
     library: 'Библиотека',
