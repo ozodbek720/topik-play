@@ -186,6 +186,10 @@ const translations = {
     loginPasswordShortDevice: 'Parol kamida 4 ta belgidan iborat bo\'lishi kerak',
     loginNewAccountDevice: 'Yangi hisob yaratish',
     loginWrongPassword: 'Parol noto\'g\'ri. Yangi foydalanuvchi nomi va parol yarating.',
+    loginDuplicateUsername: 'Bu foydalanuvchi nomi allaqachon band. Boshqa nom kiriting.',
+    loginDuplicatePassword: 'Bu parol allaqachon ishlatilgan. Boshqa parol yarating.',
+    loginDeviceError: 'Xatolik yuz berdi. Qayta urinib ko\'ring.',
+    loginDeviceHint: 'Foydalanuvchi nomi va parol yarating. Ma\'lumotlar internetda saqlanadi va barcha qurilmalarda ishlaydi.',
 
     // Navigation
     navTopik1: 'TOPIK I',
@@ -393,6 +397,10 @@ const translations = {
     loginPasswordShortDevice: 'Password must be at least 4 characters',
     loginNewAccountDevice: 'Create new account',
     loginWrongPassword: 'Wrong password. Create a new username and password.',
+    loginDuplicateUsername: 'This username is already taken. Choose another one.',
+    loginDuplicatePassword: 'This password is already used. Choose a different one.',
+    loginDeviceError: 'An error occurred. Please try again.',
+    loginDeviceHint: 'Create a username and password. Data is saved online and works on all devices.',
 
     // Common
     words: 'words',
@@ -593,6 +601,10 @@ const translations = {
     loginPasswordShortDevice: 'Пароль должен содержать минимум 4 символа',
     loginNewAccountDevice: 'Создать новый аккаунт',
     loginWrongPassword: 'Неверный пароль. Создайте новое имя пользователя и пароль.',
+    loginDuplicateUsername: 'Это имя пользователя уже занято. Выберите другое.',
+    loginDuplicatePassword: 'Этот пароль уже используется. Выберите другой.',
+    loginDeviceError: 'Произошла ошибка. Попробуйте снова.',
+    loginDeviceHint: 'Создайте имя пользователя и пароль. Данные сохраняются в интернете и работают на всех устройствах.',
 
     // Common
     words: 'слов',

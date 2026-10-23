@@ -131,3 +131,4 @@ export function listenToFriends(uid, callback) {
     callback(friends)
   })
 }
+

@@ -667,8 +667,13 @@ function getAuthErrorMessage(error) {
   return `⚠️ Kirish xatosi: ${error.code || 'noma\'lum'}\n\n📋 Xabar: ${error.message || 'noma\'lum'}\n\nQurilmada davom etish tugmasini bosing.`
 }
 
-function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileReady, skipProfile, lang, onEmailSignUp, onEmailSignIn }) {
-  const t = (key) => translate(key, lang || 'uz')
+function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileReady, skipProfile, lang, onEmailSignUp, onEmailSignIn, deviceAccount }) {
+  const [currentLang, setCurrentLang] = useState(lang || 'uz')
+  const t = (key) => translate(key, currentLang)
+  const handleLangChange = (newLang) => {
+    setCurrentLang(newLang)
+    localStorage.setItem('topik-play-lang', newLang)
+  }
   const [step, setStep] = useState(skipProfile ? 2 : 1)
   const [pf, setPf] = useState({ firstName: '', lastName: '', bio: '', avatar: '' })
   const [av, setAv] = useState('')
@@ -681,7 +686,7 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
   const [deviceUsername, setDeviceUsername] = useState(() => localStorage.getItem(DEVICE_USERNAME_KEY) || '')
   const [devicePassword, setDevicePassword] = useState('')
   const [deviceSignInMode, setDeviceSignInMode] = useState(false)
-  const hasSavedDeviceAccount = localStorage.getItem(DEVICE_USERNAME_KEY) !== null
+  const hasSavedDeviceAccount = deviceAccount !== null
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0]
@@ -717,52 +722,85 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
     }
   }
 
-  // Device login handler
+  // Device login handler — localStorage orqali (Firebase'dan alohida)
   const handleDeviceLogin = () => {
     setAuthError('')
-    const savedPassword = localStorage.getItem(DEVICE_PASSWORD_KEY)
+    if (!deviceUsername.trim()) {
+      setAuthError(t('loginFillUsername'))
+      return
+    }
+    if (!devicePassword) {
+      setAuthError(t('loginFillPassword'))
+      return
+    }
+    if (devicePassword.length < 4) {
+      setAuthError(t('loginPasswordShortDevice'))
+      return
+    }
+
+    // Barcha saqlangan hisoblarni o'qish
+    const allAccounts = JSON.parse(localStorage.getItem('DEVICE_ALL_ACCOUNTS') || '[]')
     
-    if (hasSavedDeviceAccount && deviceSignInMode) {
-      // Mavjud hisobga kirish — parolni tekshirish
-      if (!devicePassword) {
-        setAuthError(t('loginFillPassword'))
-        return
-      }
-      if (devicePassword === savedPassword) {
+    if (deviceSignInMode) {
+      // Mavjud hisobga kirish — username ga mos parolni qidirish
+      const usernameLower = deviceUsername.toLowerCase().trim()
+      const foundAccount = allAccounts.find(a => a.username === usernameLower)
+      
+      if (foundAccount && devicePassword === foundAccount.password) {
         // Parol to'g'ri — tizimga kirish
+        localStorage.setItem(DEVICE_USERNAME_KEY, foundAccount.username)
+        localStorage.setItem(DEVICE_PASSWORD_KEY, foundAccount.password)
         localStorage.setItem(SAVED_PASSWORD_KEY, devicePassword)
+        localStorage.setItem(LOCAL_MODE_STORAGE_KEY, '1')
+        // Device UID saqlash — chat ishlashi uchun
+        const deviceUid = 'device-' + foundAccount.username
+        localStorage.setItem('topik-play-device-uid', deviceUid)
         onLocalContinue()
       } else {
-        // Parol noto'g'ri — yangi username va parol so'rash
+        // Parol noto'g'ri yoki username topilmadi — xabar ko'rsatish
         setAuthError(t('loginWrongPassword'))
-        setDeviceSignInMode(false)
-        setDeviceUsername('')
-        setDevicePassword('')
       }
     } else {
-      // Yangi hisob yaratish
-      if (!deviceUsername.trim()) {
-        setAuthError(t('loginFillUsername'))
+      // Yangi hisob yaratish — localStorage da tekshirish
+      const usernameLower = deviceUsername.toLowerCase().trim()
+      
+      // Username takrorlanishini tekshirish
+      const usernameTaken = allAccounts.some(a => a.username === usernameLower)
+      if (usernameTaken) {
+        setAuthError(t('loginDuplicateUsername'))
         return
       }
-      if (!devicePassword) {
-        setAuthError(t('loginFillPassword'))
+      
+      // Parol takrorlanishini tekshirish
+      const passwordTaken = allAccounts.some(a => a.password === devicePassword)
+      if (passwordTaken) {
+        setAuthError(t('loginDuplicatePassword'))
         return
       }
-      if (devicePassword.length < 4) {
-        setAuthError(t('loginPasswordShortDevice'))
-        return
-      }
-      // Saqlash va davom etish
+      
+      // Yangi hisobni saqlash
+      const newAccount = { username: usernameLower, password: devicePassword, createdAt: Date.now() }
+      allAccounts.push(newAccount)
+      localStorage.setItem('DEVICE_ALL_ACCOUNTS', JSON.stringify(allAccounts))
       localStorage.setItem(DEVICE_USERNAME_KEY, deviceUsername.trim())
       localStorage.setItem(DEVICE_PASSWORD_KEY, devicePassword)
       localStorage.setItem(SAVED_PASSWORD_KEY, devicePassword)
+      localStorage.setItem(LOCAL_MODE_STORAGE_KEY, '1')
+      // Device UID saqlash — chat ishlashi uchun
+      const deviceUid = 'device-' + usernameLower
+      localStorage.setItem('topik-play-device-uid', deviceUid)
       onLocalContinue()
     }
   }
 
   return (
     <main className="auth-shell">
+      {/* Til o'zgartirish tugmasi */}
+      <div className="lang-selector-login" style={{position:'absolute', top:'12px', right:'12px', display:'flex', gap:'4px', zIndex:'10'}}>
+        <button type="button" className={currentLang === 'uz' ? 'lang-btn-active' : 'lang-btn'} onClick={() => handleLangChange('uz')} style={{padding:'4px 8px', fontSize:'0.75rem', cursor:'pointer', border:'none', borderRadius:'4px', background: currentLang === 'uz' ? 'var(--primary)' : 'transparent', color: currentLang === 'uz' ? '#fff' : 'var(--muted)'}}>O'z</button>
+        <button type="button" className={currentLang === 'en' ? 'lang-btn-active' : 'lang-btn'} onClick={() => handleLangChange('en')} style={{padding:'4px 8px', fontSize:'0.75rem', cursor:'pointer', border:'none', borderRadius:'4px', background: currentLang === 'en' ? 'var(--primary)' : 'transparent', color: currentLang === 'en' ? '#fff' : 'var(--muted)'}}>En</button>
+        <button type="button" className={currentLang === 'ru' ? 'lang-btn-active' : 'lang-btn'} onClick={() => handleLangChange('ru')} style={{padding:'4px 8px', fontSize:'0.75rem', cursor:'pointer', border:'none', borderRadius:'4px', background: currentLang === 'ru' ? 'var(--primary)' : 'transparent', color: currentLang === 'ru' ? '#fff' : 'var(--muted)'}}>Ru</button>
+      </div>
       <section className="auth-card">
         <img className="auth-logo" src="/topik-play-logo.svg" alt="Topik Play" />
         <p className="eyebrow">{t('loginGame')}</p>
@@ -823,12 +861,10 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
                 <h1 style={{fontSize:'1.2rem',marginBottom:'4px'}}>{t('loginDevice')}</h1>
                 <p className="settings-description">{t('loginDeviceHint')}</p>
                 {authError && <p className="auth-error" role="alert">{authError}</p>}
-                {hasSavedDeviceAccount && deviceSignInMode ? (
-                  /* ===== Mavjud hisobga kirish — parol tekshirish ===== */
+                {deviceSignInMode ? (
+                  /* ===== Mavjud hisobga kirish — username va parol ===== */
                   <>
-                    <p className="settings-description" style={{fontSize:'0.85rem',marginBottom:'8px'}}>
-                      {localStorage.getItem(DEVICE_USERNAME_KEY)}
-                    </p>
+                    <input type="text" className="auth-input" placeholder={t('loginUsername')} value={deviceUsername} onChange={(e) => setDeviceUsername(e.target.value)} />
                     <input type="password" className="auth-input" placeholder={t('loginPasswordDevice')} value={devicePassword} onChange={(e) => setDevicePassword(e.target.value)} />
                     <button type="button" className="primary-btn" style={{marginTop:'8px'}} onClick={handleDeviceLogin} disabled={busy}>
                       {t('loginSignIn')}
@@ -845,11 +881,9 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
                     <button type="button" className="primary-btn" style={{marginTop:'8px'}} onClick={handleDeviceLogin} disabled={busy}>
                       {t('loginDeviceContinue')}
                     </button>
-                    {hasSavedDeviceAccount && (
-                      <button type="button" className="ghost-btn" style={{fontSize:'0.85rem'}} onClick={() => { setDeviceSignInMode(true); setDeviceUsername(''); setDevicePassword(''); setAuthError('') }}>
-                        {t('loginHaveAccountLink')}
-                      </button>
-                    )}
+                    <button type="button" className="ghost-btn" style={{fontSize:'0.85rem'}} onClick={() => { setDeviceSignInMode(true); setDeviceUsername(''); setDevicePassword(''); setAuthError('') }}>
+                      {t('loginHaveAccountLink')}
+                    </button>
                   </>
                 )}
                 <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setAuthMode(''); setAuthError(''); setDeviceSignInMode(false) }}>{t('back')}</button>
@@ -1050,6 +1084,7 @@ function App() {
     }
   }
 
+
   // Telefon raqami orqali SMS yuborish — LoginScreen ichida to'g'ridan-to'g'ri ishlaydi
 
   if (authState.loading) {
@@ -1073,6 +1108,7 @@ function App() {
         lang={localStorage.getItem('topik-play-lang') || 'uz'}
         onEmailSignUp={handleEmailSignUp}
         onEmailSignIn={handleEmailSignIn}
+        deviceAccount={localStorage.getItem(DEVICE_USERNAME_KEY) ? { username: localStorage.getItem(DEVICE_USERNAME_KEY) } : null}
       />
     )
   }
@@ -1576,13 +1612,55 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
     }).catch(() => { /* ignore */ })
   }, [user, localMode, pendingProfile])
 
-  // Listen to chat users (only Google users)
+  // Listen to chat users — Firebase profiles + localStorage device profiles
   useEffect(() => {
-    if (!user || localMode) return
-    const unsubscribe = listenToProfiles((profiles) => {
-      setChatUsers(profiles)
+    const loadDeviceProfiles = () => {
+      const allAccounts = JSON.parse(localStorage.getItem('DEVICE_ALL_ACCOUNTS') || '[]')
+      const profiles = allAccounts.map((a) => ({
+        id: `device-${a.username}`,
+        username: a.username,
+        firstName: a.username,
+        lastName: '',
+        bio: '',
+        avatar: '',
+      }))
+      return profiles
+    }
+
+    if (localMode) {
+      // Local mode — localStorage + Firebase profiles ni birlashtirish
+      const unsubFirebase = listenToProfiles((firebaseProfiles) => {
+        const deviceProfiles = loadDeviceProfiles()
+        const existingIds = new Set(deviceProfiles.map((p) => p.id))
+        const newFirebase = firebaseProfiles.filter((p) => !existingIds.has(p.id))
+        setChatUsers([...deviceProfiles, ...newFirebase])
+      })
+      // Storage o'zgarganda yangilash
+      const handleStorage = (e) => {
+        if (e.key === 'DEVICE_ALL_ACCOUNTS') {
+          const deviceProfiles = loadDeviceProfiles()
+          listenToProfiles((firebaseProfiles) => {
+            const existingIds = new Set(deviceProfiles.map((p) => p.id))
+            const newFirebase = firebaseProfiles.filter((p) => !existingIds.has(p.id))
+            setChatUsers([...deviceProfiles, ...newFirebase])
+          })
+        }
+      }
+      window.addEventListener('storage', handleStorage)
+      return () => {
+        unsubFirebase()
+        window.removeEventListener('storage', handleStorage)
+      }
+    }
+    if (!user) return
+    // Firebase user — profiles + device profiles ni birlashtirish
+    const unsubProfiles = listenToProfiles((firebaseProfiles) => {
+      const deviceProfiles = loadDeviceProfiles()
+      const existingIds = new Set(firebaseProfiles.map((p) => p.id))
+      const newDevice = deviceProfiles.filter((p) => !existingIds.has(p.id))
+      setChatUsers([...firebaseProfiles, ...newDevice])
     })
-    return () => unsubscribe()
+    return () => unsubProfiles()
   }, [user, localMode])
 
   // Listen to friends
@@ -1596,13 +1674,14 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
   // Listen to chat messages
   useEffect(() => {
-    if (!selectedChatUser || !user || localMode) return
-    const chatId = [user.uid, selectedChatUser.id].sort().join('-')
+    if (!selectedChatUser) return
+    const myId = user?.uid || localStorage.getItem('topik-play-device-uid') || ''
+    const chatId = [myId, selectedChatUser.id].sort().join('-')
     const unsubscribe = listenToMessages(chatId, (msgs) => {
       setChatMessages(msgs)
     })
     return () => unsubscribe()
-  }, [selectedChatUser, user, localMode])
+  }, [selectedChatUser, user])
 
   // Auto-scroll chat
   useEffect(() => {
@@ -1693,9 +1772,10 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
   // Chat handlers
   const handleSendChatMessage = () => {
-    if (!chatInput.trim() || !selectedChatUser || !user || localMode) return
-    const chatId = [user.uid, selectedChatUser.id].sort().join('-')
-    sendMessage(chatId, user.uid, myProfile?.firstName || 'Men', chatInput.trim())
+    if (!chatInput.trim() || !selectedChatUser) return
+    const myId = user?.uid || localStorage.getItem('topik-play-device-uid') || ''
+    const chatId = [myId, selectedChatUser.id].sort().join('-')
+    sendMessage(chatId, myId, myProfile?.firstName || myProfile?.username || 'Men', chatInput.trim())
       .then(() => setChatInput(''))
       .catch((e) => console.error('Send message error:', e))
   }
@@ -1756,16 +1836,15 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
     removeFriend(user.uid, friendId).catch((e) => console.error('Remove friend error:', e))
   }
 
+  const currentUserId = user?.uid || localStorage.getItem('topik-play-device-uid') || ''
   const friendProfiles = useMemo(() => {
-    if (!user || localMode) return []
-    return chatUsers.filter((u) => u.id !== user.uid && friends.some((f) => f.id === u.id))
-  }, [chatUsers, friends, user, localMode])
+    return chatUsers.filter((u) => u.id !== currentUserId && friends.some((f) => f.id === u.id))
+  }, [chatUsers, friends, currentUserId])
 
   const allProfiles = useMemo(() => {
-    // Barcha foydalanuvchilar, o'zini bundan chiqarib (faqat Google orqali kirganlar)
-    if (!user || localMode) return []
-    return chatUsers.filter((u) => u.id !== user.uid)
-  }, [chatUsers, user, localMode])
+    // Barcha foydalanuvchilar, o'zini bundan chiqarib
+    return chatUsers.filter((u) => u.id !== currentUserId)
+  }, [chatUsers, currentUserId])
 
   const handleNextWord = () => {
     if (quizMode === 'mistakes') {
@@ -3513,7 +3592,33 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
             /* User List */
             <section className="chat-user-list">
               <h2 className="chat-title">{t('chatTitle')}</h2>
-              {user && !localMode ? (
+              {localMode ? (
+                <>
+                  <nav className="chat-tabs" aria-label="Chat bo'limlari">
+                    <button className={chatTab === 'all' ? 'active' : ''} onClick={() => setChatTab('all')}>
+                      {t('chatEveryone')} ({allProfiles.length})
+                    </button>
+                  </nav>
+                  {
+                    allProfiles.length === 0 ? (
+                      <p className="chat-empty">Hali boshqa foydalanuvchilar yo'q. Birinchi bo'ling!</p>
+                    ) : (
+                      allProfiles.map((u) => (
+                        <div key={u.id} className="chat-user-item glass-card">
+                          <div className="chat-user-avatar" onClick={() => setSelectedChatUser(u)}>
+                            {u.avatar ? <img src={u.avatar} alt="" /> : <span>{(u.firstName || 'U')[0]?.toUpperCase()}</span>}
+                          </div>
+                          <div className="chat-user-info" onClick={() => setSelectedChatUser(u)}>
+                            <span className="chat-user-name">{u.firstName || 'Noma\'lum'} {u.lastName || ''}</span>
+                            {u.bio && <span className="chat-user-bio">{u.bio}</span>}
+                          </div>
+                          <span className="chat-arrow" onClick={() => setSelectedChatUser(u)}>›</span>
+                        </div>
+                      ))
+                    )
+                  }
+                </>
+              ) : (
                 <>
                   <nav className="chat-tabs" aria-label="Chat bo'limlari">
                     <button className={chatTab === 'friends' ? 'active' : ''} onClick={() => setChatTab('friends')}>
@@ -3569,8 +3674,6 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                     )
                   )}
                 </>
-              ) : (
-                <p className="chat-empty">{t('chatLocalModeHint')}</p>
               )}
             </section>
           ) : (
@@ -3587,13 +3690,14 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
               </div>
 
               <div className="chat-messages-container">
-                {user && !localMode ? (
-                  <>
-                    {chatMessages.length === 0 ? (
-                      <p className="chat-no-messages">Xabarlar yo'q. Birinchi xabarni yozing!</p>
-                    ) : (
-                      chatMessages.map((msg) => {
-                        const isMe = msg.senderId === user.uid
+                {(() => {
+                  const myId = user?.uid || localStorage.getItem('topik-play-device-uid') || ''
+                  return chatMessages.length === 0 ? (
+                    <p className="chat-no-messages">Xabarlar yo'q. Birinchi xabarni yozing!</p>
+                  ) : (
+                    <>
+                      {chatMessages.map((msg) => {
+                        const isMe = msg.senderId === myId
                         return (
                           <div key={msg.id} className={`chat-bubble ${isMe ? 'chat-bubble-mine' : 'chat-bubble-theirs'}`}>
                             <p className="chat-bubble-text">{msg.text}</p>
@@ -3602,30 +3706,26 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                             </span>
                           </div>
                         )
-                      })
-                    )}
-                    <div ref={chatEndRef} />
-                  </>
-                ) : (
-                  <p className="chat-no-messages">{t('chatLocalMode')}.</p>
-                )}
+                      })}
+                      <div ref={chatEndRef} />
+                    </>
+                  )
+                })()}
               </div>
 
-              {user && !localMode && (
-                <div className="chat-input-container">
-                  <input
-                    className="chat-input"
-                    type="text"
-                    placeholder={t('chatInput')}
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleSendChatMessage() }}
-                  />
-                  <button className="chat-send-btn" onClick={handleSendChatMessage} disabled={!chatInput.trim()}>
-                    ➤
-                  </button>
-                </div>
-              )}
+              <div className="chat-input-container">
+                <input
+                  className="chat-input"
+                  type="text"
+                  placeholder={t('chatInput')}
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSendChatMessage() }}
+                />
+                <button className="chat-send-btn" onClick={handleSendChatMessage} disabled={!chatInput.trim()}>
+                  ➤
+                </button>
+              </div>
             </section>
           )}
           </div>
