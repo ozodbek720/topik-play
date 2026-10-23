@@ -3,7 +3,7 @@ import { generateAIResponse } from './aiChat.js'
 import advancedWords from './advancedWords.js'
 import topik2Lugat from './topik2Lugat.js'
 import topik1CommonWords from './topik1Words.js'
-import { addFriend, auth, getAllProfiles, getRedirectResultAuth, loadAccountData, loadProfile, listenToFriends, listenToMessages, listenToProfiles, observeAuth, removeFriend, saveAccountData, saveProfile, sendMessage, signInWithGooglePopup, signInWithGoogleRedirect, signOutUser, createUserWithEmail, signInWithEmail } from './firebase.js'
+import { addFriend, getAllProfiles, getRedirectResultAuth, loadAccountData, loadProfile, listenToFriends, listenToMessages, listenToProfiles, observeAuth, removeFriend, saveAccountData, saveProfile, sendMessage, signInWithGooglePopup, signInWithGoogleRedirect, signOutUser, createUserWithEmail, signInWithEmail } from './supabase.js'
 import githubResources from './githubResources.js'
 import libraryBooks from './libraryBooks.js'
 import grammarPoints from './grammarPoints.js'
@@ -624,12 +624,12 @@ function makeGrammarChoices(correctPoint, allPoints) {
 }
 
 function getAuthErrorMessage(error) {
-  console.error('Firebase auth error:', error.code, error.message)
+  console.error('Auth error:', error.code, error.message)
   if (error.code === 'auth/unauthorized-domain' || error.code === 'auth/unauthorized-display') {
-    return '⚠️ Bu sayt Firebase\'ning ruxsat etilgan domenlariga qo\'shilmagan.\n\n📋 Firebase Console → Authentication → Settings → Authorized domains bo\'limiga kiring va topik-play.vercel.app domenni qo\'shing.'
+    return '⚠️ Bu sayt Supabase\'ning ruxsat etilgan domenlariga qo\'shilmagan.\n\n📋 Supabase Dashboard → Authentication → URL Config bo\'limiga kiring va topik-play.vercel.app domenni qo\'shing.'
   }
   if (error.code === 'auth/operation-not-allowed') {
-    return '⚠️ Firebase\'da Google orqali kirish yoqilmagan.\n\n📋 Firebase Console → Authentication → Sign-in method bo\'limiga kiring va Google ni yoqing.'
+    return '⚠️ Supabase\'da Google orqali kirish yoqilmagan.\n\n📋 Supabase Dashboard → Authentication → Providers bo\'limiga kiring va Google ni yoqing.'
   }
   if (error.code === 'auth/popup-closed-by-user') return 'Kirish oynasi yopildi. Qayta urinib ko\'ring.'
   if (error.code === 'auth/popup-blocked') return 'Brauzer kirish oynasini to\'sdi. Qalqib chiquvchi oynalarga ruxsat bering yoki qurilmada davom eting.'
@@ -640,10 +640,10 @@ function getAuthErrorMessage(error) {
     return '⚠️ Bu email bilan boshqa akkaunt mavjud.\n\n📋 Avval o\'sha akkauntga kiring yoki qurilmada davom eting.'
   }
   if (error.code === 'auth/invalid-api-key') {
-    return '⚠️ Firebase sozlamalarida xatolik.\n\n📋 Firebase API kaliti noto\'g\'ri. Loyiha sozlamalarini tekshiring.'
+    return '⚠️ Supabase sozlamalarida xatolik.\n\n📋 Supabase API kaliti noto\'g\'ri. Loyiha sozlamalarini tekshiring.'
   }
   if (error.code === 'auth/invalid-origin') {
-    return '⚠️ Bu sayt Firebase\'da ruxsat etilmagan.\n\n📋 Firebase Console → Authentication → Settings → Authorized domains bo\'limiga kiring.'
+    return '⚠️ Bu sayt Supabase\'da ruxsat etilmagan.\n\n📋 Supabase Dashboard → Authentication → URL Config bo\'limiga kiring.'
   }
   if (error.code === 'auth/cancelled-popup-request') {
     return 'Kirish so\'rovi bekor qilindi. Qayta urinib ko\'ring.'
@@ -655,13 +655,22 @@ function getAuthErrorMessage(error) {
     return '⚠️ Vaqt tugadi. Internet aloqasi sekin bo\'lishi mumkin. Qayta urinib ko\'ring.'
   }
   if (error.code === 'auth/auth-domain-config-required') {
-    return '⚠️ Firebase sozlamalarida xatolik. Auth domain to\'g\'ri sozlanmagan.'
+    return '⚠️ Supabase sozlamalarida xatolik. Auth domain to\'g\'ri sozlanmagan.'
   }
   if (error.code === 'auth/redirect-action-needed') {
     return 'Kirish uchun Google sahifasiga yo\'naltirilmoqda...'
   }
   if (error.code === 'app/invalid-credential') {
-    return '⚠️ Firebase sozlamalari noto\'g\'ri. API kalit yoki loyiha ID tekshiring.'
+    return '⚠️ Supabase sozlamalari noto\'g\'ri. API kalit yoki loyiha ID tekshiring.'
+  }
+  if (error.code === 'auth/email_not_confirmed') {
+    return '⚠️ Email tasdiqlanmagan. Pochtangizni tekshiring va tasdiqlang.'
+  }
+  if (error.code === 'auth/invalid_credentials') {
+    return '⚠️ Email yoki parol noto\'g\'ri. Qayta urinib ko\'ring.'
+  }
+  if (error.code === 'auth/user_already_exists') {
+    return '⚠️ Bu email bilan akkaunt allaqachon mavjud. Kirish tugmasini bosing.'
   }
   // Noma'lum xato — aniq xabar qaytarish
   return `⚠️ Kirish xatosi: ${error.code || 'noma\'lum'}\n\n📋 Xabar: ${error.message || 'noma\'lum'}\n\nQurilmada davom etish tugmasini bosing.`
@@ -722,7 +731,7 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
     }
   }
 
-  // Device login handler — localStorage orqali (Firebase'dan alohida)
+  // Device login handler — localStorage orqali (Supabase'dan alohida)
   const handleDeviceLogin = () => {
     setAuthError('')
     if (!deviceUsername.trim()) {
@@ -976,7 +985,7 @@ function App() {
       setAuthState({
         loading: false,
         user: null,
-        error: 'Firebase bilan bog\'lanib bo\'lmadi. Internet va Firebase sozlamalarini tekshiring.',
+        error: 'Supabase bilan bog\'lanib bo\'lmadi. Internet va Supabase sozlamalarini tekshiring.',
       })
     },
   ), [])
@@ -1591,14 +1600,12 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         console.error('Akkaunt ma’lumotlarini sinxronlab bo‘lmadi:', error.code, error.message)
         if (active) {
           let msg = 'Bulutli saqlash ulanmagan. '
-          if (error.code === 'permission-denied') {
-            msg += 'Firebase Firestore xavfsizlik qoidalari sozlanmagan. Firebase Console → Firestore Database → Rules bo\'limiga kiring va qoidalarni deploy qiling.'
-          } else if (error.code === 'unavailable') {
-            msg += 'Firebase Firestore mavjud emas. Internet aloqasini tekshiring.'
-          } else if (error.code === 'failed-precondition') {
-            msg += 'Firebase Firestore indeks yaratish kerak. Xabar bo\'yicha indeks yarating.'
+          if (error.code === 'PGRST301') {
+            msg += 'Supabase da ruxsat yo\'q. Row Level Security (RLS) qoidalarini sozlang.'
+          } else if (error.code === 'PGRST304') {
+            msg += 'Supabase jadval topilmadi. SQL jadvalni yarating.'
           } else {
-            msg += `Xato: ${error.code || 'noma\'lum'}. Firebase Console sozlamalarini tekshiring.`
+            msg += `Xato: ${error.code || 'noma\'lum'}. Supabase Dashboard sozlamalarini tekshiring.`
           }
           setCloudError(msg)
           setCloudReady(true)
@@ -1629,7 +1636,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         setCloudError('')
       }).catch((error) => {
         console.error('Akkaunt ma’lumotlarini saqlab bo‘lmadi:', error)
-        setCloudError('Ma’lumotlarni Google akkauntingizga saqlab bo‘lmadi. Firestore sozlamalarini tekshiring.')
+        setCloudError('Ma’lumotlarni akkauntingizga saqlab bo‘lmadi. Supabase sozlamalarini tekshiring.')
       })
     }, 700)
 
