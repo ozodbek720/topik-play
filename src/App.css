@@ -4143,38 +4143,13 @@ button:disabled {
   .profile-highlights { justify-content: flex-start; }
 }
 
-/* ===== AI Chat Panel - Full Screen ===== */
-
-.app-shell[data-section='ai'] {
-  padding: 0;
-  max-width: 100%;
-}
-
-.app-shell[data-section='ai'] .topbar {
-  display: none;
-}
-
-/* Navigation stays visible in AI mode - user can switch away */
-.app-shell[data-section='ai'] .main-section-nav {
-  display: flex;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 1001;
-}
+/* ===== AI Chat Panel ===== */
 
 .ai-chat-panel {
   display: flex;
   flex-direction: row;
-  height: 100vh;
-  min-height: 100vh;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 50px;
-  z-index: 100;
+  height: calc(100vh - 180px);
+  min-height: 400px;
   animation: fadeInUp 0.5s ease;
   overflow: hidden;
 }

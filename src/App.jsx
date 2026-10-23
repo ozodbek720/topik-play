@@ -1810,7 +1810,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
   return (
     <div
-      className="app-shell" data-section={mainSection}
+      className="app-shell"
       style={{
         '--primary': theme.primary,
         '--primary-strong': theme.strong,
@@ -1818,13 +1818,11 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       }}
     >
       <header className="topbar">
-        {mainSection !== 'ai' && (
-          <div className="brand-row">
-            <div>
-              <img className="brand-logo" src="/topik-play-logo.svg" alt="Topik Play — Koreys tilini o'rganish o'yini" />
-            </div>
+        <div className="brand-row">
+          <div>
+            <img className="brand-logo" src="/topik-play-logo.svg" alt="Topik Play — Koreys tilini o'rganish o'yini" />
           </div>
-        )}
+        </div>
         {cloudError && <p className="account-sync-error" role="alert">{cloudError}</p>}
         {mainSection === 'topik1' && (
           <nav className="nav-tabs" aria-label="TOPIK I bo‘limi">
