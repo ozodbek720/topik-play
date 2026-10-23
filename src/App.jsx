@@ -1690,7 +1690,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
               Grammatika
             </button>
             <button className={activeTab === 'hearts' ? 'active' : ''} onClick={() => setActiveTab('hearts')}>
-              {t('quizMistakes')}
+              {t('quizHearts')}
             </button>
           </nav>
         )}
@@ -2194,15 +2194,15 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       {mainSection === 'topik1' && activeTab === 'hearts' && (
         <main className="panel hearts-panel">
           <div>
-            <p className="eyebrow">Yuraklar do‘koni</p>
-            <h2>Ballni yurakka almashtiring</h2>
-            <p className="heart-shop-balance">Hozir: ❤️ {gameState.hearts}/{MAX_HEARTS} · ⭐ {gameState.score} ball</p>
+            <p className="eyebrow">{t('hearts')}</p>
+            <h2>{t('heartsExchange')}</h2>
+            <p className="heart-shop-balance">{t('heartsBalance')} ❤️ {gameState.hearts}/{MAX_HEARTS} · ⭐ {gameState.score} {t('quizScore')}</p>
           </div>
           <article className="heart-offer">
             <span className="heart-offer-icon" aria-hidden="true">❤️</span>
             <div>
-              <strong>1 ta yurak</strong>
-              <p>{HEART_EXCHANGE_COST} ball evaziga</p>
+              <strong>1 {t('hearts')}</strong>
+              <p>{HEART_EXCHANGE_COST} {t('quizScore')} {t('heartsExchangeBtn')}</p>
             </div>
             <button
               type="button"
@@ -2210,12 +2210,12 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
               onClick={exchangePointsForHeart}
               disabled={gameState.score < HEART_EXCHANGE_COST || gameState.hearts >= MAX_HEARTS}
             >
-              {gameState.hearts >= MAX_HEARTS ? 'Yuraklar to‘la' : `${HEART_EXCHANGE_COST} ballga almashtirish`}
+              {gameState.hearts >= MAX_HEARTS ? t('heartsFull') : `${HEART_EXCHANGE_COST} ${t('heartsExchangeBtn')}`}
             </button>
           </article>
           <p className="heart-timer">
-            Har 12 soatda 5 ta yurak yangilanadi.
-            {gameState.hearts < MAX_HEARTS && ` Keyingi yangilanish: ${String(refillHours).padStart(2, '0')}:${String(refillMinutes).padStart(2, '0')}.`}
+            {t('heartsRefill')}
+            {gameState.hearts < MAX_HEARTS && ` ${t('heartsRefillNext')} ${String(refillHours).padStart(2, '0')}:${String(refillMinutes).padStart(2, '0')}.`}
           </p>
         </main>
       )}
