@@ -462,53 +462,109 @@ button:disabled {
   font-weight: 700;
 }
 
+/* ===== Liquid Glass Bottom Navigation ===== */
+
 .main-section-nav {
   position: fixed;
   right: 50%;
   bottom: max(8px, env(safe-area-inset-bottom));
   z-index: 10;
   display: grid;
-  width: min(calc(100% - 12px), 600px);
+  width: min(calc(100% - 16px), 520px);
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 8px;
-  padding: 8px;
+  gap: 0;
+  padding: 6px 8px;
   transform: translateX(50%);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  background: var(--panel);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.10);
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.18),
+    0 2px 8px rgba(0, 0, 0, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.20),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(50px) saturate(200%);
+  -webkit-backdrop-filter: blur(50px) saturate(200%);
+}
+
+:root[data-color-mode='day'] .main-section-nav {
+  border: 1px solid rgba(255, 255, 255, 0.60);
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 8px 40px rgba(31, 38, 135, 0.10),
+    0 2px 8px rgba(31, 38, 135, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.90),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.40);
 }
 
 .main-section-nav button {
   display: flex;
   min-width: 0;
-  min-height: 60px;
+  min-height: 52px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
   border: 0;
-  border-radius: 14px;
+  border-radius: 999px;
   background: transparent;
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 700;
-  padding: 8px 4px;
+  color: rgba(148, 163, 184, 0.70);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 6px 2px;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
 }
 
 .main-section-nav button > span:first-child {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
+  line-height: 1;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.main-section-nav button > span:last-child {
+  transition: all 0.3s ease;
+}
+
+.main-section-nav button:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.main-section-nav button:hover > span:first-child {
+  transform: scale(1.15);
 }
 
 .main-section-nav button.active {
-  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
-  color: #06131d;
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--text);
+  font-weight: 700;
+  box-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.20),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.main-section-nav button.active > span:first-child {
+  transform: scale(1.1);
+}
+
+:root[data-color-mode='day'] .main-section-nav button {
+  color: rgba(71, 85, 105, 0.60);
+}
+
+:root[data-color-mode='day'] .main-section-nav button:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.30);
 }
 
 :root[data-color-mode='day'] .main-section-nav button.active {
-  color: #102033;
+  background: rgba(255, 255, 255, 0.60);
+  color: var(--text);
+  box-shadow:
+    0 2px 12px rgba(31, 38, 135, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.90),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.40);
 }
 
 .topik-level-select {
@@ -2071,24 +2127,23 @@ button:disabled {
   }
 
   .main-section-nav {
-    width: calc(100% - 12px);
+    width: calc(100% - 14px);
     bottom: max(8px, env(safe-area-inset-bottom));
-    padding: 6px;
-    gap: 4px;
-    border-radius: 18px;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    padding: 5px 6px;
+    gap: 0;
+    border-radius: 999px;
   }
 
   .main-section-nav button {
-    min-height: 50px;
+    min-height: 48px;
     font-size: 0.65rem;
-    padding: 4px 2px;
-    border-radius: 12px;
-    gap: 2px;
+    padding: 5px 2px;
+    border-radius: 999px;
+    gap: 1px;
   }
 
   .main-section-nav button > span:first-child {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
   }
 
   .topik-two-skills {
@@ -3424,18 +3479,21 @@ button:disabled {
   }
 
   .main-section-nav {
-    padding: 4px;
-    gap: 3px;
+    padding: 4px 5px;
+    gap: 0;
+    border-radius: 999px;
   }
 
   .main-section-nav button {
-    min-height: 46px;
+    min-height: 44px;
     font-size: 0.6rem;
-    padding: 3px 1px;
+    padding: 4px 1px;
+    border-radius: 999px;
+    gap: 1px;
   }
 
   .main-section-nav button > span:first-child {
-    font-size: 1rem;
+    font-size: 1.1rem;
   }
 
   .difficulty-btn {
