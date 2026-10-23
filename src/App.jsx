@@ -4,6 +4,7 @@ import advancedWords from './advancedWords.js'
 import topik2Lugat from './topik2Lugat.js'
 import topik1CommonWords from './topik1Words.js'
 import { addFriend, auth, getAllProfiles, getRedirectResultAuth, loadAccountData, loadProfile, listenToFriends, listenToMessages, listenToProfiles, observeAuth, removeFriend, saveAccountData, saveProfile, sendMessage, signInWithGooglePopup, signInWithGoogleRedirect, signOutUser, createUserWithEmail, signInWithEmail, setupRecaptcha, signInWithPhone } from './firebase.js'
+import githubResources from './githubResources.js'
 import grammarPoints from './grammarPoints.js'
 import { t as translate } from './translations.js'
 import './App.css'
@@ -1105,7 +1106,8 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [words, setWords] = useState(loadWords)
   const [customGrammar, setCustomGrammar] = useState(loadCustomGrammar)
   const [mistakes, setMistakes] = useState(loadMistakes)
-  const [mainSection, setMainSection] = useState('topik1')
+  const [mainSection, setMainSection] = useState('topik')
+  const [selectedTopikLevel, setSelectedTopikLevel] = useState(null)
   const [activeTab, setActiveTab] = useState('quiz')
   const [topikTwoSkill, setTopikTwoSkill] = useState('vocabulary')
   const [topikTwoDay, setTopikTwoDay] = useState(1)
@@ -1126,6 +1128,8 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [selectedCategory, setSelectedCategory] = useState('Hammasi')
   const [grammarLevel, setGrammarLevel] = useState('Hammasi')
   const [grammarSearch, setGrammarSearch] = useState('')
+  const [githubSearch, setGithubSearch] = useState('')
+  const [githubCategory, setGithubCategory] = useState('Hammasi')
   const [learningProgress, setLearningProgress] = useState(loadLearningProgress)
   const [grammarForm, setGrammarForm] = useState({
     pattern: '',
@@ -2047,7 +2051,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
           </div>
         )}
         {cloudError && <p className="account-sync-error" role="alert">{cloudError}</p>}
-        {mainSection === 'topik1' && (
+        {mainSection === 'topik' && selectedTopikLevel === 'I' && (
           <nav className="nav-tabs" aria-label="TOPIK I bo‘limi">
             <button className={activeTab === 'quiz' ? 'active' : ''} onClick={() => setActiveTab('quiz')}>
               Test
@@ -2071,7 +2075,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         )}
       </header>
 
-      {mainSection === 'topik1' && !['words', 'grammar', 'topik1words'].includes(activeTab) && (
+      {mainSection === 'topik' && selectedTopikLevel === 'I' && !['words', 'grammar', 'topik1words'].includes(activeTab) && (
         <section className="stats-grid">
           <article className="stat-card accent">
             <span>{t('quizScore')}</span>
@@ -2085,8 +2089,18 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         </section>
       )}
 
-      {mainSection === 'topik1' && activeTab === 'quiz' && (
+      {mainSection === 'topik' && selectedTopikLevel === 'I' && activeTab === 'quiz' && (
         <main className="panel quiz-panel">
+          <button
+            type="button"
+            className="ghost-btn topik-back-btn"
+            onClick={() => {
+              setSelectedTopikLevel(null)
+              setActiveTab('quiz')
+            }}
+          >
+            ← Daraja tanlash
+          </button>
           <div className="quiz-mode-tabs" role="group" aria-label="Test turini tanlang">
             <button
               type="button"
@@ -2293,7 +2307,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         </main>
       )}
 
-      {mainSection === 'topik1' && activeTab === 'topik' && currentTopik && (
+      {mainSection === 'topik' && selectedTopikLevel === 'I' && activeTab === 'topik' && currentTopik && (
         <main className="panel topik-panel">
           <div className="topik-header">
             <span className="topik-tag">{t("navTopik1")} mashq</span>
@@ -2439,7 +2453,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         </main>
       )}
 
-      {mainSection === 'topik1' && activeTab === 'grammar' && (
+      {mainSection === 'topik' && selectedTopikLevel === 'I' && activeTab === 'grammar' && (
         <main className="panel grammar-panel">
           <div className="grammar-header">
             <div>
@@ -2566,7 +2580,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         </main>
       )}
 
-      {mainSection === 'topik1' && activeTab === 'hearts' && (
+      {mainSection === 'topik' && selectedTopikLevel === 'I' && activeTab === 'hearts' && (
         <main className="panel hearts-panel">
           <div>
             <p className="eyebrow">{t('hearts')}</p>
@@ -2595,6 +2609,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         </main>
       )}
 
+<<<<<<< Updated upstream
       {mainSection === 'topik1' && activeTab === 'topik1words' && (
         <main className="panel topik-panel">
           <h2>📝 TOPIK 1 — Ko'p uchraydigan so'zlar</h2>
@@ -2823,10 +2838,50 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         </main>
       )}
 
-      {mainSection === 'topik2' && (
+      {mainSection === 'topik' && selectedTopikLevel === null && (
+        <main className="panel topik-level-select">
+          <p className="eyebrow">Daraja tanlang</p>
+          <h1>TOPIK</h1>
+          <p className="settings-description">Qaysi darajada o'rganmoqchisiz?</p>
+          <nav className="topik-level-cards" aria-label="TOPIK darajasi">
+            <button
+              type="button"
+              className="topik-level-card"
+              onClick={() => {
+                setSelectedTopikLevel('I')
+                setActiveTab('quiz')
+              }}
+              aria-pressed={selectedTopikLevel === 'I'}
+            >
+              <span className="topik-level-icon">📘</span>
+              <strong>TOPIK I</strong>
+              <span>Boshlang'ich daraja</span>
+            </button>
+            <button
+              type="button"
+              className="topik-level-card"
+              onClick={() => setSelectedTopikLevel('II')}
+              aria-pressed={selectedTopikLevel === 'II'}
+            >
+              <span className="topik-level-icon">📚</span>
+              <strong>TOPIK II</strong>
+              <span>Yuqori daraja</span>
+            </button>
+          </nav>
+        </main>
+      )}
+
+      {mainSection === 'topik' && selectedTopikLevel === 'II' && (
         <main className="panel topik-two-panel">
-          <p className="eyebrow">{t('navTopik2')}</p>
-          <h1>{t('navTopik2')}</h1>
+          <button
+            type="button"
+            className="ghost-btn topik-back-btn"
+            onClick={() => setSelectedTopikLevel(null)}
+          >
+            ← Daraja tanlash
+          </button>
+          <p className="eyebrow">Ikkinchi daraja</p>
+          <h1>TOPIK II ga tayyorgarlik</h1>
           <nav className="topik-two-skills" aria-label="TOPIK II ko‘nikmalari">
             <button
               type="button"
@@ -3833,7 +3888,78 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         </main>
       )}
 
-      {mainSection === 'topik1' && activeTab === 'words' && (
+      {mainSection === 'github' && (
+        <main className="panel github-panel">
+          <p className="eyebrow">Ochiq manbalar</p>
+          <h2 className="panel-title">🔍 GitHub Explorer</h2>
+          <p className="settings-description">
+            GitHub'da koreys tilini o'rganish uchun foydali resurslar — so'zliklar, grammatika, darslar va boshqalar.
+          </p>
+
+          <input
+            className="word-search"
+            type="search"
+            value={githubSearch}
+            onChange={(event) => setGithubSearch(event.target.value)}
+            placeholder="Resurs nomida yoki tavsifda qidirish..."
+            aria-label="GitHub resurslaridan qidirish"
+          />
+
+          <div className="word-categories" aria-label="GitHub resurslar turkumlari">
+            {['Hammasi', ...new Set(githubResources.map((r) => r.category))].map((category) => (
+              <button
+                key={category}
+                type="button"
+                className={`category-btn ${githubCategory === category ? 'active' : ''}`}
+                onClick={() => setGithubCategory(category)}
+              >
+                {category}
+                <span>
+                  {category === 'Hammasi'
+                    ? githubResources.length
+                    : githubResources.filter((r) => r.category === category).length}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="github-list">
+            {githubResources
+              .filter((resource) => {
+                const matchesCategory = githubCategory === 'Hammasi' || resource.category === githubCategory
+                const matchesSearch =
+                  !githubSearch ||
+                  resource.name.toLowerCase().includes(githubSearch.toLowerCase()) ||
+                  resource.description.toLowerCase().includes(githubSearch.toLowerCase())
+                return matchesCategory && matchesSearch
+              })
+              .map((resource) => (
+                <div key={resource.id} className="github-item">
+                  <div className="github-item-header">
+                    <span className="github-item-icon">{resource.icon}</span>
+                    <div className="github-item-info">
+                      <a
+                        href={resource.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="github-item-name"
+                      >
+                        {resource.name}
+                      </a>
+                      <p className="github-item-description">{resource.description}</p>
+                    </div>
+                  </div>
+                  <div className="github-item-meta">
+                    <span className="github-item-category">{resource.category}</span>
+                    <span className="github-item-stars">⭐ {resource.stars}</span>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </main>
+      )}
+
+      {mainSection === 'topik' && selectedTopikLevel === 'I' && activeTab === 'words' && (
         <main className="panel words-panel">
           <form className="word-form" onSubmit={handleSubmitWord}>
             <h3>{editingId ? 'Soʻzni tahrirlash' : 'Yangi soʻz qoʻshish'}</h3>
@@ -3937,21 +4063,24 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       <nav className="main-section-nav" aria-label="Asosiy bo‘limlar">
         <button
           type="button"
-          className={mainSection === 'topik1' ? 'active' : ''}
-          onClick={() => setMainSection('topik1')}
-          aria-pressed={mainSection === 'topik1'}
+          className={mainSection === 'topik' ? 'active' : ''}
+          onClick={() => {
+            setMainSection('topik')
+            setSelectedTopikLevel(null)
+          }}
+          aria-pressed={mainSection === 'topik'}
         >
-          <span aria-hidden="true">📘</span>
-          <span>{t('navTopik1')}</span>
+          <span aria-hidden="true">📖</span>
+          <span>TOPIK</span>
         </button>
         <button
           type="button"
-          className={mainSection === 'topik2' ? 'active' : ''}
-          onClick={() => setMainSection('topik2')}
-          aria-pressed={mainSection === 'topik2'}
+          className={mainSection === 'github' ? 'active' : ''}
+          onClick={() => setMainSection('github')}
+          aria-pressed={mainSection === 'github'}
         >
-          <span aria-hidden="true">📚</span>
-          <span>{t('navTopik2')}</span>
+          <span aria-hidden="true">🔍</span>
+          <span>GitHub</span>
         </button>
         <button
           type="button"

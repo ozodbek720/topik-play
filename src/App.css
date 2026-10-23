@@ -405,6 +405,68 @@ button:disabled {
   color: #102033;
 }
 
+.topik-level-select {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.topik-level-select > h1 {
+  margin: -8px 0 0;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+}
+
+.topik-level-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.topik-level-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 120px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--panel-alt);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+
+.topik-level-card:hover {
+  border-color: var(--primary-strong);
+  transform: translateY(-2px);
+}
+
+.topik-level-card:active {
+  transform: translateY(0);
+}
+
+.topik-level-icon {
+  font-size: 2.2rem;
+}
+
+.topik-level-card > span:last-child {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.topik-back-btn {
+  align-self: flex-start;
+  margin-bottom: -8px;
+}
+
 .topik-two-panel {
   display: flex;
   flex-direction: column;
@@ -2125,6 +2187,7 @@ button:disabled {
   }
 }
 
+<<<<<<< Updated upstream
 /* ===== iOS 26 Liquid Glass Animations ===== */
 
 @keyframes glassShimmer {
@@ -2924,10 +2987,54 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+/* GitHub Explorer */
+.github-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.github-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.github-item {
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.2s;
+}
+
+.github-item:hover {
+  border-color: var(--primary);
+}
+
+.github-item-header {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.github-item-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.github-item-info {
   flex: 1;
   min-width: 0;
 }
 
+<<<<<<< Updated upstream
 .private-chat-info strong {
   font-size: 0.95rem;
   color: var(--text);
@@ -3135,6 +3242,44 @@ button:disabled {
   }
 }
 
+.github-item-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+  word-break: break-word;
+}
+
+.github-item-name:hover {
+  text-decoration: underline;
+}
+
+.github-item-description {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.github-item-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.github-item-category {
+  background: var(--border);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+}
+
+.github-item-stars {
+  color: var(--accent);
+}
+
 @media (max-width: 360px) {
   .app-shell {
     padding-right: 10px;
@@ -3169,6 +3314,18 @@ button:disabled {
   .chat-input-form .primary-btn {
     padding: 10px 12px;
     font-size: 0.85rem;
+  }
+
+  .github-item {
+    padding: 12px;
+  }
+
+  .github-item-icon {
+    font-size: 1.3rem;
+  }
+
+  .github-item-name {
+    font-size: 0.9rem;
   }
 }
 
