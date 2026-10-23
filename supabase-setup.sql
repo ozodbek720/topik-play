@@ -1,12 +1,19 @@
 -- ============================================
 -- Topik Play — Supabase SQL jadval yaratish
 -- ============================================
--- Bu fayldagi SQL kodni Supabase Dashboard → SQL Editor da ishga tushiring
+-- MUHIM: Agar jadval allaqachon yaratilgan bo'lsa, avval o'chiring!
+-- Quyidagi DROP qoidalari eski jadvalni o'chiradi va yangi yaratadi.
 -- ============================================
 
--- 1. Profiles jadvali
-CREATE TABLE IF NOT EXISTS profiles (
-  uid UUID PRIMARY KEY,
+-- Eski jadvalarni o'chirish (agar mavjud bo'lsa)
+DROP TABLE IF EXISTS friends CASCADE;
+DROP TABLE IF EXISTS messages CASCADE;
+DROP TABLE IF EXISTS accounts CASCADE;
+DROP TABLE IF EXISTS profiles CASCADE;
+
+-- 1. Profiles jadvali (uid TEXT — device foydalanuvchilar uchun)
+CREATE TABLE profiles (
+  uid TEXT PRIMARY KEY,
   firstName TEXT,
   lastName TEXT,
   bio TEXT,
@@ -17,8 +24,8 @@ CREATE TABLE IF NOT EXISTS profiles (
 );
 
 -- 2. Accounts jadvali (o'quv progress, sozlamalar, test natijalari)
-CREATE TABLE IF NOT EXISTS accounts (
-  uid UUID PRIMARY KEY,
+CREATE TABLE accounts (
+  uid TEXT PRIMARY KEY,
   words JSONB DEFAULT '[]'::jsonb,
   customGrammar JSONB DEFAULT '[]'::jsonb,
   mistakes JSONB DEFAULT '[]'::jsonb,
@@ -31,7 +38,7 @@ CREATE TABLE IF NOT EXISTS accounts (
 );
 
 -- 3. Messages jadvali (chat xabarlari)
-CREATE TABLE IF NOT EXISTS messages (
+CREATE TABLE messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chatId TEXT NOT NULL,
   senderId TEXT NOT NULL,
@@ -44,10 +51,10 @@ CREATE INDEX idx_messages_chatId ON messages(chatId);
 CREATE INDEX idx_messages_timestamp ON messages(timestamp);
 
 -- 4. Friends jadvali (dostlar)
-CREATE TABLE IF NOT EXISTS friends (
+CREATE TABLE friends (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  myUid UUID NOT NULL,
-  friendUid UUID NOT NULL,
+  myUid TEXT NOT NULL,
+  friendUid TEXT NOT NULL,
   addedAt TEXT,
   UNIQUE(myUid, friendUid)
 );
@@ -75,7 +82,7 @@ CREATE POLICY "Accounts are updatable by owners" ON accounts FOR UPDATE USING (a
 -- Messages
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Messages are viewable by everyone" ON messages FOR SELECT USING (true);
-CREATE POLICY "Messages are insertable by authenticated users" ON messages FOR INSERT WITH CHECK (auth.uid()::text = senderId);
+CREATE POLICY "Messages are insertable by anyone" ON messages FOR INSERT WITH CHECK (true);
 
 -- Friends
 ALTER TABLE friends ENABLE ROW LEVEL SECURITY;
