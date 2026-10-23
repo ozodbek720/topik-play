@@ -10,6 +10,14 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      try {
+        const mode = localStorage.getItem('topik-play-color-mode')
+        if (mode === 'day') {
+          document.documentElement.dataset.colorMode = 'day'
+        }
+      } catch(e) {}
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

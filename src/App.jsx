@@ -3,7 +3,7 @@ import { generateAIResponse } from './aiChat.js'
 import advancedWords from './advancedWords.js'
 import topik2Lugat from './topik2Lugat.js'
 import topik1CommonWords from './topik1Words.js'
-import { addFriend, auth, getAllProfiles, getRedirectResultAuth, loadAccountData, loadProfile, listenToFriends, listenToMessages, listenToProfiles, observeAuth, removeFriend, saveAccountData, saveProfile, sendMessage, signInWithGooglePopup, signInWithGoogleRedirect, signOutUser, createUserWithEmail, signInWithEmail, setupRecaptcha, signInWithPhone } from './firebase.js'
+import { addFriend, auth, getAllProfiles, getRedirectResultAuth, loadAccountData, loadProfile, listenToFriends, listenToMessages, listenToProfiles, observeAuth, removeFriend, saveAccountData, saveProfile, sendMessage, signInWithGooglePopup, signInWithGoogleRedirect, signOutUser, createUserWithEmail, signInWithEmail } from './firebase.js'
 import githubResources from './githubResources.js'
 import libraryBooks from './libraryBooks.js'
 import grammarPoints from './grammarPoints.js'
@@ -28,6 +28,8 @@ const MISTAKES_STORAGE_KEY = 'topik-play-mistakes'
 const ACCOUNT_DATA_OWNER_KEY = 'topik-play-account-data-owner'
 const LOCAL_MODE_STORAGE_KEY = 'topik-play-local-mode'
 const SAVED_PASSWORD_KEY = 'topik-play-saved-password'
+const DEVICE_USERNAME_KEY = 'topik-play-device-username'
+const DEVICE_PASSWORD_KEY = 'topik-play-device-password'
 const TOPIK_TWO_DAY_ONE_WORDS = [
   { korean: '필요하다', meaning: 'kerak bo‘lmoq' },
   { korean: '방법', meaning: 'usul' },
@@ -643,21 +645,6 @@ function getAuthErrorMessage(error) {
   if (error.code === 'auth/invalid-origin') {
     return '⚠️ Bu sayt Firebase\'da ruxsat etilmagan.\n\n📋 Firebase Console → Authentication → Settings → Authorized domains bo\'limiga kiring.'
   }
-  if (error.code === 'auth/invalid-phone-number') {
-    return '⚠️ Telefon raqami noto\'g\'ri formatda.\n\n📋 Mamlakat kodini qo\'shing. Masalan: +998901234567'
-  }
-  if (error.code === 'auth/missing-phone-number') {
-    return '⚠️ Telefon raqamini kiriting.'
-  }
-  if (error.code === 'auth/quota-exceeded') {
-    return '⚠️ SMS yuborish limiti oshib ketdi. Keyinroq qayta urinib ko\'ring.'
-  }
-  if (error.code === 'auth/code-expired') {
-    return '⚠️ SMS kod muddati tugadi. Yangi kod yuboring.'
-  }
-  if (error.code === 'auth/invalid-verification-code') {
-    return '⚠️ SMS kod noto\'g\'ri. Qayta kiriting.'
-  }
   if (error.code === 'auth/cancelled-popup-request') {
     return 'Kirish so\'rovi bekor qilindi. Qayta urinib ko\'ring.'
   }
@@ -685,17 +672,16 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
   const [step, setStep] = useState(skipProfile ? 2 : 1)
   const [pf, setPf] = useState({ firstName: '', lastName: '', bio: '', avatar: '' })
   const [av, setAv] = useState('')
-  // Kirish rejimi: '' = asosiy, 'createAccount' = hisob ochish (email yoki telefon tanlash), 'emailSignUp' = email hisob ochish, 'emailSignIn' = kirish, 'phoneSignUp' = telefon hisob ochish
+  // Kirish rejimi: '' = asosiy, 'createAccount' = hisob ochish (email tanlash), 'emailSignUp' = email hisob ochish, 'emailSignIn' = kirish, 'deviceLogin' = qurilma orqali kirish
   const [authMode, setAuthMode] = useState('')
   const [authEmail, setAuthEmail] = useState('')
   const [authPassword, setAuthPassword] = useState('')
   const [authError, setAuthError] = useState('')
-  // Phone forms
-  const [phoneNumber, setPhoneNumber] = useState('')
-  const [smsCode, setSmsCode] = useState('')
-  const [smsSent, setSmsSent] = useState(false)
-  const [confirmationResult, setConfirmationResult] = useState(null)
-  const recaptchaRef = useRef(null)
+  // Device login forms
+  const [deviceUsername, setDeviceUsername] = useState(() => localStorage.getItem(DEVICE_USERNAME_KEY) || '')
+  const [devicePassword, setDevicePassword] = useState('')
+  const [deviceSignInMode, setDeviceSignInMode] = useState(false)
+  const hasSavedDeviceAccount = localStorage.getItem(DEVICE_USERNAME_KEY) !== null
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0]
@@ -721,7 +707,7 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
       return
     }
     try {
-      if (authMode === 'emailSignUp') {
+      if (authMode === 'createAccount') {
         await onEmailSignUp(authEmail, authPassword, pf)
       } else if (authMode === 'emailSignIn') {
         await onEmailSignIn(authEmail, authPassword)
@@ -731,49 +717,47 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
     }
   }
 
-  // Phone handlers
-  const handlePhoneSendSms = async () => {
+  // Device login handler
+  const handleDeviceLogin = () => {
     setAuthError('')
-    if (!phoneNumber) {
-      setAuthError(t('loginFillPhone'))
-      return
-    }
-    // Validate phone number format - must start with +
-    if (!phoneNumber.startsWith('+')) {
-      setAuthError('⚠️ Telefon raqami "+" belgisidan boshlanishi kerak.\n\nMasalan: +998901234567')
-      return
-    }
-    // Validate phone number length (min 8 digits after +)
-    const digits = phoneNumber.replace(/\D/g, '')
-    if (digits.length < 9) {
-      setAuthError('⚠️ Telefon raqami noto\'g\'ri. To\'liq raqamni kiriting.\n\nMasalan: +998901234567')
-      return
-    }
-    try {
-      // Setup recaptcha
-      let container = recaptchaRef.current
-      if (!container) return
-      const verifier = setupRecaptcha(auth, container, 'invisible')
-      const result = await signInWithPhone(phoneNumber, verifier)
-      setConfirmationResult(result)
-      setSmsSent(true)
-    } catch (e) {
-      setAuthError(getAuthErrorMessage(e))
-    }
-  }
-
-  const handlePhoneVerifyCode = async () => {
-    setAuthError('')
-    if (!smsCode) {
-      setAuthError(t('loginFillSmsCode'))
-      return
-    }
-    try {
-      await confirmationResult.confirm(smsCode)
-      // Profile save will be handled by onProfileReady in App component
-      if (onProfileReady) onProfileReady(pf)
-    } catch (e) {
-      setAuthError(getAuthErrorMessage(e))
+    const savedPassword = localStorage.getItem(DEVICE_PASSWORD_KEY)
+    
+    if (hasSavedDeviceAccount && deviceSignInMode) {
+      // Mavjud hisobga kirish — parolni tekshirish
+      if (!devicePassword) {
+        setAuthError(t('loginFillPassword'))
+        return
+      }
+      if (devicePassword === savedPassword) {
+        // Parol to'g'ri — tizimga kirish
+        localStorage.setItem(SAVED_PASSWORD_KEY, devicePassword)
+        onLocalContinue()
+      } else {
+        // Parol noto'g'ri — yangi username va parol so'rash
+        setAuthError(t('loginWrongPassword'))
+        setDeviceSignInMode(false)
+        setDeviceUsername('')
+        setDevicePassword('')
+      }
+    } else {
+      // Yangi hisob yaratish
+      if (!deviceUsername.trim()) {
+        setAuthError(t('loginFillUsername'))
+        return
+      }
+      if (!devicePassword) {
+        setAuthError(t('loginFillPassword'))
+        return
+      }
+      if (devicePassword.length < 4) {
+        setAuthError(t('loginPasswordShortDevice'))
+        return
+      }
+      // Saqlash va davom etish
+      localStorage.setItem(DEVICE_USERNAME_KEY, deviceUsername.trim())
+      localStorage.setItem(DEVICE_PASSWORD_KEY, devicePassword)
+      localStorage.setItem(SAVED_PASSWORD_KEY, devicePassword)
+      onLocalContinue()
     }
   }
 
@@ -809,22 +793,8 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
               </div>
             )}
 
-            {/* ===== Create Account - Method Selection (Hisob ochish tanlash) ===== */}
+            {/* ===== Create Account - Email only ===== */}
             {authMode === 'createAccount' ? (
-              <>
-                <h1 style={{fontSize:'1.2rem',marginBottom:'4px'}}>{t('loginCreateAccount')}</h1>
-                <p className="settings-description">{t('loginCreateAccountHint')}</p>
-                {authError && <p className="auth-error" role="alert">{authError}</p>}
-                <button type="button" className="email-sign-up-btn" onClick={() => setAuthMode('emailSignUp')} disabled={busy}>
-                  {t('loginCreateWithEmail')}
-                </button>
-                <button type="button" className="phone-sign-in-btn" onClick={() => { setAuthMode('phoneSignUp'); setSmsSent(false) }} disabled={busy}>
-                  {t('loginCreateWithPhone')}
-                </button>
-                <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setAuthMode(''); setAuthError('') }}>{t('back')}</button>
-              </>
-            ) : authMode === 'emailSignUp' ? (
-              /* ===== Email Sign Up (Email hisob ochish) ===== */
               <>
                 <h1 style={{fontSize:'1.2rem',marginBottom:'4px'}}>{t('loginCreateAccount')}</h1>
                 {authError && <p className="auth-error" role="alert">{authError}</p>}
@@ -833,7 +803,7 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
                 <button type="button" className="primary-btn" style={{marginTop:'8px'}} onClick={handleEmailAuth} disabled={busy}>
                   {busy ? t('loginSigningIn') : t('loginCreateAccount')}
                 </button>
-                <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setAuthMode('createAccount'); setAuthError('') }}>{t('back')}</button>
+                <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setAuthMode(''); setAuthError('') }}>{t('back')}</button>
               </>
             ) : authMode === 'emailSignIn' ? (
               /* ===== Email Sign In (Menda hisob bor) ===== */
@@ -847,33 +817,42 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
                 </button>
                 <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setAuthMode(''); setAuthError('') }}>{t('back')}</button>
               </>
-            ) : authMode === 'phoneSignUp' ? (
-              /* ===== Phone Sign Up (Telefon hisob ochish) ===== */
+            ) : authMode === 'deviceLogin' ? (
+              /* ===== Device Login (Qurilma orqali kirish) ===== */
               <>
-                <h1 style={{fontSize:'1.2rem',marginBottom:'4px'}}>{t('loginCreateAccount')}</h1>
+                <h1 style={{fontSize:'1.2rem',marginBottom:'4px'}}>{t('loginDevice')}</h1>
+                <p className="settings-description">{t('loginDeviceHint')}</p>
                 {authError && <p className="auth-error" role="alert">{authError}</p>}
-                <div ref={recaptchaRef} />
-                {!smsSent ? (
+                {hasSavedDeviceAccount && deviceSignInMode ? (
+                  /* ===== Mavjud hisobga kirish — parol tekshirish ===== */
                   <>
-                    <p className="settings-description">{t('loginPhoneHint')}</p>
-                    <input type="tel" className="auth-input" placeholder="+998901234567" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
-                    <button type="button" className="primary-btn" style={{marginTop:'8px'}} onClick={handlePhoneSendSms} disabled={busy}>
-                      {busy ? t('loginSending') : t('loginSendSms')}
+                    <p className="settings-description" style={{fontSize:'0.85rem',marginBottom:'8px'}}>
+                      {localStorage.getItem(DEVICE_USERNAME_KEY)}
+                    </p>
+                    <input type="password" className="auth-input" placeholder={t('loginPasswordDevice')} value={devicePassword} onChange={(e) => setDevicePassword(e.target.value)} />
+                    <button type="button" className="primary-btn" style={{marginTop:'8px'}} onClick={handleDeviceLogin} disabled={busy}>
+                      {t('loginSignIn')}
+                    </button>
+                    <button type="button" className="ghost-btn" style={{fontSize:'0.85rem'}} onClick={() => { setDeviceSignInMode(false); setDevicePassword(''); setAuthError('') }}>
+                      {t('loginNewAccountDevice')}
                     </button>
                   </>
                 ) : (
+                  /* ===== Yangi hisob yaratish ===== */
                   <>
-                    <p className="settings-description">{t('loginSmsSent')}</p>
-                    <input type="text" className="auth-input" placeholder={t('loginSmsCode')} value={smsCode} onChange={(e) => setSmsCode(e.target.value)} maxLength={6} />
-                    <button type="button" className="primary-btn" style={{marginTop:'8px'}} onClick={handlePhoneVerifyCode} disabled={busy}>
-                      {busy ? t('loginVerifying') : t('loginVerifyCode')}
+                    <input type="text" className="auth-input" placeholder={t('loginUsername')} value={deviceUsername} onChange={(e) => setDeviceUsername(e.target.value)} />
+                    <input type="password" className="auth-input" placeholder={t('loginPasswordDevice')} value={devicePassword} onChange={(e) => setDevicePassword(e.target.value)} />
+                    <button type="button" className="primary-btn" style={{marginTop:'8px'}} onClick={handleDeviceLogin} disabled={busy}>
+                      {t('loginDeviceContinue')}
                     </button>
-                    <button type="button" className="ghost-btn" style={{fontSize:'0.85rem'}} onClick={() => { setSmsSent(false); setSmsCode(''); setAuthError('') }}>
-                      {t('loginResendSms')}
-                    </button>
+                    {hasSavedDeviceAccount && (
+                      <button type="button" className="ghost-btn" style={{fontSize:'0.85rem'}} onClick={() => { setDeviceSignInMode(true); setDeviceUsername(''); setDevicePassword(''); setAuthError('') }}>
+                        {t('loginHaveAccountLink')}
+                      </button>
+                    )}
                   </>
                 )}
-                <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setAuthMode('createAccount'); setSmsSent(false); setAuthError('') }}>{t('back')}</button>
+                <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setAuthMode(''); setAuthError(''); setDeviceSignInMode(false) }}>{t('back')}</button>
               </>
             ) : (
               /* ===== Main Login Methods ===== */
@@ -893,22 +872,13 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
 
                 <div className="auth-divider"><span>{t('loginOr')}</span></div>
 
-                {/* Hisob ochish - Email yoki Telefon tanlash */}
+                {/* Hisob ochish - Email */}
                 <button type="button" className="email-sign-up-btn" onClick={() => setAuthMode('createAccount')} disabled={busy}>
                   {t('loginCreateAccount')}
                 </button>
 
-                <div className="auth-divider"><span>{t('loginOr')}</span></div>
-
-                {/* Menda hisob bor - Email/Parol */}
-                <button type="button" className="email-sign-in-btn" onClick={() => setAuthMode('emailSignIn')} disabled={busy}>
-                  {t('loginHaveAccountLink')}
-                </button>
-
-                <div className="auth-divider"><span>{t('loginOr')}</span></div>
-
-                {/* Local */}
-                <button type="button" className="local-sign-in-btn" onClick={onLocalContinue} disabled={busy}>
+                {/* Device Login */}
+                <button type="button" className="local-sign-in-btn" onClick={() => setAuthMode('deviceLogin')} disabled={busy}>
                   {t('loginLocal')}
                 </button>
                 <p className="auth-privacy-note">{t('loginPrivacy')}</p>
@@ -1702,6 +1672,10 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const handleSaveProfile = () => {
     setMyProfile({ ...profileForm })
     setProfileEditing(false)
+    // Agar username o'zgargan bo'lsa, saqlash
+    if (profileForm.username && profileForm.username.trim()) {
+      localStorage.setItem(DEVICE_USERNAME_KEY, profileForm.username.trim())
+    }
     if (user && !localMode) {
       saveProfile(user.uid, profileForm).catch((e) => console.error('Profile save error:', e))
     } else {
@@ -3279,6 +3253,13 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
             {profileEditing ? (
               <div className="profile-edit-form">
+                <input
+                  className="profile-input"
+                  type="text"
+                  placeholder={t('loginUsername')}
+                  value={profileForm.username || localStorage.getItem(DEVICE_USERNAME_KEY) || ''}
+                  onChange={(e) => setProfileForm((p) => ({ ...p, username: e.target.value }))}
+                />
                 <input
                   className="profile-input"
                   type="text"
