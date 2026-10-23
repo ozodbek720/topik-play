@@ -1181,6 +1181,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [selectedBook, setSelectedBook] = useState(null)
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false)
   const [showsVideoOpen, setShowsVideoOpen] = useState(false)
+  const [showsCurrentVideo, setShowsCurrentVideo] = useState(null)
   const [pdfDoc, setPdfDoc] = useState(null)
   const [pdfPage, setPdfPage] = useState(1)
   const [pdfTotalPages, setPdfTotalPages] = useState(0)
@@ -1251,8 +1252,142 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [aiTyping, setAiTyping] = useState(false)
   const [aiShowChatList, setAiShowChatList] = useState(false) // Mobile: show chat list sidebar
   const aiEndRef = useRef(null)
-  // Messages tab: 'ai' or 'chat'
+  // Messages tab: 'news', 'chat', or 'asiye'
   const [messagesTab, setMessagesTab] = useState('news')
+
+  // Asiyе AI bot messages
+  const [asiyeMessages, setAsiyeMessages] = useState(() => {
+    try {
+      const saved = localStorage.getItem('topik-play-asiye-messages')
+      return saved ? JSON.parse(saved) : []
+    } catch { return [] }
+  })
+  const [asiyeUnread, setAsiyeUnread] = useState(() => {
+    try {
+      const saved = localStorage.getItem('topik-play-asiye-unread')
+      return saved ? parseInt(saved, 10) : 0
+    } catch { return 0 }
+  })
+
+  // Save Asiyе messages
+  useEffect(() => {
+    try {
+      localStorage.setItem('topik-play-asiye-messages', JSON.stringify(asiyeMessages))
+    } catch {}
+  }, [asiyeMessages])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('topik-play-asiye-unread', String(asiyeUnread))
+    } catch {}
+  }, [asiyeUnread])
+
+  // Asiyе AI xabarlar ro'yxati — 30 ta
+  const asiyeGreetings = [
+    'Salom! 😊',
+    'Ishlar qalay ketyapti? 💪',
+    'Nima gaplar? 🗣️',
+    'Bugun qanday mavzu o\'tamiz? 📚',
+    'Bugun nechta lug\'at yodladingiz? 📝',
+    'Alo, kimdir bormi? 📡',
+    'Koreys tilini o\'rganish qalay borapti? 🇰🇷',
+    'Bugun yangi so\'z o\'rgandingizmi? ✨',
+    'Grammatika mashqlarini qildingizmi? 📖',
+    'TOPIK imtihoniga tayyormisiz? 🎯',
+    'Salom! Bugun qanday kayfiyatdasiz? 😄',
+    'Koreyscha qanaqa gapirasiz? 💬',
+    'Bugun kutubxonadan o\'qidingizmi? 📕',
+    'Testlarni yechdingizmi? 🧠',
+    'Yuraklaringiz yetadimi? ❤️',
+    'Ball yig\'ishni unutmang! ⭐',
+    'Koreys madaniyati haqida bilasizmi? 🎭',
+    'Bugun AI bilan suhbatlashdingizmi? 🤖',
+    'Do\'stlaringiz bilan chat qildingizmi? 👥',
+    'Kundalik maqsadingizga erishdingizmi? 🏆',
+    'Yangi grammatika qoida o\'rgandingizmi? 📐',
+    'TOPIK so\'zlarini yodladingizmi? 📋',
+    'Bugun qancha vaqt o\'qidingiz? ⏰',
+    'Koreyscha qo\'shiq tingladingizmi? 🎵',
+    'Koreyscha film ko\'rdingizmi? 🎬',
+    'Bugun nima yangi o\'rgandingiz? 🌟',
+    'O\'rganish jarayoni qalay borapti? 📈',
+    'Muvaffaqiyatlar tilayman! 🍀',
+    'Har kuni o\'rganish muhim! 💡',
+    'Yaxshi ishlayapsiz! 👏'
+  ]
+
+  // Asiyе AI har 6 soatda xabar yuboradi
+  useEffect(() => {
+    const lastMessage = localStorage.getItem('topik-play-asiye-last-time')
+    const now = Date.now()
+    const sixHours = 6 * 60 * 60 * 1000
+
+    const shouldSend = !lastMessage || (now - parseInt(lastMessage, 10)) >= sixHours
+
+    if (shouldSend) {
+      const randomIndex = Math.floor(Math.random() * asiyeGreetings.length)
+      const greeting = asiyeGreetings[randomIndex]
+      const msg = { id: Date.now(), text: greeting, time: now }
+      setAsiyeMessages(prev => [...prev, msg])
+      setAsiyeUnread(prev => prev + 1)
+      localStorage.setItem('topik-play-asiye-last-time', String(now))
+    }
+
+    // Har 6 soatda tekshirish
+    const interval = setInterval(() => {
+      const lastMsg = localStorage.getItem('topik-play-asiye-last-time')
+      const currentTime = Date.now()
+      const lastTime = lastMsg ? parseInt(lastMsg, 10) : 0
+
+      if (currentTime - lastTime >= sixHours) {
+        const randomIndex = Math.floor(Math.random() * asiyeGreetings.length)
+        const greeting = asiyeGreetings[randomIndex]
+        const msg = { id: currentTime, text: greeting, time: currentTime }
+        setAsiyeMessages(prev => [...prev, msg])
+        setAsiyeUnread(prev => prev + 1)
+        localStorage.setItem('topik-play-asiye-last-time', String(currentTime))
+
+        // Brauzer bildirishnomasi
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('Asiyе AI', { body: greeting, icon: '/topik-play-logo.svg' })
+        }
+      }
+    }, 60 * 60 * 1000) // Har 1 soatda tekshirish
+
+    // Bildirishnoma ruxsatini so'rash
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+
+    return () => clearInterval(interval)
+  }, [])
+
+  // Asiyе AI ga javob yuborish
+  const handleSendAsiyeMessage = (text) => {
+    if (!text.trim()) return
+    const msg = { id: Date.now(), text: text.trim(), time: Date.now(), fromUser: true }
+    setAsiyeMessages(prev => [...prev, msg])
+    setAsiyeUnread(0)
+
+    // AI javob
+    setTimeout(() => {
+      const responses = [
+        'Juda yaxshi! Davom eting! 💪',
+        'Zo\'r! Siz juda mehnatsiz! 🌟',
+        'Yaxshi savol! Koreys tilini o\'rganish qiziqarli! 🇰🇷',
+        'Har kuni o\'rganish muhim! 📚',
+        'Muvaffaqiyatlar! TOPIK imtihonida yuqori ball oling! 🎯',
+        'Koreyscha gapirish amaliyoti qilish eng yaxshi usul! 💬',
+        'Bugun qancha so\'z o\'rgandingiz? 📝',
+        'Grammatika mashqlari foydali! 📖',
+        'Koreys madaniyatini ham o\'rganing! 🎭',
+        'AI yordamchidan foydalaning! 🤖'
+      ]
+      const randomResponse = responses[Math.floor(Math.random() * responses.length)]
+      const reply = { id: Date.now() + 1, text: randomResponse, time: Date.now() + 1 }
+      setAsiyeMessages(prev => [...prev, reply])
+    }, 1000)
+  }
 
   // News read tracking
   const [newsReadToday, setNewsReadToday] = useState(() => {
@@ -2440,9 +2575,6 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
             <button className={activeTab === 'topik1words' ? 'active' : ''} onClick={() => { setActiveTab('topik1words'); setTopik1WordsPage('list'); }}>
               📝 TOPIK so'zlar
             </button>
-            <button className={activeTab === 'topik' ? 'active' : ''} onClick={() => setActiveTab('topik')}>
-              TOPIK
-            </button>
             <button className={activeTab === 'grammar' ? 'active' : ''} onClick={() => setActiveTab('grammar')}>
               Grammatika
             </button>
@@ -2527,53 +2659,57 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
             <h2>🎬 {t('homeShowsTitle')}</h2>
           </div>
           <p className="settings-description" style={{marginBottom:'16px'}}>
-            AI yordamida yaratilgan koreyscha suhbatlar. Har bir video koreys tilini o'rganishga yordam beradi.
+            O'zingiz koreyscha video qo'shing va tomosha qiling.
           </p>
-          <div className="shows-grid">
-            <article className="show-card glass-card" onClick={() => {
-              const video = document.querySelector('.show-video-overlay video');
-              if (video) {
-                video.src = 'https://www.youtube.com/embed/dQw4w9WgXcQ';
-                setShowsVideoOpen(true);
+
+          {/* Video qo'shish tugmasi */}
+          <input
+            type="file"
+            accept="video/*"
+            id="show-video-upload"
+            style={{display:'none'}}
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) {
+                const url = URL.createObjectURL(file)
+                const videoData = { id: Date.now(), name: file.name, url: url }
+                const saved = JSON.parse(localStorage.getItem('topik-play-show-videos') || '[]')
+                saved.push(videoData)
+                localStorage.setItem('topik-play-show-videos', JSON.stringify(saved))
+                setShowsVideoOpen(true)
+                setShowsCurrentVideo(url)
               }
-            }}>
-              <div className="show-thumbnail">
-                <div className="show-thumbnail-bg show-bg-1">
-                  <span className="show-avatar">👨</span>
-                  <span className="show-avatar">👩</span>
-                </div>
-                <div className="show-play-btn">▶</div>
-                <span className="show-duration">5:30</span>
-              </div>
-              <div className="show-info">
-                <h3 className="show-title">Kundalik suhbat — Salomlashish</h3>
-                <p className="show-desc">이름이 뭐예요? — Menim ismim... Koreyscha salomlashish va tanishish.</p>
-                <div className="show-meta">
-                  <span>🟢 Boshlang'ich</span>
-                  <span>👁️ 1.2K</span>
-                </div>
-              </div>
-            </article>
-            <article className="show-card glass-card" onClick={() => {
-              setShowsVideoOpen(true);
-            }}>
-              <div className="show-thumbnail">
-                <div className="show-thumbnail-bg show-bg-2">
-                  <span className="show-avatar">👦</span>
-                  <span className="show-avatar">👧</span>
-                </div>
-                <div className="show-play-btn">▶</div>
-                <span className="show-duration">7:15</span>
-              </div>
-              <div className="show-info">
-                <h3 className="show-title">Do'konda xarid qilish</h3>
-                <p className="show-desc">이것 얼마예요? — Narxi qancha? Do'konda koreyscha gapirish.</p>
-                <div className="show-meta">
-                  <span>🟡 O'rta</span>
-                  <span>👁️ 890</span>
-                </div>
-              </div>
-            </article>
+            }}
+          />
+          <label htmlFor="show-video-upload" className="primary-btn" style={{display:'inline-flex',alignItems:'center',gap:'8px',marginBottom:'16px',cursor:'pointer'}}>
+            ➕ Video qo'shish
+          </label>
+
+          {/* Saqlangan videolar */}
+          <div className="shows-grid">
+            {(() => {
+              const saved = JSON.parse(localStorage.getItem('topik-play-show-videos') || '[]')
+              if (saved.length === 0) {
+                return <p className="chat-empty">Hali video qo'shmagan ekansiz. Yuqoridagi tugmani bosing!</p>
+              }
+              return saved.map((v) => (
+                <article key={v.id} className="show-card glass-card" onClick={() => {
+                  setShowsVideoOpen(true)
+                  setShowsCurrentVideo(v.url)
+                }}>
+                  <div className="show-thumbnail">
+                    <div className="show-thumbnail-bg show-bg-1">
+                      <span className="show-avatar">🎬</span>
+                    </div>
+                    <div className="show-play-btn">▶</div>
+                  </div>
+                  <div className="show-info">
+                    <h3 className="show-title">{v.name}</h3>
+                    <p className="show-desc">Foydalanuvchi qo'shgan video</p>
+                  </div>
+                </article>
+              ))
+            })()}
           </div>
         </main>
       )}
@@ -3938,17 +4074,72 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
       {mainSection === 'messages' && (
         <main className="panel messages-panel">
           <div className="chat-panel">
-          {/* Tablar: Yangiliklar / Chat */}
+          {/* Tablar: Yangiliklar / Asiyе AI / Chat */}
           <nav className="chat-tabs" aria-label="Xabarlar bo'limlari" style={{marginBottom:'12px'}}>
             <button className={messagesTab === 'news' ? 'active' : ''} onClick={() => { setMessagesTab('news'); setSelectedChatUser(null); }}>
               📢 {t('newsTitle')}
+            </button>
+            <button className={messagesTab === 'asiye' ? 'active' : ''} onClick={() => { setMessagesTab('asiye'); setAsiyeUnread(0); }}>
+              🤖 Asiyе AI {asiyeUnread > 0 && <span className="chat-badge">{asiyeUnread}</span>}
             </button>
             <button className={messagesTab === 'chat' ? 'active' : ''} onClick={() => { setMessagesTab('chat'); setSelectedChatUser(null); }}>
               💬 {t('chatTitle')}
             </button>
           </nav>
 
-          {messagesTab === 'news' ? (
+          {messagesTab === 'asiye' ? (
+            /* ASIYE AI BOT BO'LIMI */
+            <section className="chat-messages-view">
+              <div className="chat-header">
+                <div className="chat-header-user">
+                  <div className="chat-header-avatar" style={{background:'linear-gradient(135deg,#667eea,#764ba2)',borderRadius:'50%',width:'40px',height:'40px',display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontWeight:'bold'}}>
+                    AI
+                  </div>
+                  <div>
+                    <span style={{fontWeight:'600',display:'block'}}>Asiyе AI</span>
+                    <span style={{fontSize:'0.75rem',opacity:0.7}}>Har 6 soatda xabar yuboradi</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="chat-messages-container" style={{flex:1,overflowY:'auto',padding:'12px'}}>
+                {asiyeMessages.length === 0 ? (
+                  <p className="chat-no-messages">Salom! Men Asiyе AI — sizning yordamchingiz! 🤖</p>
+                ) : (
+                  asiyeMessages.map((msg) => {
+                    const isUser = msg.fromUser
+                    return (
+                      <div key={msg.id} className={`chat-bubble ${isUser ? 'chat-bubble-mine' : 'chat-bubble-theirs'}`}>
+                        <p className="chat-bubble-text">{msg.text}</p>
+                        <span className="chat-bubble-time">
+                          {new Date(msg.time).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+
+              <div className="chat-input-container">
+                <form onSubmit={(e) => {
+                  e.preventDefault()
+                  const input = e.target.elements.asiyeInput
+                  if (input) {
+                    handleSendAsiyeMessage(input.value)
+                    input.value = ''
+                  }
+                }}>
+                  <input
+                    className="chat-input"
+                    type="text"
+                    name="asiyeInput"
+                    placeholder="Xabar yozing..."
+                  />
+                  <button type="submit" className="chat-send-btn">➤</button>
+                </form>
+              </div>
+            </section>
+          ) : messagesTab === 'news' ? (
             /* YANGILIKLAR BO'LIMI */
             <section className="news-section">
               <div className="news-feed">
@@ -4833,7 +5024,7 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
           aria-pressed={mainSection === 'messages'}
         >
           <span aria-hidden="true">💌</span>
-          {!newsReadToday && <span className="nav-badge">!</span>}
+          {(asiyeUnread > 0 || !newsReadToday) && <span className="nav-badge">{asiyeUnread > 0 ? asiyeUnread : '!'}</span>}
           <span>{t('navAi')}</span>
         </button>
         <button
@@ -4989,14 +5180,14 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
       )}
 
       {/* Video overlay for shows */}
-      {showsVideoOpen && (
+      {showsVideoOpen && showsCurrentVideo && (
         <div className="show-video-overlay" onClick={() => setShowsVideoOpen(false)}>
-          <iframe
-            src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
-            allow="autoplay; encrypted-media"
-            allowFullScreen
-            title="Koreyscha suhbat videosi"
-          ></iframe>
+          <video
+            controls
+            autoPlay
+            src={showsCurrentVideo}
+            style={{width:'90vw',maxWidth:'800px',borderRadius:'8px'}}
+          ></video>
           <button
             type="button"
             className="show-video-close"
