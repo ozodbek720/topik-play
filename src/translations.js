@@ -66,6 +66,36 @@ const translations = {
     chatLocalModeHint: '💬 Chat bo\'limi ko\'rinmoqda. Xabar yuborish uchun Google orqali kiring.',
     chatNoMessages: 'Xabarlar yo\'q',
 
+    // Home page
+    homeWelcome: 'Xush kelibsiz',
+    homeSubtitle: 'Koreys tilini o\'rganish sayohatingiz boshlanadi',
+    homeQuickLinks: 'Tezkor havolalar',
+    homeTopik1Desc: 'Boshlang\'ich testlar',
+    homeTopik2Desc: 'Yuqori daraja',
+    homeLibraryDesc: 'PDF kitoblar',
+    homeAiTitle: 'AI yordamchi',
+    homeAiDesc: 'Savol bering',
+    homeChatDesc: 'Do\'stlar bilan',
+
+    // Library
+    library: 'Kutubxona',
+    libraryEyebrow: 'O\'quv materiallari',
+    libraryDesc: 'Koreys tilini o\'rganish uchun PDF kitoblar va GitHub resurslar.',
+    libraryBooks: 'PDF Kitoblar',
+    librarySearchPlaceholder: 'Kitob nomida yoki tavsifda qidirish...',
+    librarySearchAria: 'Kitoblardan qidirish',
+    libraryComingSoon: 'Tez orada',
+    libraryRead: 'O\'qish',
+
+    // News
+    newsTitle: 'Yangiliklar',
+    newsMore: 'Ko\'proq',
+    newsLess: 'Yashirish',
+    newsComments: 'Fikrlar',
+    newsNoComments: 'Hali fikrlar yo\'q. Birinchi bo\'ling!',
+    newsCommentPlaceholder: 'Fikringizni yozing...',
+    newsSendComment: 'Yuborish',
+
     // AI Chat
     aiTitle: 'Asiye AI',
     aiSubtitle: 'Koreys tilini o\'rganish bo\'yicha yordamchi',
@@ -283,6 +313,36 @@ const translations = {
     chatLocalModeHint: '💬 Chat section is visible. Sign in with Google to send messages.',
     chatNoMessages: 'No messages',
 
+    // Home page
+    homeWelcome: 'Welcome',
+    homeSubtitle: 'Your Korean language learning journey starts here',
+    homeQuickLinks: 'Quick links',
+    homeTopik1Desc: 'Beginner tests',
+    homeTopik2Desc: 'Advanced level',
+    homeLibraryDesc: 'PDF books',
+    homeAiTitle: 'AI assistant',
+    homeAiDesc: 'Ask a question',
+    homeChatDesc: 'With friends',
+
+    // Library
+    library: 'Library',
+    libraryEyebrow: 'Study materials',
+    libraryDesc: 'PDF books and GitHub resources for learning Korean.',
+    libraryBooks: 'PDF Books',
+    librarySearchPlaceholder: 'Search by book name or description...',
+    librarySearchAria: 'Search books',
+    libraryComingSoon: 'Coming soon',
+    libraryRead: 'Read',
+
+    // News
+    newsTitle: 'News',
+    newsMore: 'Read more',
+    newsLess: 'Hide',
+    newsComments: 'Comments',
+    newsNoComments: 'No comments yet. Be the first!',
+    newsCommentPlaceholder: 'Write a comment...',
+    newsSendComment: 'Send',
+
     // AI Chat
     aiTitle: 'Asiye AI',
     aiSubtitle: 'Korean language learning assistant',
@@ -486,6 +546,36 @@ const translations = {
     chatLocalMode: 'Войдите через Google для использования чата',
     chatLocalModeHint: '💬 Раздел чата виден. Войдите через Google, чтобы отправлять сообщения.',
     chatNoMessages: 'Нет сообщений',
+
+    // Home page
+    homeWelcome: 'Добро пожаловать',
+    homeSubtitle: 'Ваше путешествие по изучению корейского начинается здесь',
+    homeQuickLinks: 'Быстрые ссылки',
+    homeTopik1Desc: 'Начальные тесты',
+    homeTopik2Desc: 'Продвинутый уровень',
+    homeLibraryDesc: 'PDF книги',
+    homeAiTitle: 'AI помощник',
+    homeAiDesc: 'Задать вопрос',
+    homeChatDesc: 'С друзьями',
+
+    // Library
+    library: 'Библиотека',
+    libraryEyebrow: 'Учебные материалы',
+    libraryDesc: 'PDF книги и GitHub ресурсы для изучения корейского.',
+    libraryBooks: 'PDF Книги',
+    librarySearchPlaceholder: 'Поиск по названию или описанию...',
+    librarySearchAria: 'Поиск книг',
+    libraryComingSoon: 'Скоро',
+    libraryRead: 'Читать',
+
+    // News
+    newsTitle: 'Новости',
+    newsMore: 'Подробнее',
+    newsLess: 'Скрыть',
+    newsComments: 'Комментарии',
+    newsNoComments: 'Комментариев пока нет. Будьте первым!',
+    newsCommentPlaceholder: 'Напишите комментарий...',
+    newsSendComment: 'Отправить',
 
     // AI Chat
     aiTitle: 'Асия AI',

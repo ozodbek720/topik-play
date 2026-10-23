@@ -1211,6 +1211,87 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   // Messages tab: 'ai' or 'chat'
   const [messagesTab, setMessagesTab] = useState('ai')
 
+  // News section state
+  const [expandedNews, setExpandedNews] = useState(null)
+  const [expandedComments, setExpandedComments] = useState(null)
+  const [newComment, setNewComment] = useState('')
+  const [newsComments, setNewsComments] = useState(() => {
+    try {
+      const saved = localStorage.getItem('topik-play-news-comments')
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return {}
+  })
+
+  // Save news comments to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('topik-play-news-comments', JSON.stringify(newsComments))
+    } catch {}
+  }, [newsComments])
+
+  // Sample news data (translated per language)
+  const homeNews = [
+    {
+      id: 1,
+      title: { uz: '🎉 Topik Play ilovasi yangilandi!', en: '🎉 Topik Play app updated!', ru: '🎉 Приложение Topik Play обновлено!' },
+      date: '23-oktyabr 2026',
+      image: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&h=400&fit=crop',
+      text: {
+        uz: 'Ilovamizga yangi funksiyalar qo\'shildi: AI yordamchi, chat bo\'limi, yangi testlar va ko\'proq! Koreys tilini o\'rganish endi yanada qulay va qiziqarli bo\'ldi.',
+        en: 'New features added: AI assistant, chat section, new tests and more! Learning Korean is now easier and more fun.',
+        ru: 'Добавлены новые функции: AI помощник, раздел чата, новые тесты и многое другое! Изучение корейского стало проще и интереснее.'
+      }
+    },
+    {
+      id: 2,
+      title: { uz: '📚 Yangi TOPIK II lug\'atlar qo\'shildi', en: '📚 New TOPIK II vocabulary added', ru: '📚 Добавлен новый словарь TOPIK II' },
+      date: '20-oktyabr 2026',
+      image: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=600&h=400&fit=crop',
+      text: {
+        uz: 'TOPIK II imtihoniga tayyorgarik ko\'rayotganlar uchun 500 ta yangi so\'z qo\'shildi. Muvaffaqiyatli imtihon tilaymiz!',
+        en: '500 new words added for TOPIK II exam preparation. Good luck with your exam!',
+        ru: 'Добавлено 500 новых слов для подготовки к экзамену TOPIK II. Удачи на экзамене!'
+      }
+    },
+    {
+      id: 3,
+      title: { uz: '🏆 Kunlik maqsad funksiyasi', en: '🏆 Daily goal feature', ru: '🏆 Функция ежедневных целей' },
+      date: '15-oktyabr 2026',
+      image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&h=400&fit=crop',
+      text: {
+        uz: 'Endi har kuni nechta so\'z o\'rganish kerakligini o\'zingiz belgilaysiz. Kunlik maqsadga erishganingizda, yuraklar va balllar olasiz.',
+        en: 'Set your own daily word learning goals. Earn hearts and points when you reach them!',
+        ru: 'Устанавливайте свои ежедневные цели по изучению слов. Получайте сердца и баллы за их выполнение!'
+      }
+    },
+    {
+      id: 4,
+      title: { uz: '💬 Chat bo\'limi ishga tushirildi', en: '💬 Chat section launched', ru: '💬 Запущен раздел чата' },
+      date: '10-oktyabr 2026',
+      image: 'https://images.unsplash.com/photo-1577563908411-5077b6dc7629?w=600&h=400&fit=crop',
+      text: {
+        uz: 'Boshqa foydalanuvchilar bilan muloqot qiling! Chat bo\'limida savollaringizni bering va yangi do\'stlar toping.',
+        en: 'Chat with other users! Ask questions, share experiences and make new friends in the chat section.',
+        ru: 'Общайтесь с другими пользователями! Задавайте вопросы и заводите новых друзей в разделе чата.'
+      }
+    }
+  ]
+
+  // Add comment handler
+  const handleAddComment = (newsId) => {
+    if (!newComment.trim()) return
+    const username = localStorage.getItem('topik-play-device-username') || (user?.displayName || 'Noma\'lum')
+    const now = new Date()
+    const dateStr = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`
+    const comment = { author: username, text: newComment.trim(), date: dateStr }
+    setNewsComments(prev => ({
+      ...prev,
+      [newsId]: [...(prev[newsId] || []), comment]
+    }))
+    setNewComment('')
+  }
+
   // Derived: active chat messages
   const aiMessages = useMemo(() => {
     const chat = aiChats.find(c => c.id === activeChatId)
@@ -2166,9 +2247,6 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
             <button className={activeTab === 'grammar' ? 'active' : ''} onClick={() => setActiveTab('grammar')}>
               Grammatika
             </button>
-            <button className={activeTab === 'hearts' ? 'active' : ''} onClick={() => setActiveTab('hearts')}>
-              {t('quizHearts')}
-            </button>
           </nav>
         )}
       </header>
@@ -2176,57 +2254,166 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       {mainSection === 'home' && (
         <main className="panel home-panel">
           <div className="home-welcome">
-            <h1>Xush kelibsiz! 👋</h1>
-            <p className="settings-description">Koreys tilini o'rganish sayohatingiz boshlanadi</p>
+            <h1>{t('homeWelcome')} 👋</h1>
+            <p className="settings-description">{t('homeSubtitle')}</p>
           </div>
 
-          <section className="stats-grid">
+          {/* Do'kon tugmasi — ball va yuraklar oldida */}
+          <div style={{display:'flex',justifyContent:'center',marginBottom:'16px'}}>
+            <button type="button" className="primary-btn" style={{padding:'10px 24px',fontSize:'0.95rem'}} onClick={() => setMainSection('shop')}>
+              🏪 {t('heartsExchange')}
+            </button>
+          </div>
+
+          <section className="stats-grid home-stats-grid">
             <article className="stat-card accent">
-              <span>Ball</span>
+              <span>{t('quizScore')}</span>
               <strong>{gameState.score}</strong>
             </article>
             <article className="stat-card heart-stat">
-              <span>Yuraklar</span>
+              <span>{t('hearts')}</span>
               <strong aria-label={`${gameState.hearts} ta yurak`}>{'❤️'.repeat(gameState.hearts)}{'🖤'.repeat(MAX_HEARTS - gameState.hearts)}</strong>
               <small>{gameState.hearts}/{MAX_HEARTS}</small>
             </article>
           </section>
 
+          {/* ===== YANGILIKLAR BO'LIMI ===== */}
+          <section className="news-section">
+            <h2 className="news-section-title">📢 {t('newsTitle')}</h2>
+            <div className="news-feed">
+              {homeNews.map((news) => {
+                const comments = newsComments[news.id] || []
+                const isExpanded = expandedNews === news.id
+                return (
+                  <article key={news.id} className="news-card glass-card">
+                    {news.image && (
+                      <div className="news-image-wrapper">
+                        <img src={news.image} alt={news.title} className="news-image" />
+                      </div>
+                    )}
+                    <div className="news-content">
+                      <h3 className="news-title">{typeof news.title === 'object' ? (news.title[lang] || news.title.uz) : news.title}</h3>
+                      <p className="news-date">{news.date}</p>
+                      {(() => {
+                        const newsText = typeof news.text === 'object' ? (news.text[lang] || news.text.uz) : news.text
+                        return (
+                          <>
+                            <p className="news-text" style={{display: isExpanded ? 'block' : '-webkit-box'}}>{newsText}</p>
+                            {newsText.length > 200 && (
+                              <button type="button" className="news-expand-btn" onClick={() => setExpandedNews(isExpanded ? null : news.id)}>
+                                {isExpanded ? t('newsLess') : t('newsMore')}
+                              </button>
+                            )}
+                          </>
+                        )
+                      })()}
+                      {/* Fikrlar */}
+                      <div className="news-comments">
+                        <button type="button" className="news-comment-toggle" onClick={() => setExpandedComments(expandedComments === news.id ? null : news.id)}>
+                          💬 {t('newsComments')} ({comments.length})
+                        </button>
+                        {expandedComments === news.id && (
+                          <>
+                            <div className="news-comments-list">
+                              {comments.length === 0 ? (
+                                <p className="news-no-comments">{t('newsNoComments')}</p>
+                              ) : (
+                                comments.map((c, i) => (
+                                  <div key={i} className="news-comment-item">
+                                    <span className="news-comment-author">{c.author}</span>
+                                    <span className="news-comment-text">{c.text}</span>
+                                    <span className="news-comment-date">{c.date}</span>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                            <form className="news-comment-form" onSubmit={(e) => { e.preventDefault(); handleAddComment(news.id) }}>
+                              <input
+                                type="text"
+                                className="news-comment-input glass-input"
+                                placeholder={t('newsCommentPlaceholder')}
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                              />
+                              <button type="submit" className="news-comment-btn" disabled={!newComment.trim()}>
+                                {t('newsSendComment')}
+                              </button>
+                            </form>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          </section>
+
           <div className="home-quick-links">
-            <h2>Tezkor havolalar</h2>
+            <h2>{t('homeQuickLinks')}</h2>
             <div className="home-links-grid">
               <button type="button" className="home-link-card" onClick={() => { setMainSection('topik'); setSelectedTopikLevel('I'); }}>
                 <span className="home-link-icon">📖</span>
                 <span className="home-link-title">TOPIK I</span>
-                <span className="home-link-desc">Boshlang'ich testlar</span>
+                <span className="home-link-desc">{t('homeTopik1Desc')}</span>
               </button>
               <button type="button" className="home-link-card" onClick={() => { setMainSection('topik'); setSelectedTopikLevel('II'); }}>
                 <span className="home-link-icon">📚</span>
                 <span className="home-link-title">TOPIK II</span>
-                <span className="home-link-desc">Yuqori daraja</span>
+                <span className="home-link-desc">{t('homeTopik2Desc')}</span>
               </button>
               <button type="button" className="home-link-card" onClick={() => setMainSection('library')}>
                 <span className="home-link-icon">📕</span>
-                <span className="home-link-title">Kutubxona</span>
-                <span className="home-link-desc">PDF kitoblar</span>
+                <span className="home-link-title">{t('library')}</span>
+                <span className="home-link-desc">{t('homeLibraryDesc')}</span>
               </button>
               <button type="button" className="home-link-card" onClick={() => setMainSection('ai')}>
                 <span className="home-link-icon">✨</span>
-                <span className="home-link-title">AI yordamchi</span>
-                <span className="home-link-desc">Savol bering</span>
+                <span className="home-link-title">{t('homeAiTitle')}</span>
+                <span className="home-link-desc">{t('homeAiDesc')}</span>
               </button>
               <button type="button" className="home-link-card" onClick={() => setMainSection('messages')}>
                 <span className="home-link-icon">💬</span>
-                <span className="home-link-title">Chat</span>
-                <span className="home-link-desc">Do'stlar bilan</span>
+                <span className="home-link-title">{t('chat')}</span>
+                <span className="home-link-desc">{t('homeChatDesc')}</span>
               </button>
               <button type="button" className="home-link-card" onClick={() => setMainSection('profile')}>
                 <span className="home-link-icon">👤</span>
-                <span className="home-link-title">Profil</span>
-                <span className="home-link-desc">Sozlamalar</span>
+                <span className="home-link-title">{t('profile')}</span>
+                <span className="home-link-desc">{t('settings')}</span>
               </button>
             </div>
           </div>
+        </main>
+      )}
+
+      {mainSection === 'shop' && (
+        <main className="panel hearts-panel">
+          <div>
+            <p className="eyebrow">{t('hearts')}</p>
+            <h2>{t('heartsExchange')}</h2>
+            <p className="heart-shop-balance">{t('heartsBalance')} ❤️ {gameState.hearts}/{MAX_HEARTS} · ⭐ {gameState.score} {t('quizScore')}</p>
+          </div>
+          <article className="heart-offer">
+            <span className="heart-offer-icon" aria-hidden="true">❤️</span>
+            <div>
+              <strong>1 {t('hearts')}</strong>
+              <p>{HEART_EXCHANGE_COST} {t('quizScore')} {t('heartsExchangeBtn')}</p>
+            </div>
+            <button
+              type="button"
+              className="primary-btn"
+              onClick={exchangePointsForHeart}
+              disabled={gameState.score < HEART_EXCHANGE_COST || gameState.hearts >= MAX_HEARTS}
+            >
+              {gameState.hearts >= MAX_HEARTS ? t('heartsFull') : `${HEART_EXCHANGE_COST} ${t('heartsExchangeBtn')}`}
+            </button>
+          </article>
+          <p className="heart-timer">
+            {t('heartsRefill')}
+            {gameState.hearts < MAX_HEARTS && ` ${t('heartsRefillNext')} ${String(refillHours).padStart(2, '0')}:${String(refillMinutes).padStart(2, '0')}.`}
+          </p>
+          <button type="button" className="ghost-btn" onClick={() => setMainSection('home')}>← Orqaga</button>
         </main>
       )}
 
@@ -2725,34 +2912,6 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         </main>
       )}
 
-      {mainSection === 'topik' && selectedTopikLevel === 'I' && activeTab === 'hearts' && (
-        <main className="panel hearts-panel">
-          <div>
-            <p className="eyebrow">{t('hearts')}</p>
-            <h2>{t('heartsExchange')}</h2>
-            <p className="heart-shop-balance">{t('heartsBalance')} ❤️ {gameState.hearts}/{MAX_HEARTS} · ⭐ {gameState.score} {t('quizScore')}</p>
-          </div>
-          <article className="heart-offer">
-            <span className="heart-offer-icon" aria-hidden="true">❤️</span>
-            <div>
-              <strong>1 {t('hearts')}</strong>
-              <p>{HEART_EXCHANGE_COST} {t('quizScore')} {t('heartsExchangeBtn')}</p>
-            </div>
-            <button
-              type="button"
-              className="primary-btn"
-              onClick={exchangePointsForHeart}
-              disabled={gameState.score < HEART_EXCHANGE_COST || gameState.hearts >= MAX_HEARTS}
-            >
-              {gameState.hearts >= MAX_HEARTS ? t('heartsFull') : `${HEART_EXCHANGE_COST} ${t('heartsExchangeBtn')}`}
-            </button>
-          </article>
-          <p className="heart-timer">
-            {t('heartsRefill')}
-            {gameState.hearts < MAX_HEARTS && ` ${t('heartsRefillNext')} ${String(refillHours).padStart(2, '0')}:${String(refillMinutes).padStart(2, '0')}.`}
-          </p>
-        </main>
-      )}
 
       {mainSection === 'topik' && selectedTopikLevel === 'I' && activeTab === 'topik1words' && (
         <main className="panel topik-panel">
@@ -4083,19 +4242,19 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
       {mainSection === 'library' && (
         <main className="panel github-panel">
-          <p className="eyebrow">O'quv materiallari</p>
-          <h2 className="panel-title">📚 Kutubxona</h2>
+          <p className="eyebrow">{t('libraryEyebrow')}</p>
+          <h2 className="panel-title">📚 {t('library')}</h2>
           <p className="settings-description">
-            Koreys tilini o'rganish uchun PDF kitoblar va GitHub resurslar.
+            {t('libraryDesc')}
           </p>
 
-          <div className="library-tabs" aria-label="Kutubxona bo'limlari">
+          <div className="library-tabs" aria-label={t('library')}>
             <button
               type="button"
               className={`category-btn ${libraryTab === 'books' ? 'active' : ''}`}
               onClick={() => setLibraryTab('books')}
             >
-              📖 PDF Kitoblar
+              📖 {t('libraryBooks')}
               <span>{libraryBooks.length}</span>
             </button>
             <button
@@ -4115,8 +4274,8 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                 type="search"
                 value={librarySearch}
                 onChange={(event) => setLibrarySearch(event.target.value)}
-                placeholder="Kitob nomida yoki tavsifda qidirish..."
-                aria-label="Kitoblardan qidirish"
+                placeholder={t('librarySearchPlaceholder')}
+                aria-label={t('librarySearchAria')}
               />
 
               <div className="word-categories" aria-label="Kitoblar turkumlari">
@@ -4182,8 +4341,8 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                       <div className="github-item-meta">
                         <span className="github-item-category">{book.category}</span>
                         <span className="github-item-stars">{book.level} · {book.pages} bet</span>
-                        {book.pdfUrl === '#' && <span className="github-item-badge" style={{ backgroundColor: '#ffc107', color: '#000' }}>🔒 Tez orada</span>}
-                        {book.pdfUrl && book.pdfUrl !== '#' && <span className="github-item-badge" style={{ backgroundColor: '#28a745', color: '#fff' }}>📖 O'qish</span>}
+                        {book.pdfUrl === '#' && <span className="github-item-badge" style={{ backgroundColor: '#ffc107', color: '#000' }}>🔒 {t('libraryComingSoon')}</span>}
+                        {book.pdfUrl && book.pdfUrl !== '#' && <span className="github-item-badge" style={{ backgroundColor: '#28a745', color: '#fff' }}>📖 {t('libraryRead')}</span>}
                       </div>
                     </div>
                   ))}
