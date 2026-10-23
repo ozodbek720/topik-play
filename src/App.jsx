@@ -12,7 +12,7 @@ import * as pdfjsLib from 'pdfjs-dist'
 import './App.css'
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.mjs',
+  'pdfjs-dist/build/pdf.worker.min.mjs',
   import.meta.url,
 ).toString()
 
@@ -1506,7 +1506,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
     setPdfShowAnalysis(false)
     setPdfAnalysisResult('')
     try {
-      const loadingTask = pdfjsLib.getDocument(url)
+      const loadingTask = pdfjsLib.getDocument({ url: url })
       const pdf = await loadingTask.promise
       setPdfDoc(pdf)
       setPdfTotalPages(pdf.numPages)
