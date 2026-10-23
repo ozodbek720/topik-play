@@ -638,7 +638,7 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
   const [step, setStep] = useState(skipProfile ? 2 : 1)
   const [pf, setPf] = useState({ firstName: '', lastName: '', bio: '', avatar: '' })
   const [av, setAv] = useState('')
-  // Kirish rejimi: '' = asosiy, 'emailSignUp' = hisob ochish, 'emailSignIn' = kirish, 'phone' = telefon
+  // Kirish rejimi: '' = asosiy, 'createAccount' = hisob ochish (email yoki telefon tanlash), 'emailSignUp' = email hisob ochish, 'emailSignIn' = kirish, 'phoneSignUp' = telefon hisob ochish
   const [authMode, setAuthMode] = useState('')
   const [authEmail, setAuthEmail] = useState('')
   const [authPassword, setAuthPassword] = useState('')
@@ -676,7 +676,7 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
     try {
       if (authMode === 'emailSignUp') {
         await onEmailSignUp(authEmail, authPassword, pf)
-      } else {
+      } else if (authMode === 'emailSignIn') {
         await onEmailSignIn(authEmail, authPassword)
       }
     } catch (e) {
@@ -751,8 +751,22 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
               </div>
             )}
 
-            {/* ===== Email Sign Up (Hisob ochish) ===== */}
-            {authMode === 'emailSignUp' ? (
+            {/* ===== Create Account - Method Selection (Hisob ochish tanlash) ===== */}
+            {authMode === 'createAccount' ? (
+              <>
+                <h1 style={{fontSize:'1.2rem',marginBottom:'4px'}}>{t('loginCreateAccount')}</h1>
+                <p className="settings-description">{t('loginCreateAccountHint')}</p>
+                {authError && <p className="auth-error" role="alert">{authError}</p>}
+                <button type="button" className="email-sign-up-btn" onClick={() => setAuthMode('emailSignUp')} disabled={busy}>
+                  {t('loginCreateWithEmail')}
+                </button>
+                <button type="button" className="phone-sign-in-btn" onClick={() => { setAuthMode('phoneSignUp'); setSmsSent(false) }} disabled={busy}>
+                  {t('loginCreateWithPhone')}
+                </button>
+                <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setAuthMode(''); setAuthError('') }}>{t('back')}</button>
+              </>
+            ) : authMode === 'emailSignUp' ? (
+              /* ===== Email Sign Up (Email hisob ochish) ===== */
               <>
                 <h1 style={{fontSize:'1.2rem',marginBottom:'4px'}}>{t('loginCreateAccount')}</h1>
                 {authError && <p className="auth-error" role="alert">{authError}</p>}
@@ -761,7 +775,7 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
                 <button type="button" className="primary-btn" style={{marginTop:'8px'}} onClick={handleEmailAuth} disabled={busy}>
                   {busy ? t('loginSigningIn') : t('loginCreateAccount')}
                 </button>
-                <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setAuthMode(''); setAuthError('') }}>{t('back')}</button>
+                <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setAuthMode('createAccount'); setAuthError('') }}>{t('back')}</button>
               </>
             ) : authMode === 'emailSignIn' ? (
               /* ===== Email Sign In (Menda hisob bor) ===== */
@@ -775,10 +789,10 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
                 </button>
                 <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setAuthMode(''); setAuthError('') }}>{t('back')}</button>
               </>
-            ) : authMode === 'phone' ? (
-              /* ===== Phone Sign In ===== */
+            ) : authMode === 'phoneSignUp' ? (
+              /* ===== Phone Sign Up (Telefon hisob ochish) ===== */
               <>
-                <h1 style={{fontSize:'1.2rem',marginBottom:'4px'}}>{t('loginPhoneSignIn')}</h1>
+                <h1 style={{fontSize:'1.2rem',marginBottom:'4px'}}>{t('loginCreateAccount')}</h1>
                 {authError && <p className="auth-error" role="alert">{authError}</p>}
                 <div ref={recaptchaRef} />
                 {!smsSent ? (
@@ -801,7 +815,7 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
                     </button>
                   </>
                 )}
-                <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setAuthMode(''); setSmsSent(false); setAuthError('') }}>{t('back')}</button>
+                <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setAuthMode('createAccount'); setSmsSent(false); setAuthError('') }}>{t('back')}</button>
               </>
             ) : (
               /* ===== Main Login Methods ===== */
@@ -821,16 +835,9 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
 
                 <div className="auth-divider"><span>{t('loginOr')}</span></div>
 
-                {/* Hisob ochish - Email yoki Telefon */}
-                <button type="button" className="email-sign-up-btn" onClick={() => setAuthMode('emailSignUp')} disabled={busy}>
+                {/* Hisob ochish - Email yoki Telefon tanlash */}
+                <button type="button" className="email-sign-up-btn" onClick={() => setAuthMode('createAccount')} disabled={busy}>
                   {t('loginCreateAccount')}
-                </button>
-
-                <div className="auth-divider"><span>{t('loginOr')}</span></div>
-
-                {/* Telefon */}
-                <button type="button" className="phone-sign-in-btn" onClick={() => setAuthMode('phone')} disabled={busy}>
-                  {t('loginPhoneSignIn')}
                 </button>
 
                 <div className="auth-divider"><span>{t('loginOr')}</span></div>
