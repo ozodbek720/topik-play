@@ -2079,9 +2079,9 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
               type="button"
               className="ghost-btn messages-header-btn"
               onClick={() => setMainSection('ai')}
-              title="AI dan yordam sorash"
+              title="AI"
             >
-              ✨ AI dan yordam sorash
+              ✨ AI
             </button>
           </div>
         )}
