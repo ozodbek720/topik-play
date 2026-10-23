@@ -111,7 +111,9 @@ graph LR
 
 # Delivery Steps
 
-### ✓ Step 1: 1. aiChat.js AI logikasi yaratish
+### ✓ Step 1: 1. aiChat.js AI logikasi yaratish (done)
+### ✓ Step 2: 2. App.jsx ga AI chat integratsiya qilish (done)
+### ✓ Step 3: 3. App.css ga AI chat stillari qo'shish (done)
 AI chat logikasi alohida faylda yaratiladi — generateAIResponse, detectIntent, searchWord, searchGrammar, generateTestQuestion, generateConversationReply funksiyalari.
 - `src/aiChat.js` fayli yaratiladi
 - `generateAIResponse(message)` — asosiy funksiya: niyat aniqlash + javob generatsiya

@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react'
-import { generateAIResponse, generateGeminiResponse } from './aiChat.js'
+import { generateAIResponse } from './aiChat.js'
 import advancedWords from './advancedWords.js'
 import topik2Lugat from './topik2Lugat.js'
 import topik1CommonWords from './topik1Words.js'
@@ -1182,14 +1182,6 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [aiInput, setAiInput] = useState('')
   const [aiTyping, setAiTyping] = useState(false)
   const [aiShowChatList, setAiShowChatList] = useState(false) // Mobile: show chat list sidebar
-  const [geminiApiKey, setGeminiApiKey] = useState(() => {
-    try {
-      return localStorage.getItem('topik-play-gemini-key') || 'AIza.Ab8RN6J7nJ7SYAFi0nI1NVXO-M_BlMmLt4M-pHqXYbmUBbIOKA'
-    } catch {
-      return 'AIza.Ab8RN6J7nJ7SYAFi0nI1NVXO-M_BlMmLt4M-pHqXYbmUBbIOKA'
-    }
-  })
-  const [isGeminiKeyVisible, setIsGeminiKeyVisible] = useState(false) // Toggle password visibility
   const aiEndRef = useRef(null)
 
   // Derived: active chat messages
@@ -1703,62 +1695,23 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       .catch((e) => console.error('Send message error:', e))
   }
 
-  // AI Chat handler — Gemini AI only, with image support
-  const aiImageInput = useRef(null)
-  const [aiImagePreview, setAiImagePreview] = useState(null)
-  const [aiImageBase64, setAiImageBase64] = useState(null)
-
-  const handleAiImageSelect = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      setAiImagePreview(reader.result)
-      // Extract base64 data (without data: prefix)
-      setAiImageBase64(reader.result.split(',')[1])
-    }
-    reader.readAsDataURL(file)
-  }
-
-  const handleRemoveAiImage = () => {
-    setAiImagePreview(null)
-    setAiImageBase64(null)
-    if (aiImageInput.current) aiImageInput.current.value = ''
-  }
-
-  const handleSendAIMessage = async (imageData = null) => {
+  // AI Chat handler — Offline AI only
+  const handleSendAIMessage = async () => {
     const text = aiInput.trim()
-    if (!text && !imageData && !aiImageBase64) return
+    if (!text) return
     if (aiTyping) return
 
     const userMsg = {
       id: Date.now(),
       role: 'user',
-      content: text || '📷 Rasm',
-      image: imageData || aiImageBase64 || null,
+      content: text,
       timestamp: Date.now()
     }
     setAiMessages(prev => [...prev, userMsg])
     setAiInput('')
-    handleRemoveAiImage()
     setAiTyping(true)
 
-    // Try Gemini AI first if API key is set
-    if (geminiApiKey && text) {
-      try {
-        const geminiResponse = await generateGeminiResponse(userMsg.content, geminiApiKey, aiMessages, userMsg.image)
-        if (geminiResponse) {
-          const aiMsg = { id: Date.now() + 1, role: 'ai', ...geminiResponse, timestamp: Date.now() + 1 }
-          setAiMessages(prev => [...prev, aiMsg])
-          setAiTyping(false)
-          return
-        }
-      } catch (error) {
-        console.error('Gemini AI error, falling back to offline:', error)
-      }
-    }
-
-    // Fallback to offline AI
+    // Offline AI only
     try {
       const offlineResponse = generateAIResponse(text || '', aiMessages)
       if (offlineResponse) {
@@ -3371,47 +3324,6 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                     </div>
                   </div>
 
-                  {/* Gemini AI API Key — only for admin (ozodbek) */}
-                  {user?.email?.includes('ozodbek') && (
-                    <div className="profile-settings-section">
-                      <h4>{t('settingsGemini')}</h4>
-                      <p className="settings-description" style={{fontSize:'0.78rem',marginBottom:'10px'}}>{t('settingsGeminiDesc')}</p>
-                      <div className="gemini-key-input-row">
-                        <input
-                          type={isGeminiKeyVisible ? 'text' : 'password'}
-                          className="gemini-key-input"
-                          placeholder={t('settingsGeminiPlaceholder')}
-                          value={geminiApiKey}
-                          onChange={(e) => setGeminiApiKey(e.target.value)}
-                          onBlur={() => { try { localStorage.setItem('topik-play-gemini-key', geminiApiKey) } catch {} }}
-                        />
-                        <button
-                          type="button"
-                          className="ghost-btn"
-                          onClick={() => setIsGeminiKeyVisible(!isGeminiKeyVisible)}
-                          style={{fontSize:'0.75rem', padding: '4px 8px'}}
-                        >
-                          {isGeminiKeyVisible ? '🙈' : '👁️'}
-                        </button>
-                        {geminiApiKey && (
-                          <button
-                            type="button"
-                            className="ghost-btn"
-                            onClick={() => { setGeminiApiKey(''); try { localStorage.removeItem('topik-play-gemini-key') } catch {} }}
-                            style={{fontSize:'0.75rem',color:'var(--accent)'}}
-                          >
-                            {t('close')}
-                          </button>
-                        )}
-                      </div>
-                      {geminiApiKey && (
-                        <p className="settings-description" style={{fontSize:'0.72rem',color:'#4caf50',marginTop:'6px'}}>
-                          ✅ {t('settingsGeminiActive')}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
                   {/* Learning */}
                   <div className="profile-settings-section">
                     <h4>{t('settingsLearning')}</h4>
@@ -3511,7 +3423,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                   )}
                 </>
               ) : (
-                <p className="chat-empty">Chat va foydalanuvchilar ro'yxati faqat Google orqali kirganingizda ko'rinadi.</p>
+                <p className="chat-empty">{t('chatLocalModeHint')}</p>
               )}
             </section>
           ) : (
@@ -3638,14 +3550,6 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
               </button>
             </div>
 
-            {/* Image Preview */}
-            {aiImagePreview && (
-              <div className="ai-image-preview-container">
-                <img src={aiImagePreview} alt="Rasm" className="ai-image-preview" />
-                <button type="button" className="ai-image-remove" onClick={handleRemoveAiImage}>✕</button>
-              </div>
-            )}
-
             {/* Messages */}
             <div className="ai-messages-container">
               {aiMessages.length === 0 ? (
@@ -3679,9 +3583,6 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                       </div>
                     )}
                     <div className="ai-bubble">
-                      {msg.image && msg.role === 'user' && (
-                        <img src={`data:image/jpeg;base64,${msg.image}`} alt="Yuborilgan rasm" className="ai-message-image" />
-                      )}
                       {msg.type === 'test' ? (
                         <div className="ai-test-question">
                           <p className="ai-test-text">{msg.content.question}</p>
@@ -3755,21 +3656,6 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
             {/* Input */}
             <div className="ai-input-container">
-              <button
-                type="button"
-                className="ai-image-btn"
-                onClick={() => aiImageInput.current?.click()}
-                title="Rasm yuborish"
-              >
-                📷
-              </button>
-              <input
-                ref={aiImageInput}
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={handleAiImageSelect}
-              />
               <input
                 className="ai-input"
                 type="text"
@@ -3777,7 +3663,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                 value={aiInput}
                 onChange={(e) => setAiInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && (aiInput.trim() || aiImageBase64)) {
+                  if (e.key === 'Enter' && aiInput.trim()) {
                     handleSendAIMessage()
                   }
                 }}
@@ -3785,7 +3671,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
               <button
                 className="ai-send-btn"
                 onClick={() => handleSendAIMessage()}
-                disabled={(!aiInput.trim() && !aiImageBase64) || aiTyping}
+                disabled={!aiInput.trim() || aiTyping}
               >
                 ➤
               </button>

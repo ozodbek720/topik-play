@@ -35,12 +35,6 @@ const translations = {
     settingsLangEn: '🇬🇧 English',
     settingsLangRu: '🇷🇺 Русский',
 
-    // Gemini AI
-    settingsGemini: '🤖 Gemini AI',
-    settingsGeminiDesc: 'Google Gemini AI orqali Asiye AI ni yanada aqlliroq qiling. API kalitni [aistudio.google.com](https://aistudio.google.com) dan oling.',
-    settingsGeminiPlaceholder: 'Gemini API kalitni kiriting...',
-    settingsGeminiActive: 'Gemini AI faol — internet bo\'lsa Gemini, bo\'lmasa offline AI ishlaydi',
-
     // Profile
     profileEdit: 'Profilni tahrirlash',
     profileFirstName: 'Ism',
@@ -69,6 +63,7 @@ const translations = {
     chatIsFriend: '✓ Dost',
     chatInput: 'Xabar yozing...',
     chatLocalMode: 'Chat uchun Google orqali kiring',
+    chatLocalModeHint: '💬 Chat bo\'limi ko\'rinmoqda. Xabar yuborish uchun Google orqali kiring.',
     chatNoMessages: 'Xabarlar yo\'q',
 
     // AI Chat
@@ -256,12 +251,6 @@ const translations = {
     settingsLangEn: '🇬🇧 English',
     settingsLangRu: '🇷🇺 Русский',
 
-    // Gemini AI
-    settingsGemini: '🤖 Gemini AI',
-    settingsGeminiDesc: 'Make Asiye AI smarter with Google Gemini. Get API key from [aistudio.google.com](https://aistudio.google.com).',
-    settingsGeminiPlaceholder: 'Enter Gemini API key...',
-    settingsGeminiActive: 'Gemini AI active — uses Gemini online, falls back to offline AI',
-
     // Profile
     profileEdit: 'Edit Profile',
     profileFirstName: 'First name',
@@ -290,6 +279,7 @@ const translations = {
     chatIsFriend: '✓ Friend',
     chatInput: 'Write a message...',
     chatLocalMode: 'Sign in with Google to use chat',
+    chatLocalModeHint: '💬 Chat section is visible. Sign in with Google to send messages.',
     chatNoMessages: 'No messages',
 
     // AI Chat
@@ -464,12 +454,6 @@ const translations = {
     settingsLangEn: '🇬🇧 English',
     settingsLangRu: '🇷🇺 Русский',
 
-    // Gemini AI
-    settingsGemini: '🤖 Gemini AI',
-    settingsGeminiDesc: 'Сделайте Асию AI умнее с Google Gemini. Получите API ключ на [aistudio.google.com](https://aistudio.google.com).',
-    settingsGeminiPlaceholder: 'Введите API ключ Gemini...',
-    settingsGeminiActive: 'Gemini AI активен — использует Gemini онлайн, при отсутствии интернета — офлайн AI',
-
     // Profile
     profileEdit: 'Редактировать профиль',
     profileFirstName: 'Имя',
@@ -498,6 +482,7 @@ const translations = {
     chatIsFriend: '✓ Друг',
     chatInput: 'Напишите сообщение...',
     chatLocalMode: 'Войдите через Google для использования чата',
+    chatLocalModeHint: '💬 Раздел чата виден. Войдите через Google, чтобы отправлять сообщения.',
     chatNoMessages: 'Нет сообщений',
 
     // AI Chat
