@@ -930,9 +930,9 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [aiShowChatList, setAiShowChatList] = useState(false) // Mobile: show chat list sidebar
   const [geminiApiKey, setGeminiApiKey] = useState(() => {
     try {
-      return localStorage.getItem('topik-play-gemini-key') || ''
+      return localStorage.getItem('topik-play-gemini-key') || 'AIza.Ab8RN6J7nJ7SYAFi0nI1NVXO-M_BlMmLt4M-pHqXYbmUBbIOKA'
     } catch {
-      return ''
+      return 'AIza.Ab8RN6J7nJ7SYAFi0nI1NVXO-M_BlMmLt4M-pHqXYbmUBbIOKA'
     }
   })
   const [isGeminiKeyVisible, setIsGeminiKeyVisible] = useState(false) // Toggle password visibility
