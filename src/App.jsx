@@ -1581,16 +1581,13 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
     setPdfAnalyzing(true)
     setPdfShowAnalysis(true)
     try {
-      let fullText = ''
-      const maxPages = Math.min(pdfTotalPages, 10)
-      for (let i = 1; i <= maxPages; i++) {
-        const page = await pdfDoc.getPage(i)
-        const textContent = await page.getTextContent()
-        const pageText = textContent.items.map(item => item.str).join(' ')
-        fullText += pageText + '\n'
-      }
-      // AI tahlil qilish
-      const prompt = `Bu koreys tilini o'rganish kitobidan matn. Iltimos, o'zbek tilida tahlil qiling:\n\n${fullText.substring(0, 4000)}\n\nTahlil: asosiy mavzu, yangi so'zlar, grammatika qoidalari va qisqacha xulosa.`
+      // Tanlangan sahifadan matn o'qish
+      const page = await pdfDoc.getPage(pdfPage)
+      const textContent = await page.getTextContent()
+      const pageText = textContent.items.map(item => item.str).join(' ')
+
+      // AI tarjima va tahlil qilish
+      const prompt = `Bu koreys tilini o'rganish kitobidan ${pdfPage}-sahifa matni. Iltimos, o'zbek tilida batafsil tahlil qiling:\n\n${pageText.substring(0, 6000)}\n\n1. To'liq tarjima (o'zbek tiliga)\n2. Yangi so'zlar va ularning tarjimasi\n3. Grammatika qoidalari tushuntirilgan holda\n4. Matn haqida qisqacha xulosa\n5. Agar mashqlar bo'lsa, yechimlari bilan.`
       const response = generateAIResponse(prompt, [])
       setPdfAnalysisResult(response || 'Tahlil qilishda xatolik yuz berdi.')
     } catch (err) {
@@ -4714,16 +4711,16 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         <div className="pdf-viewer-overlay" onClick={handleClosePdf} role="dialog" aria-modal="true" aria-label="PDF ko'rish">
           <div className="pdf-viewer-container" onClick={(e) => e.stopPropagation()}>
             <div className="pdf-viewer-header">
-              <h3 className="pdf-viewer-title">{selectedBook.icon} {selectedBook.title}</h3>
+              <h3 className="pdf-viewer-title">{selectedBook.coverUrl ? <img className="github-item-cover" src={selectedBook.coverUrl} alt="" style={{width:'32px',height:'40px',objectFit:'cover',verticalAlign:'middle',marginRight:'6px'}} /> : selectedBook.icon} {selectedBook.title}</h3>
               <div className="pdf-viewer-actions">
                 <button
                   type="button"
                   className="pdf-viewer-action-btn"
                   onClick={handleAnalyzePdf}
                   disabled={pdfAnalyzing}
-                  title="AI bilan tahlil qilish"
+                  title={`${pdfPage}-sahifani AI bilan tarjima qilish`}
                 >
-                  {pdfAnalyzing ? '⏳' : '🤖'} AI
+                  {pdfAnalyzing ? '⏳' : '🤖'} AI Tarjima
                 </button>
                 <button
                   type="button"
@@ -4739,11 +4736,11 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
             {pdfShowAnalysis && pdfAnalysisResult && (
               <div className="pdf-analysis-panel">
                 <div className="pdf-analysis-header">
-                  <strong>🤖 AI Tahlil</strong>
+                  <strong>🤖 AI Tarjima ({pdfPage}-sahifa)</strong>
                   <button type="button" className="ghost-btn" onClick={() => setPdfShowAnalysis(false)}>✕</button>
                 </div>
                 <div className="pdf-analysis-content">
-                  {pdfAnalyzing ? 'Tahlil qilinmoqda...' : pdfAnalysisResult}
+                  {pdfAnalyzing ? `${pdfPage}-sahifa tarjima qilinmoqda...` : pdfAnalysisResult}
                 </div>
               </div>
             )}
