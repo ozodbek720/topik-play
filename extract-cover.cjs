@@ -5,8 +5,8 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 
-const pdfPath = path.resolve(__dirname, 'public', 'pdf', 'ssugui-modom-get.pdf');
-const outputPath = path.resolve(__dirname, 'public', 'pdf', 'cover.png');
+const pdfPath = path.resolve(__dirname, 'public', 'pdf', 'munhaga-ittain-hangeugo-itgi-1.pdf');
+const outputPath = path.resolve(__dirname, 'public', 'pdf', 'cover-munhaga.png');
 
 async function extractCover() {
   try {
@@ -69,8 +69,8 @@ function createSVG(width, height) {
     </defs>
     <rect width="${width}" height="${height}" fill="url(#bg)" rx="20"/>
     <text x="${width/2}" y="${height/2 - 40}" font-family="Arial" font-size="80" fill="white" text-anchor="middle" font-weight="bold">📖</text>
-    <text x="${width/2}" y="${height/2 + 40}" font-family="Arial" font-size="32" fill="white" text-anchor="middle">TOPIK Yozish</text>
-    <text x="${width/2}" y="${height/2 + 80}" font-family="Arial" font-size="24" fill="rgba(255,255,255,0.8)" text-anchor="middle">StarTOPIK</text>
+    <text x="${width/2}" y="${height/2 + 40}" font-family="Arial" font-size="28" fill="white" text-anchor="middle">Koreya madaniyati</text>
+    <text x="${width/2}" y="${height/2 + 80}" font-family="Arial" font-size="22" fill="rgba(255,255,255,0.8)" text-anchor="middle">O'qish kitobi 1</text>
   </svg>`;
 }
 

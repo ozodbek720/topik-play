@@ -1511,6 +1511,10 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       setPdfDoc(pdf)
       setPdfTotalPages(pdf.numPages)
       setPdfLoading(false)
+      // PDF yuklangandan so'ng birinchi sahifani render qilish
+      setTimeout(() => {
+        renderPdfPage(pdf, 1, 1.0)
+      }, 150)
     } catch (err) {
       console.error('PDF yuklash xatosi:', err)
       setPdfLoading(false)
