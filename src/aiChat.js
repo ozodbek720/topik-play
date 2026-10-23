@@ -758,3 +758,88 @@ function generateAIResponse(message, chatHistory = []) {
 }
 
 export { generateAIResponse, detectIntent, searchWord, searchGrammar, generateTestQuestion, generateConversationReply, allWords, grammarPoints }
+
+// ========================
+// Gemini AI Integration
+// ========================
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+
+const GEMINI_SYSTEM_PROMPT = `Sen Asiye AI — koreys tilini o'rganish bo'yicha aqlli yordamchisan. Sen O'zbekistonlik Ozodbek tomonidan yaratilgan.
+
+Qoidalaring:
+1. Foydalanuvchi qaysi tilda so'rasa, shu tilda javob ber (o'zbek, ingliz, rus).
+2. Koreys so'zlarini har doim koreyscha, tarjimasini va talaffuzini ko'rsat.
+3. Markdown formatda javob ber (qalin, kursiv, ro'yxat, jadval).
+4. Qisqa va aniq javob ber, lekin to'liq ma'lumot ber.
+5. Har doim misol gaplar keltir.
+6. Emojilardan foydalan, lekin o'rinli bo'lsin.
+7. Agar savol koreys tiliga oid bo'lmasa, ham javob ber — sen umumiy bilimlarga ega AI.
+8. "Asiye AI" ismingni unutmang.
+
+Mavzular:
+- Koreys so'zlar tarjimasi
+- Koreys grammatika qoidalari
+- TOPIK imtihoni haqida
+- Hangul alifbo
+- Koreys madaniyati
+- Suhbat mashqi
+- Umumiy savollar`
+
+async function generateGeminiResponse(message, apiKey, chatHistory = []) {
+  if (!apiKey || !message || !message.trim()) {
+    return null
+  }
+
+  try {
+    // Build conversation history for context
+    const historyMessages = chatHistory
+      .slice(-10) // Last 10 messages for context
+      .map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.content }]
+      }))
+
+    const contents = [
+      ...historyMessages,
+      { role: 'user', parts: [{ text: message }] }
+    ]
+
+    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: GEMINI_SYSTEM_PROMPT }] },
+        contents: contents,
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 1000
+        }
+      })
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      console.error('Gemini API error:', errorData)
+      return null // Fall back to offline AI
+    }
+
+    const data = await response.json()
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text
+
+    if (text) {
+      return {
+        type: 'text',
+        content: text.trim()
+      }
+    }
+
+    return null // Fall back to offline AI
+  } catch (error) {
+    console.error('Gemini AI error:', error)
+    return null // Fall back to offline AI
+  }
+}
+
+export { generateGeminiResponse }

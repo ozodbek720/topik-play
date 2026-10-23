@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { generateAIResponse } from './aiChat.js'
+import { generateAIResponse, generateGeminiResponse } from './aiChat.js'
 import advancedWords from './advancedWords.js'
 import topik2Lugat from './topik2Lugat.js'
 import { addFriend, getAllProfiles, getRedirectResultAuth, loadAccountData, loadProfile, listenToFriends, listenToMessages, listenToProfiles, observeAuth, removeFriend, saveAccountData, saveProfile, sendMessage, signInWithGooglePopup, signInWithGoogleRedirect, signOutUser } from './firebase.js'
@@ -907,6 +907,13 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   })
   const [aiInput, setAiInput] = useState('')
   const [aiTyping, setAiTyping] = useState(false)
+  const [geminiApiKey, setGeminiApiKey] = useState(() => {
+    try {
+      return localStorage.getItem('topik-play-gemini-key') || ''
+    } catch {
+      return ''
+    }
+  })
   const aiEndRef = useRef(null)
   // Language state
   const [appLang, setAppLang] = useState(() => {
@@ -1341,8 +1348,8 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       .catch((e) => console.error('Send message error:', e))
   }
 
-  // AI Chat handler
-  const handleSendAIMessage = () => {
+  // AI Chat handler — Gemini or Offline
+  const handleSendAIMessage = async () => {
     if (!aiInput.trim() || aiTyping) return
     const userMsg = { id: Date.now(), role: 'user', content: aiInput.trim(), timestamp: Date.now() }
     const currentMessages = [...aiMessages, userMsg]
@@ -1350,22 +1357,57 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
     setAiInput('')
     setAiTyping(true)
 
-    // Simulate AI thinking delay (800-1500ms)
-    const delay = 800 + Math.random() * 700
-    setTimeout(() => {
-      const response = generateAIResponse(userMsg.content, aiMessages)
-      let aiMsg = null
-      if (response) {
-        aiMsg = { id: Date.now() + 1, role: 'ai', ...response, timestamp: Date.now() + 1 }
-      }
-      const newMessages = aiMsg ? [...currentMessages, aiMsg] : currentMessages
-      setAiMessages(newMessages)
-      setAiTyping(false)
-      try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(newMessages.slice(-100))) } catch {}
-    }, delay)
-
     // Save user message immediately
     try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(currentMessages.slice(-100))) } catch {}
+
+    if (geminiApiKey) {
+      // Try Gemini AI first (online)
+      try {
+        const geminiResponse = await generateGeminiResponse(userMsg.content, geminiApiKey, aiMessages)
+        let aiMsg = null
+        if (geminiResponse) {
+          aiMsg = { id: Date.now() + 1, role: 'ai', ...geminiResponse, timestamp: Date.now() + 1 }
+        } else {
+          // Gemini failed, fall back to offline AI
+          const offlineResponse = generateAIResponse(userMsg.content, aiMessages)
+          if (offlineResponse) {
+            aiMsg = { id: Date.now() + 1, role: 'ai', ...offlineResponse, timestamp: Date.now() + 1 }
+          }
+        }
+        const newMessages = aiMsg ? [...currentMessages, aiMsg] : currentMessages
+        setAiMessages(newMessages)
+        setAiTyping(false)
+        try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(newMessages.slice(-100))) } catch {}
+      } catch {
+        // Gemini error, fall back to offline AI
+        const delay = 800 + Math.random() * 700
+        setTimeout(() => {
+          const offlineResponse = generateAIResponse(userMsg.content, aiMessages)
+          let aiMsg = null
+          if (offlineResponse) {
+            aiMsg = { id: Date.now() + 1, role: 'ai', ...offlineResponse, timestamp: Date.now() + 1 }
+          }
+          const newMessages = aiMsg ? [...currentMessages, aiMsg] : currentMessages
+          setAiMessages(newMessages)
+          setAiTyping(false)
+          try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(newMessages.slice(-100))) } catch {}
+        }, delay)
+      }
+    } else {
+      // Offline AI only
+      const delay = 800 + Math.random() * 700
+      setTimeout(() => {
+        const response = generateAIResponse(userMsg.content, aiMessages)
+        let aiMsg = null
+        if (response) {
+          aiMsg = { id: Date.now() + 1, role: 'ai', ...response, timestamp: Date.now() + 1 }
+        }
+        const newMessages = aiMsg ? [...currentMessages, aiMsg] : currentMessages
+        setAiMessages(newMessages)
+        setAiTyping(false)
+        try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(newMessages.slice(-100))) } catch {}
+      }, delay)
+    }
   }
 
   // Friend handlers
@@ -2697,6 +2739,37 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                         {t('settingsLangRu')}
                       </button>
                     </div>
+                  </div>
+
+                  {/* Gemini AI API Key */}
+                  <div className="profile-settings-section">
+                    <h4>{t('settingsGemini')}</h4>
+                    <p className="settings-description" style={{fontSize:'0.78rem',marginBottom:'10px'}}>{t('settingsGeminiDesc')}</p>
+                    <div className="gemini-key-input-row">
+                      <input
+                        type="password"
+                        className="gemini-key-input"
+                        placeholder={t('settingsGeminiPlaceholder')}
+                        value={geminiApiKey}
+                        onChange={(e) => setGeminiApiKey(e.target.value)}
+                        onBlur={() => { try { localStorage.setItem('topik-play-gemini-key', geminiApiKey) } catch {} }}
+                      />
+                      {geminiApiKey && (
+                        <button
+                          type="button"
+                          className="ghost-btn"
+                          onClick={() => { setGeminiApiKey(''); try { localStorage.removeItem('topik-play-gemini-key') } catch {} }}
+                          style={{fontSize:'0.75rem',color:'var(--accent)'}}
+                        >
+                          {t('close')}
+                        </button>
+                      )}
+                    </div>
+                    {geminiApiKey && (
+                      <p className="settings-description" style={{fontSize:'0.72rem',color:'#4caf50',marginTop:'6px'}}>
+                        ✅ {t('settingsGeminiActive')}
+                      </p>
+                    )}
                   </div>
 
                   {/* Learning */}

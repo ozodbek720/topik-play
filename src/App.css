@@ -3687,6 +3687,35 @@ button:disabled {
   color: var(--primary);
 }
 
+/* Gemini API Key Input */
+.gemini-key-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.gemini-key-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.gemini-key-input:focus {
+  border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.gemini-key-input::placeholder {
+  color: var(--muted);
+}
+
 /* ===== Chat Section - Instagram Direct Style ===== */
 
 .chat-panel {
