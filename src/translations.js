@@ -104,7 +104,7 @@ const translations = {
     // Quiz
     quizNext: 'Keyingi',
     quizCheck: 'Tekshirish',
-    quizScore: 'Natija',
+    quizScore: 'Ball',
     quizRetry: 'Qayta urinish',
 
     // TOPIK I
@@ -133,7 +133,7 @@ const translations = {
     quizWords: '📖 So\'zlar',
     quizGrammar: '📝 Grammatika',
     quizMistakes: '❌ Xatolarim',
-    quizHearts: '❤️ Yuraklar',
+    quizHearts: '🏪 Do\'kon',
     quizAll: 'Hammasi',
     quizEasy: 'Oson',
     quizMedium: 'O\'rtacha',
@@ -201,7 +201,7 @@ const translations = {
     words: 'so\'zlar',
     days: 'kunlar',
     hearts: 'yuraklar',
-    heartsExchange: 'Ballni yurakka almashtiring',
+    heartsExchange: '🏪 Do\'kon',
     heartsBalance: 'Hozir:',
     heartsFull: 'Yuraklar to\'la',
     heartsExchangeBtn: 'ballga almashtirish',
