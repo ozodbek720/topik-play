@@ -1507,7 +1507,11 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
     setPdfShowAnalysis(false)
     setPdfAnalysisResult('')
     try {
-      const loadingTask = pdfjsLib.getDocument({ url: url })
+      const loadingTask = pdfjsLib.getDocument({
+        url: url,
+        cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/cmaps/',
+        cMapPacked: true,
+      })
       const pdf = await loadingTask.promise
       setPdfDoc(pdf)
       setPdfTotalPages(pdf.numPages)
@@ -1596,8 +1600,15 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       const textContent = await page.getTextContent()
       const pageText = textContent.items.map(item => item.str).join(' ')
 
-      // AI tarjima va tahlil qilish
-      const prompt = `Bu koreys tilini o'rganish kitobidan ${pdfPage}-sahifa matni. Iltimos, o'zbek tilida batafsil tahlil qiling:\n\n${pageText.substring(0, 6000)}\n\n1. To'liq tarjima (o'zbek tiliga)\n2. Yangi so'zlar va ularning tarjimasi\n3. Grammatika qoidalari tushuntirilgan holda\n4. Matn haqida qisqacha xulosa\n5. Agar mashqlar bo'lsa, yechimlari bilan.`
+      // AI tarjima, lug'at va grammatika tahlil qilish
+      const prompt = `Bu koreys tilini o'rganish kitobidan ${pdfPage}-sahifa matni. Iltimos, o'zbek tilida batafsil tahlil qiling:\n\n${pageText.substring(0, 8000)}\n\nQOIDALAR:
+1. TO'LIQ TARJIMA — butun matnni o'zbek tiliga tarjima qiling.
+2. LUG'AT — sahifadagi barcha foydali so'zlarni jadval ko'rinishida ko'rsating: koreys so'z | hamxonim (o'qilishi) | o'zbek tarjimasi. Har bir so'zni alohida qatorga yozing.
+3. GRAMMATIKA — sahifada ishlatilgan barcha grammatika qoidalarini alohida ko'rsating: qoida nomi, formula, tushuntirish va misol.
+4. XULOSA — matn haqida qisqacha xulosa.
+5. MASHQLAR — agar mashqlar bo'lsa, yechimlari bilan ko'rsating.
+
+Har bir bo'limni aniq sarlavha bilan ajrating.`
       const response = generateAIResponse(prompt, [])
       setPdfAnalysisResult(response || 'Tahlil qilishda xatolik yuz berdi.')
     } catch (err) {
