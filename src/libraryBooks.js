@@ -21,8 +21,7 @@ export default [
     description: 'TOPIK imtihonining yozish qismiga to\'liq tayyorgarlik ko\'rish uchun eng qulay kitob. Barcha yozish turlari, namuna javoblar va foydali iboralar.',
     category: 'TOPIK',
     level: 'B1-B2',
-    pages: 150,
-    icon: '✏️',
+    icon: '📖',
     pdfUrl: '/pdf/ssugui-modom-get.pdf',
   },
 ]

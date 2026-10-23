@@ -4473,7 +4473,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
                       </div>
                       <div className="github-item-meta">
                         <span className="github-item-category">{book.category}</span>
-                        <span className="github-item-stars">{book.level} · {book.pages} bet</span>
+                        <span className="github-item-stars">{book.level}</span>
                         {book.pdfUrl === '#' && <span className="github-item-badge" style={{ backgroundColor: '#ffc107', color: '#000' }}>🔒 {t('libraryComingSoon')}</span>}
                         {book.pdfUrl && book.pdfUrl !== '#' && <span className="github-item-badge" style={{ backgroundColor: '#28a745', color: '#fff' }}>📖 {t('libraryRead')}</span>}
                       </div>
