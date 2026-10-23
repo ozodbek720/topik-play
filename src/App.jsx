@@ -1202,6 +1202,8 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [aiTyping, setAiTyping] = useState(false)
   const [aiShowChatList, setAiShowChatList] = useState(false) // Mobile: show chat list sidebar
   const aiEndRef = useRef(null)
+  // Messages tab: 'ai' or 'chat'
+  const [messagesTab, setMessagesTab] = useState('ai')
 
   // Derived: active chat messages
   const aiMessages = useMemo(() => {
@@ -2068,11 +2070,19 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       }}
     >
       <header className="topbar">
-        {mainSection !== 'ai' && mainSection !== 'profile' && (
+        {mainSection !== 'messages' && mainSection !== 'profile' && (
           <div className="brand-row">
             <div>
               <img className="brand-logo" src="/topik-play-logo.svg" alt="Topik Play — Koreys tilini o'rganish o'yini" />
             </div>
+            <button
+              type="button"
+              className="ghost-btn messages-header-btn"
+              onClick={() => setMainSection('ai')}
+              title="AI dan yordam sorash"
+            >
+              ✨ AI dan yordam sorash
+            </button>
           </div>
         )}
         {cloudError && <p className="account-sync-error" role="alert">{cloudError}</p>}
@@ -2109,6 +2119,63 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
           </nav>
         )}
       </header>
+
+      {mainSection === 'home' && (
+        <main className="panel home-panel">
+          <div className="home-welcome">
+            <h1>Xush kelibsiz! 👋</h1>
+            <p className="settings-description">Koreys tilini o'rganish sayohatingiz boshlanadi</p>
+          </div>
+
+          <section className="stats-grid">
+            <article className="stat-card accent">
+              <span>Ball</span>
+              <strong>{gameState.score}</strong>
+            </article>
+            <article className="stat-card heart-stat">
+              <span>Yuraklar</span>
+              <strong aria-label={`${gameState.hearts} ta yurak`}>{'❤️'.repeat(gameState.hearts)}{'🖤'.repeat(MAX_HEARTS - gameState.hearts)}</strong>
+              <small>{gameState.hearts}/{MAX_HEARTS}</small>
+            </article>
+          </section>
+
+          <div className="home-quick-links">
+            <h2>Tezkor havolalar</h2>
+            <div className="home-links-grid">
+              <button type="button" className="home-link-card" onClick={() => { setMainSection('topik'); setSelectedTopikLevel('I'); }}>
+                <span className="home-link-icon">📖</span>
+                <span className="home-link-title">TOPIK I</span>
+                <span className="home-link-desc">Boshlang'ich testlar</span>
+              </button>
+              <button type="button" className="home-link-card" onClick={() => { setMainSection('topik'); setSelectedTopikLevel('II'); }}>
+                <span className="home-link-icon">📚</span>
+                <span className="home-link-title">TOPIK II</span>
+                <span className="home-link-desc">Yuqori daraja</span>
+              </button>
+              <button type="button" className="home-link-card" onClick={() => setMainSection('library')}>
+                <span className="home-link-icon">📕</span>
+                <span className="home-link-title">Kutubxona</span>
+                <span className="home-link-desc">PDF kitoblar</span>
+              </button>
+              <button type="button" className="home-link-card" onClick={() => setMainSection('ai')}>
+                <span className="home-link-icon">✨</span>
+                <span className="home-link-title">AI yordamchi</span>
+                <span className="home-link-desc">Savol bering</span>
+              </button>
+              <button type="button" className="home-link-card" onClick={() => setMainSection('messages')}>
+                <span className="home-link-icon">💬</span>
+                <span className="home-link-title">Chat</span>
+                <span className="home-link-desc">Do'stlar bilan</span>
+              </button>
+              <button type="button" className="home-link-card" onClick={() => setMainSection('profile')}>
+                <span className="home-link-icon">👤</span>
+                <span className="home-link-title">Profil</span>
+                <span className="home-link-desc">Sozlamalar</span>
+              </button>
+            </div>
+          </div>
+        </main>
+      )}
 
       {mainSection === 'topik' && selectedTopikLevel === 'I' && !['words', 'grammar', 'topik1words'].includes(activeTab) && (
         <section className="stats-grid">
@@ -3253,16 +3320,29 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
             {/* Stats */}
             <div className="profile-stats">
               <div className="profile-stat-item">
-                <span className="profile-stat-value">{words.length}</span>
-                <span className="profile-stat-label">{t('profileWords')}</span>
+                <span className="profile-stat-value">{gameState?.score || 0}</span>
+                <span className="profile-stat-label">Ball</span>
               </div>
               <div className="profile-stat-item">
-                <span className="profile-stat-value">{gameState?.streak || 0}</span>
-                <span className="profile-stat-label">{t('profileDays')}</span>
+                <span className="profile-stat-value">{(() => {
+                  try {
+                    const first = localStorage.getItem('topik-play-first-use')
+                    if (!first) {
+                      const now = Date.now()
+                      localStorage.setItem('topik-play-first-use', String(now))
+                      return 1
+                    }
+                    const diff = now - Number(first)
+                    return Math.max(1, Math.floor(diff / (1000 * 60 * 60 * 24)) + 1)
+                  } catch {
+                    return 1
+                  }
+                })()}</span>
+                <span className="profile-stat-label">Kunlar 🔥</span>
               </div>
               <div className="profile-stat-item">
                 <span className="profile-stat-value">{gameState?.hearts ?? MAX_HEARTS}</span>
-                <span className="profile-stat-label">{t('profileHearts')}</span>
+                <span className="profile-stat-label">Yuraklar ❤️</span>
               </div>
             </div>
 
@@ -3279,27 +3359,27 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
 
             {/* Story Highlights */}
             <div className="profile-highlights">
-              <div className="profile-highlight-item" onClick={() => setMainSection('topik1')}>
+              <div className="profile-highlight-item" onClick={() => { setMainSection('topik'); setSelectedTopikLevel('I'); }}>
                 <div className="profile-highlight-icon">📘</div>
                 <span>{t('profileHighlightTopik1')}</span>
               </div>
-              <div className="profile-highlight-item" onClick={() => { setMainSection('topik2'); setTopikTwoSkill('vocabulary'); }}>
+              <div className="profile-highlight-item" onClick={() => { setMainSection('topik'); setSelectedTopikLevel('II'); }}>
                 <div className="profile-highlight-icon">📖</div>
                 <span>{t('profileHighlightVocab')}</span>
               </div>
-              <div className="profile-highlight-item" onClick={() => { setMainSection('topik2'); setTopikTwoSkill('sigi'); }}>
+              <div className="profile-highlight-item" onClick={() => { setMainSection('topik'); setSelectedTopikLevel('II'); }}>
                 <div className="profile-highlight-icon">✍️</div>
                 <span>쓰기</span>
               </div>
-              <div className="profile-highlight-item" onClick={() => { setMainSection('topik2'); setTopikTwoSkill('ilgi'); }}>
+              <div className="profile-highlight-item" onClick={() => { setMainSection('topik'); setSelectedTopikLevel('II'); }}>
                 <div className="profile-highlight-icon">📰</div>
                 <span>읽기</span>
               </div>
-              <div className="profile-highlight-item" onClick={() => { setMainSection('topik2'); setTopikTwoSkill('titki'); }}>
+              <div className="profile-highlight-item" onClick={() => { setMainSection('topik'); setSelectedTopikLevel('II'); }}>
                 <div className="profile-highlight-icon">🎧</div>
                 <span>듣기</span>
               </div>
-              <div className="profile-highlight-item" onClick={() => setMainSection('chat')}>
+              <div className="profile-highlight-item" onClick={() => setMainSection('messages')}>
                 <div className="profile-highlight-icon">💬</div>
                 <span>{t('profileHighlightChat')}</span>
               </div>
@@ -3445,8 +3525,9 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         </main>
       )}
 
-      {mainSection === 'chat' && (
-        <main className="panel chat-panel">
+      {mainSection === 'messages' && (
+        <main className="panel messages-panel">
+          <div className="chat-panel">
           {!selectedChatUser ? (
             /* User List */
             <section className="chat-user-list">
@@ -3566,6 +3647,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
               )}
             </section>
           )}
+          </div>
         </main>
       )}
 
@@ -4199,6 +4281,15 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       <nav className="main-section-nav" aria-label="Asosiy bo‘limlar">
         <button
           type="button"
+          className={mainSection === 'home' ? 'active' : ''}
+          onClick={() => setMainSection('home')}
+          aria-pressed={mainSection === 'home'}
+        >
+          <span aria-hidden="true">🏠</span>
+          <span>Asosiy</span>
+        </button>
+        <button
+          type="button"
           className={mainSection === 'topik' ? 'active' : ''}
           onClick={() => {
             setMainSection('topik')
@@ -4219,20 +4310,11 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         </button>
         <button
           type="button"
-          className={mainSection === 'chat' ? 'active' : ''}
-          onClick={() => setMainSection('chat')}
-          aria-pressed={mainSection === 'chat'}
+          className={mainSection === 'messages' ? 'active' : ''}
+          onClick={() => setMainSection('messages')}
+          aria-pressed={mainSection === 'messages'}
         >
-          <span aria-hidden="true">💬</span>
-          <span>{t('navChat')}</span>
-        </button>
-        <button
-          type="button"
-          className={mainSection === 'ai' ? 'active' : ''}
-          onClick={() => setMainSection('ai')}
-          aria-pressed={mainSection === 'ai'}
-        >
-          <span className="nav-ai-icon">AI</span>
+          <span aria-hidden="true">💌</span>
           <span>{t('navAi')}</span>
         </button>
         <button

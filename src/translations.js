@@ -6,7 +6,7 @@ const translations = {
     navTopik1: 'TOPIK I',
     navTopik2: 'TOPIK II',
     navChat: '💬 Chat',
-    navAi: '🌸 Asiye',
+    navAi: '💌 Xabarlar',
     navProfile: '👤 Profil',
 
     // Settings
@@ -194,7 +194,7 @@ const translations = {
     navTopik1: 'TOPIK I',
     navTopik2: 'TOPIK II',
     navChat: '💬 Chat',
-    navAi: '🌸 Asiye',
+    navAi: '💌 Xabarlar',
     navProfile: '👤 Profil',
 
     // Common
@@ -222,7 +222,7 @@ const translations = {
     navTopik1: 'TOPIK I',
     navTopik2: 'TOPIK II',
     navChat: '💬 Chat',
-    navAi: '🌸 Asiye',
+    navAi: '💌 Messages',
     navProfile: '👤 Profile',
 
     // Settings
@@ -425,7 +425,7 @@ const translations = {
     navTopik1: 'TOPIK I',
     navTopik2: 'TOPIK II',
     navChat: '💬 Чат',
-    navAi: '🌸 Асия',
+    navAi: '💌 Сообщения',
     navProfile: '👤 Профиль',
 
     // Settings

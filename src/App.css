@@ -106,6 +106,112 @@ button:disabled {
   height: auto;
 }
 
+.messages-header-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+
+.messages-header-btn:hover {
+  background: var(--accent);
+  border-color: var(--primary);
+}
+
+.messages-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.messages-tabs button {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.messages-tabs button.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.home-welcome {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.home-welcome h1 {
+  margin: 0 0 8px;
+  font-size: clamp(1.4rem, 4vw, 1.8rem);
+}
+
+.home-quick-links {
+  margin-top: 24px;
+}
+
+.home-quick-links h2 {
+  margin: 0 0 16px;
+  font-size: 1.1rem;
+  color: var(--muted);
+}
+
+.home-links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.home-link-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  text-align: center;
+}
+
+.home-link-card:hover {
+  background: var(--accent);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.home-link-icon {
+  font-size: 2rem;
+}
+
+.home-link-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.home-link-desc {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
 .account-actions {
   display: flex;
   align-items: center;
