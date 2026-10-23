@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { generateAIResponse, generateGeminiResponse } from './aiChat.js'
+import { generateGeminiResponse } from './aiChat.js'
 import advancedWords from './advancedWords.js'
 import topik2Lugat from './topik2Lugat.js'
+import topik1CommonWords from './topik1Words.js'
 import { addFriend, getAllProfiles, getRedirectResultAuth, loadAccountData, loadProfile, listenToFriends, listenToMessages, listenToProfiles, observeAuth, removeFriend, saveAccountData, saveProfile, sendMessage, signInWithGooglePopup, signInWithGoogleRedirect, signOutUser } from './firebase.js'
 import grammarPoints from './grammarPoints.js'
 import { t as translate } from './translations.js'
@@ -861,6 +862,12 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [topik2LugatQuizScore, setTopik2LugatQuizScore] = useState(0)
   const [topik2LugatQuizAnswered, setTopik2LugatQuizAnswered] = useState(null)
   const [topik2LugatQuizOptions, setTopik2LugatQuizOptions] = useState([])
+  // TOPIK 1 common words states
+  const [topik1WordsPage, setTopik1WordsPage] = useState('list')
+  const [topik1WordsQuizIndex, setTopik1WordsQuizIndex] = useState(0)
+  const [topik1WordsQuizScore, setTopik1WordsQuizScore] = useState(0)
+  const [topik1WordsQuizAnswered, setTopik1WordsQuizAnswered] = useState(null)
+  const [topik1WordsQuizOptions, setTopik1WordsQuizOptions] = useState([])
   const [selectedTheme, setSelectedTheme] = useState(loadTheme)
   const [colorMode, setColorMode] = useState(loadColorMode)
   const [settings, setSettings] = useState(loadSettings)
@@ -1348,9 +1355,26 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       .catch((e) => console.error('Send message error:', e))
   }
 
-  // AI Chat handler — Gemini or Offline
+  // AI Chat handler — Gemini AI only
   const handleSendAIMessage = async () => {
     if (!aiInput.trim() || aiTyping) return
+
+    // Check if Gemini API key is set
+    if (!geminiApiKey) {
+      const noKeyMsg = {
+        id: Date.now(),
+        role: 'ai',
+        type: 'text',
+        content: '⚠️ Gemini AI ishlashi uchun API kalit kerak.\n\n📋 Sozlamalardan API kalit qanday kiritish:\n1. 👤 Profil bo\'limiga o\'ting\n2. ⚙️ Sozlamalar tugmasini bosing\n3. "🤖 Gemini AI" bo\'limiga o\'ting\n4. API kalitni kiriting\n\n🔗 API kalit olish: [aistudio.google.com](https://aistudio.google.com) → Get API key (bepul)',
+        timestamp: Date.now()
+      }
+      const newMessages = [...aiMessages, { id: Date.now() - 1, role: 'user', content: aiInput.trim(), timestamp: Date.now() - 1 }, noKeyMsg]
+      setAiMessages(newMessages)
+      setAiInput('')
+      try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(newMessages.slice(-100))) } catch {}
+      return
+    }
+
     const userMsg = { id: Date.now(), role: 'user', content: aiInput.trim(), timestamp: Date.now() }
     const currentMessages = [...aiMessages, userMsg]
     setAiMessages(currentMessages)
@@ -1360,53 +1384,29 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
     // Save user message immediately
     try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(currentMessages.slice(-100))) } catch {}
 
-    if (geminiApiKey) {
-      // Try Gemini AI first (online)
-      try {
-        const geminiResponse = await generateGeminiResponse(userMsg.content, geminiApiKey, aiMessages)
-        let aiMsg = null
-        if (geminiResponse) {
-          aiMsg = { id: Date.now() + 1, role: 'ai', ...geminiResponse, timestamp: Date.now() + 1 }
-        } else {
-          // Gemini failed, fall back to offline AI
-          const offlineResponse = generateAIResponse(userMsg.content, aiMessages)
-          if (offlineResponse) {
-            aiMsg = { id: Date.now() + 1, role: 'ai', ...offlineResponse, timestamp: Date.now() + 1 }
-          }
-        }
-        const newMessages = aiMsg ? [...currentMessages, aiMsg] : currentMessages
-        setAiMessages(newMessages)
-        setAiTyping(false)
-        try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(newMessages.slice(-100))) } catch {}
-      } catch {
-        // Gemini error, fall back to offline AI
-        const delay = 800 + Math.random() * 700
-        setTimeout(() => {
-          const offlineResponse = generateAIResponse(userMsg.content, aiMessages)
-          let aiMsg = null
-          if (offlineResponse) {
-            aiMsg = { id: Date.now() + 1, role: 'ai', ...offlineResponse, timestamp: Date.now() + 1 }
-          }
-          const newMessages = aiMsg ? [...currentMessages, aiMsg] : currentMessages
-          setAiMessages(newMessages)
-          setAiTyping(false)
-          try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(newMessages.slice(-100))) } catch {}
-        }, delay)
+    try {
+      const geminiResponse = await generateGeminiResponse(userMsg.content, geminiApiKey, aiMessages)
+      let aiMsg = null
+      if (geminiResponse) {
+        aiMsg = { id: Date.now() + 1, role: 'ai', ...geminiResponse, timestamp: Date.now() + 1 }
       }
-    } else {
-      // Offline AI only
-      const delay = 800 + Math.random() * 700
-      setTimeout(() => {
-        const response = generateAIResponse(userMsg.content, aiMessages)
-        let aiMsg = null
-        if (response) {
-          aiMsg = { id: Date.now() + 1, role: 'ai', ...response, timestamp: Date.now() + 1 }
-        }
-        const newMessages = aiMsg ? [...currentMessages, aiMsg] : currentMessages
-        setAiMessages(newMessages)
-        setAiTyping(false)
-        try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(newMessages.slice(-100))) } catch {}
-      }, delay)
+      const newMessages = aiMsg ? [...currentMessages, aiMsg] : currentMessages
+      setAiMessages(newMessages)
+      setAiTyping(false)
+      try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(newMessages.slice(-100))) } catch {}
+    } catch (error) {
+      console.error('Gemini AI error:', error)
+      const errorMsg = {
+        id: Date.now() + 1,
+        role: 'ai',
+        type: 'text',
+        content: '❌ Gemini AI bilan bog\'lanishda xatolik yuz berdi.\n\nInternet aloqangizni tekshiring yoki API kalitni qayta kiriting.\n📋 Sozlamalar → 🤖 Gemini AI',
+        timestamp: Date.now() + 1
+      }
+      const newMessages = [...currentMessages, errorMsg]
+      setAiMessages(newMessages)
+      setAiTyping(false)
+      try { localStorage.setItem('topik-play-ai-chat', JSON.stringify(newMessages.slice(-100))) } catch {}
     }
   }
 
@@ -1725,6 +1725,9 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
             <button className={activeTab === 'words' ? 'active' : ''} onClick={() => setActiveTab('words')}>
               Lug'at
             </button>
+            <button className={activeTab === 'topik1words' ? 'active' : ''} onClick={() => { setActiveTab('topik1words'); setTopik1WordsPage('list'); }}>
+              📝 TOPIK so'zlar
+            </button>
             <button className={activeTab === 'topik' ? 'active' : ''} onClick={() => setActiveTab('topik')}>
               TOPIK
             </button>
@@ -1738,7 +1741,7 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
         )}
       </header>
 
-      {mainSection === 'topik1' && !['words', 'grammar'].includes(activeTab) && (
+      {mainSection === 'topik1' && !['words', 'grammar', 'topik1words'].includes(activeTab) && (
         <section className="stats-grid">
           <article className="stat-card accent">
             <span>{t('quizScore')}</span>
@@ -2259,6 +2262,234 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
             {t('heartsRefill')}
             {gameState.hearts < MAX_HEARTS && ` ${t('heartsRefillNext')} ${String(refillHours).padStart(2, '0')}:${String(refillMinutes).padStart(2, '0')}.`}
           </p>
+        </main>
+      )}
+
+      {mainSection === 'topik1' && activeTab === 'topik1words' && (
+        <main className="panel topik-panel">
+          <h2>📝 TOPIK 1 — Ko'p uchraydigan so'zlar</h2>
+          <p className="settings-description">{topik1CommonWords.length} ta so'z · Test va eshitish mashqlari</p>
+          <nav className="topik-words-tabs">
+            <button type="button" className={topik1WordsPage === 'list' ? 'active' : ''} onClick={() => setTopik1WordsPage('list')}>📖 Ro'yxat</button>
+            <button type="button" className={topik1WordsPage === 'quiz' ? 'active' : ''} onClick={() => {
+              setTopik1WordsPage('quiz')
+              setTopik1WordsQuizIndex(0)
+              setTopik1WordsQuizScore(0)
+              setTopik1WordsQuizAnswered(null)
+              const shuffled = [...topik1CommonWords].sort(() => Math.random() - 0.5).slice(0, 20)
+              const options = shuffled.map((target) => {
+                const wrongPool = topik1CommonWords.filter((w) => w.korean !== target.korean)
+                const wrong = []
+                const usedIndices = new Set()
+                while (wrong.length < 3 && usedIndices.size < wrongPool.length) {
+                  const randIndex = Math.floor(Math.random() * wrongPool.length)
+                  if (!usedIndices.has(randIndex)) {
+                    usedIndices.add(randIndex)
+                    wrong.push(wrongPool[randIndex].meaning)
+                  }
+                }
+                const allOptions = [...wrong, target.meaning].sort(() => Math.random() - 0.5)
+                return { word: target, options: allOptions, correct: target.meaning }
+              })
+              setTopik1WordsQuizOptions(options)
+            }}>🧠 Test</button>
+            <button type="button" className={topik1WordsPage === 'listening' ? 'active' : ''} onClick={() => {
+              setTopik1WordsPage('listening')
+              setTopik1WordsQuizIndex(0)
+              setTopik1WordsQuizScore(0)
+              setTopik1WordsQuizAnswered(null)
+              const shuffled = [...topik1CommonWords].sort(() => Math.random() - 0.5).slice(0, 20)
+              const options = shuffled.map((target) => {
+                const wrongPool = topik1CommonWords.filter((w) => w.korean !== target.korean)
+                const wrong = []
+                const usedIndices = new Set()
+                while (wrong.length < 3 && usedIndices.size < wrongPool.length) {
+                  const randIndex = Math.floor(Math.random() * wrongPool.length)
+                  if (!usedIndices.has(randIndex)) {
+                    usedIndices.add(randIndex)
+                    wrong.push(wrongPool[randIndex].korean)
+                  }
+                }
+                const allOptions = [...wrong, target.korean].sort(() => Math.random() - 0.5)
+                return { word: target, options: allOptions, correct: target.korean }
+              })
+              setTopik1WordsQuizOptions(options)
+            }}>🎧 Eshitish</button>
+          </nav>
+
+          {topik1WordsPage === 'list' && (
+            <div className="topik-words-list">
+              {topik1CommonWords.map((word, index) => (
+                <div key={`${word.korean}-${index}`} className="topik-word-card">
+                  <span className="topik-word-number">{String(index + 1).padStart(2, '0')}</span>
+                  <div className="topik-word-content">
+                    <strong lang="ko">{word.korean}</strong>
+                    <span>{word.meaning}</span>
+                    {word.example && <span className="topik-word-example">💡 {word.example}</span>}
+                    {word.category && <span className="topik-word-category">{word.category}</span>}
+                  </div>
+                  {settings.speechEnabled && (
+                    <button type="button" className="pronunciation-btn" onClick={() => handleSpeak(word.korean)} aria-label={`${word.korean} talaffuz`}>🔊</button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {topik1WordsPage === 'quiz' && topik1WordsQuizOptions.length > 0 && (
+            <div className="topik-quiz-section">
+              <div className="progress-row">
+                <span>Savol {topik1WordsQuizIndex + 1}/{topik1WordsQuizOptions.length}</span>
+                <span>To'g'ri: {topik1WordsQuizScore}/{topik1WordsQuizOptions.length}</span>
+              </div>
+              {topik1WordsQuizIndex < topik1WordsQuizOptions.length ? (
+                <>
+                  <div className="question-box">
+                    <p className="label">"
+                      {topik1WordsQuizOptions[topik1WordsQuizIndex].word.korean}" so'zining tarjimasi nima?
+                    </p>
+                    <h2>{topik1WordsQuizOptions[topik1WordsQuizIndex].word.korean}</h2>
+                    {settings.speechEnabled && (
+                      <button type="button" className="pronunciation-btn" onClick={() => handleSpeak(topik1WordsQuizOptions[topik1WordsQuizIndex].word.korean)}>🔊</button>
+                    )}
+                  </div>
+                  <div className="answer-options">
+                    {topik1WordsQuizOptions[topik1WordsQuizIndex].options.map((option, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        className={`answer-btn ${topik1WordsQuizAnswered !== null
+                          ? option === topik1WordsQuizOptions[topik1WordsQuizIndex].correct
+                            ? 'correct'
+                            : topik1WordsQuizAnswered === option ? 'wrong' : ''
+                          : ''}`}
+                        onClick={() => {
+                          if (topik1WordsQuizAnswered !== null) return
+                          setTopik1WordsQuizAnswered(option)
+                          if (option === topik1WordsQuizOptions[topik1WordsQuizIndex].correct) {
+                            setTopik1WordsQuizScore((s) => s + 1)
+                          }
+                        }}
+                        disabled={topik1WordsQuizAnswered !== null}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                  {topik1WordsQuizAnswered !== null && (
+                    <div className={`quiz-feedback ${topik1WordsQuizAnswered === topik1WordsQuizOptions[topik1WordsQuizIndex].correct ? 'correct' : 'wrong'}`}>
+                      {topik1WordsQuizAnswered === topik1WordsQuizOptions[topik1WordsQuizIndex].correct
+                        ? '✅ To\'g\'ri!'
+                        : `❌ Xato! To'g'ri javob: ${topik1WordsQuizOptions[topik1WordsQuizIndex].correct}`}
+                    </div>
+                  )}
+                  {topik1WordsQuizAnswered !== null && (
+                    <button
+                      type="button"
+                      className="primary-btn"
+                      onClick={() => {
+                        if (topik1WordsQuizIndex + 1 >= topik1WordsQuizOptions.length) {
+                          setTopik1WordsPage('list')
+                          setTopik1WordsQuizIndex(0)
+                          setTopik1WordsQuizScore(0)
+                          setTopik1WordsQuizAnswered(null)
+                        } else {
+                          setTopik1WordsQuizIndex((i) => i + 1)
+                          setTopik1WordsQuizAnswered(null)
+                        }
+                      }}
+                    >
+                      {topik1WordsQuizIndex + 1 >= topik1WordsQuizOptions.length ? '🏁 Yakunlash' : 'Keyingi →'}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <div className="quiz-result">
+                  <h2>🏁 Test yakunlandi!</h2>
+                  <p>Siz {topik1WordsQuizScore}/{topik1WordsQuizOptions.length} ta to'g'ri javob berdingiz.</p>
+                  <button type="button" className="primary-btn" onClick={() => setTopik1WordsPage('list')}>📖 Ro'yxatga qaytish</button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {topik1WordsPage === 'listening' && topik1WordsQuizOptions.length > 0 && (
+            <div className="topik-quiz-section">
+              <div className="progress-row">
+                <span>Savol {topik1WordsQuizIndex + 1}/{topik1WordsQuizOptions.length}</span>
+                <span>To'g'ri: {topik1WordsQuizScore}/{topik1WordsQuizOptions.length}</span>
+              </div>
+              {topik1WordsQuizIndex < topik1WordsQuizOptions.length ? (
+                <>
+                  <div className="question-box">
+                    <p className="label">Eshitgan so'zni tanlang</p>
+                    <button
+                      type="button"
+                      className="listening-play-btn"
+                      onClick={() => handleSpeak(topik1WordsQuizOptions[topik1WordsQuizIndex].word.korean)}
+                    >
+                      🔊 Eshitish
+                    </button>
+                  </div>
+                  <div className="answer-options">
+                    {topik1WordsQuizOptions[topik1WordsQuizIndex].options.map((option, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        className={`answer-btn ${topik1WordsQuizAnswered !== null
+                          ? option === topik1WordsQuizOptions[topik1WordsQuizIndex].correct
+                            ? 'correct'
+                            : topik1WordsQuizAnswered === option ? 'wrong' : ''
+                          : ''}`}
+                        onClick={() => {
+                          if (topik1WordsQuizAnswered !== null) return
+                          setTopik1WordsQuizAnswered(option)
+                          if (option === topik1WordsQuizOptions[topik1WordsQuizIndex].correct) {
+                            setTopik1WordsQuizScore((s) => s + 1)
+                          }
+                        }}
+                        disabled={topik1WordsQuizAnswered !== null}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                  {topik1WordsQuizAnswered !== null && (
+                    <div className={`quiz-feedback ${topik1WordsQuizAnswered === topik1WordsQuizOptions[topik1WordsQuizIndex].correct ? 'correct' : 'wrong'}`}>
+                      {topik1WordsQuizAnswered === topik1WordsQuizOptions[topik1WordsQuizIndex].correct
+                        ? '✅ To\'g\'ri!'
+                        : `❌ Xato! To'g'ri javob: ${topik1WordsQuizOptions[topik1WordsQuizIndex].correct}`}
+                    </div>
+                  )}
+                  {topik1WordsQuizAnswered !== null && (
+                    <button
+                      type="button"
+                      className="primary-btn"
+                      onClick={() => {
+                        if (topik1WordsQuizIndex + 1 >= topik1WordsQuizOptions.length) {
+                          setTopik1WordsPage('list')
+                          setTopik1WordsQuizIndex(0)
+                          setTopik1WordsQuizScore(0)
+                          setTopik1WordsQuizAnswered(null)
+                        } else {
+                          setTopik1WordsQuizIndex((i) => i + 1)
+                          setTopik1WordsQuizAnswered(null)
+                        }
+                      }}
+                    >
+                      {topik1WordsQuizIndex + 1 >= topik1WordsQuizOptions.length ? '🏁 Yakunlash' : 'Keyingi →'}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <div className="quiz-result">
+                  <h2>🏁 Eshitish yakunlandi!</h2>
+                  <p>Siz {topik1WordsQuizScore}/{topik1WordsQuizOptions.length} ta to'g'ri javob berdingiz.</p>
+                  <button type="button" className="primary-btn" onClick={() => setTopik1WordsPage('list')}>📖 Ro'yxatga qaytish</button>
+                </div>
+              )}
+            </div>
+          )}
         </main>
       )}
 
