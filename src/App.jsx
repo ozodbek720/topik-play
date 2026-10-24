@@ -3786,7 +3786,7 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
             : topikTwoSkill === 'sigi'
             ? (
                 <section className="topik-two-sigi" aria-live="polite">
-                  <h2>✍️ Sigi — Yozish mashqlari</h2>
+                  <h2>📝 51 Sigi — 10 ta mashq</h2>
                   <p className="settings-description">Bo'sh joyga to'g'ri javobni yozing. AI tahlil va tarjima bilan.</p>
                   <div className="sigi-exercise-list">
                     {sigiExercises.map((exercise, index) => (

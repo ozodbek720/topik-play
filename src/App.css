@@ -894,18 +894,18 @@ button:disabled {
 .topik-two-sigi {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 
 .sigi-exercise-list {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 10px;
 }
 
 .sigi-exercise-card {
-  padding: 20px;
-  border-radius: 18px;
+  padding: 10px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -914,65 +914,65 @@ button:disabled {
 
 .sigi-exercise-card:hover {
   background: rgba(255, 255, 255, 0.08);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .sigi-exercise-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
   border-bottom: 1px solid var(--border);
 }
 
 .sigi-exercise-number {
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   color: var(--primary);
 }
 
 .sigi-exercise-grammar {
-  font-size: 0.78rem;
+  font-size: 0.65rem;
   color: var(--muted);
   background: rgba(255, 255, 255, 0.08);
-  padding: 4px 10px;
-  border-radius: 8px;
+  padding: 2px 6px;
+  border-radius: 6px;
 }
 
 .sigi-sentence {
-  font-size: 1.05rem;
-  line-height: 1.8;
-  margin: 0 0 16px 0;
-  padding: 14px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  margin: 0 0 8px 0;
+  padding: 8px;
   background: rgba(255, 255, 255, 0.04);
-  border-radius: 12px;
-  border-left: 3px solid var(--primary);
+  border-radius: 8px;
+  border-left: 2px solid var(--primary);
 }
 
 .sigi-answer-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 6px;
+  margin-bottom: 6px;
 }
 
 .sigi-answer-input {
   width: 100%;
-  padding: 12px 16px;
-  border: 2px solid var(--border);
-  border-radius: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.06);
   color: var(--text);
-  font-size: 1rem;
+  font-size: 0.82rem;
   transition: all 0.2s ease;
 }
 
 .sigi-answer-input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
 .sigi-answer-input[data-correct="true"] {
@@ -987,21 +987,21 @@ button:disabled {
 
 .sigi-check-btn {
   align-self: flex-start;
-  padding: 10px 20px;
-  font-size: 0.9rem;
+  padding: 6px 12px;
+  font-size: 0.75rem;
 }
 
 .sigi-answer-result {
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .sigi-result {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 12px 16px;
-  border-radius: 12px;
-  font-size: 0.9rem;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 0.75rem;
 }
 
 .sigi-result.correct {
@@ -1021,17 +1021,17 @@ button:disabled {
 }
 
 .sigi-details {
-  margin-top: 12px;
+  margin-top: 6px;
   border-top: 1px solid var(--border);
-  padding-top: 12px;
+  padding-top: 6px;
 }
 
 .sigi-details summary {
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.78rem;
   color: var(--primary);
-  padding: 8px 0;
+  padding: 4px 0;
   user-select: none;
 }
 
@@ -1042,11 +1042,11 @@ button:disabled {
 .sigi-analysis {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 14px;
+  gap: 8px;
+  padding: 8px;
   background: rgba(255, 255, 255, 0.04);
-  border-radius: 12px;
-  margin-top: 8px;
+  border-radius: 8px;
+  margin-top: 4px;
 }
 
 .sigi-translation,
@@ -1054,13 +1054,13 @@ button:disabled {
 .sigi-grammar-rule {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
 }
 
 .sigi-translation strong,
 .sigi-ai-analysis strong,
 .sigi-grammar-rule strong {
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   color: var(--primary);
 }
 
@@ -1068,8 +1068,8 @@ button:disabled {
 .sigi-ai-analysis p,
 .sigi-grammar-rule p {
   margin: 0;
-  font-size: 0.88rem;
-  line-height: 1.6;
+  font-size: 0.72rem;
+  line-height: 1.5;
   color: var(--text);
 }
 
@@ -1078,20 +1078,20 @@ button:disabled {
 .sigi-vocabulary {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
 
 .sigi-vocabulary strong {
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   color: var(--primary);
 }
 
 .sigi-vocab-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.85rem;
+  font-size: 0.7rem;
   background: rgba(255, 255, 255, 0.03);
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
 }
 
@@ -1100,16 +1100,16 @@ button:disabled {
 }
 
 .sigi-vocab-table th {
-  padding: 10px 12px;
+  padding: 5px 6px;
   text-align: left;
   font-weight: 700;
   color: var(--primary);
-  font-size: 0.82rem;
-  border-bottom: 2px solid rgba(99, 102, 241, 0.3);
+  font-size: 0.68rem;
+  border-bottom: 1px solid rgba(99, 102, 241, 0.3);
 }
 
 .sigi-vocab-table td {
-  padding: 8px 12px;
+  padding: 4px 6px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   color: var(--text);
   vertical-align: top;
@@ -1121,15 +1121,15 @@ button:disabled {
 
 .sigi-vocab-table td[lang="ko"] {
   font-weight: 600;
-  font-size: 0.92rem;
+  font-size: 0.78rem;
   color: #e0e7ff;
 }
 
 .sigi-vocab-type {
   display: inline-block;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 0.75rem;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.62rem;
   font-weight: 600;
   background: rgba(99, 102, 241, 0.15);
   color: var(--primary);
