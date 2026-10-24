@@ -1267,6 +1267,75 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [sigiGroup, setSigiGroup] = useState(1)
   // Messages tab: 'news', 'chat', or 'asiye'
   const [messagesTab, setMessagesTab] = useState('news')
+  // Home search
+  const [homeSearch, setHomeSearch] = useState('')
+
+  // Home search results — search across all sections
+  const homeSearchResults = useMemo(() => {
+    const q = homeSearch.trim().toLowerCase()
+    if (!q) return []
+    const results = []
+
+    // Search in library books
+    libraryBooks.forEach(book => {
+      if (book.title.toLowerCase().includes(q) || (book.description || '').toLowerCase().includes(q) || (book.category || '').toLowerCase().includes(q)) {
+        results.push({ icon: '📕', title: book.title, category: t('library'), action: () => { setMainSection('library'); setLibraryTab('books'); } })
+      }
+    })
+
+    // Search in grammar points
+    try {
+      const saved = JSON.parse(localStorage.getItem('topik-play-custom-grammar') || '[]')
+      saved.forEach(g => {
+        if ((g.title || '').toLowerCase().includes(q) || (g.explanation || '').toLowerCase().includes(q)) {
+          results.push({ icon: '📐', title: g.title, category: 'Grammatika', action: () => { setMainSection('topik'); setSelectedTopikLevel('I'); setActiveTab('grammar'); } })
+        }
+      })
+    } catch {}
+
+    // Search in words
+    try {
+      const words = JSON.parse(localStorage.getItem('topik-play-words') || '[]')
+      words.forEach(w => {
+        if ((w.korean || '').toLowerCase().includes(q) || (w.meaning || '').toLowerCase().includes(q)) {
+          results.push({ icon: '📝', title: `${w.korean} — ${w.meaning}`, category: 'Lug\'at', action: () => { setMainSection('topik'); setSelectedTopikLevel('I'); setActiveTab('words'); } })
+        }
+      })
+    } catch {}
+
+    // Search sections
+    const sections = [
+      { icon: '📖', title: 'TOPIK I', category: 'Bo\'lim', action: () => { setMainSection('topik'); setSelectedTopikLevel('I'); } },
+      { icon: '📚', title: 'TOPIK II', category: 'Bo\'lim', action: () => { setMainSection('topik'); setSelectedTopikLevel('II'); } },
+      { icon: '📕', title: t('library'), category: 'Bo\'lim', action: () => setMainSection('library') },
+      { icon: '✨', title: t('homeAiTitle'), category: 'Bo\'lim', action: () => setMainSection('ai') },
+      { icon: '💬', title: t('chat'), category: 'Bo\'lim', action: () => setMainSection('messages') },
+      { icon: '🎬', title: t('homeShowsTitle'), category: 'Bo\'lim', action: () => setMainSection('shows') },
+      { icon: '👤', title: t('profile'), category: 'Bo\'lim', action: () => setMainSection('profile') },
+      { icon: '🏪', title: t('heartsExchange'), category: 'Bo\'lim', action: () => setMainSection('shop') },
+    ]
+    sections.forEach(s => {
+      if (s.title.toLowerCase().includes(q)) {
+        results.push(s)
+      }
+    })
+
+    // Search in news
+    homeNews.forEach(news => {
+      const title = typeof news.title === 'object' ? (news.title[lang] || news.title.uz) : news.title
+      if (title.toLowerCase().includes(q)) {
+        results.push({ icon: '📢', title: title, category: 'Yangiliklar', action: () => { setMainSection('messages'); setMessagesTab('news'); } })
+      }
+    })
+
+    // Deduplicate by title
+    const seen = new Set()
+    return results.filter(r => {
+      if (seen.has(r.title)) return false
+      seen.add(r.title)
+      return true
+    })
+  }, [homeSearch, lang, t, libraryBooks, homeNews])
 
   // Asiyе AI bot messages
   const [asiyeMessages, setAsiyeMessages] = useState(() => {
@@ -2602,9 +2671,69 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
             <p className="settings-description">{t('homeSubtitle')}</p>
           </div>
 
+          {/* Qidiruv */}
+          <div className="home-search-wrapper">
+            <input
+              type="search"
+              className="home-search-input"
+              placeholder="🔍 Ilovada qidirish..."
+              value={homeSearch}
+              onChange={(e) => setHomeSearch(e.target.value)}
+              aria-label="Ilovada qidirish"
+            />
+            {homeSearch.trim() && (
+              <div className="home-search-results">
+                {homeSearchResults.length === 0 ? (
+                  <p className="search-no-results">Hech narsa topilmadi</p>
+                ) : (
+                  homeSearchResults.map((result, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className="search-result-item"
+                      onClick={() => {
+                        result.action()
+                        setHomeSearch('')
+                      }}
+                    >
+                      <span className="search-result-icon">{result.icon}</span>
+                      <span className="search-result-text">{result.title}</span>
+                      <span className="search-result-category">{result.category}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Xabarlar bo'limi — kichik, AI oldida */}
+          <div className="home-messages-compact" onClick={() => setMainSection('messages')}>
+            <div className="home-messages-header">
+              <span className="home-messages-title">💌 Xabarlar</span>
+              {(asiyeUnread > 0 || (!newsReadToday)) && <span className="home-messages-badge"></span>}
+            </div>
+            <div className="home-messages-tabs">
+              <button
+                type="button"
+                className={`home-msg-tab ${messagesTab === 'news' ? 'active' : ''}`}
+                onClick={(e) => { e.stopPropagation(); setMessagesTab('news'); setMainSection('messages'); }}
+              >📢 Yangiliklar</button>
+              <button
+                type="button"
+                className={`home-msg-tab ${messagesTab === 'asiye' ? 'active' : ''}`}
+                onClick={(e) => { e.stopPropagation(); setMessagesTab('asiye'); setAsiyeUnread(0); setMainSection('messages'); }}
+              >🤖 Asiyе AI{asiyeUnread > 0 && <span className="home-msg-badge">{asiyeUnread}</span>}</button>
+              <button
+                type="button"
+                className={`home-msg-tab ${messagesTab === 'chat' ? 'active' : ''}`}
+                onClick={(e) => { e.stopPropagation(); setMessagesTab('chat'); setMainSection('messages'); }}
+              >💬 Chat</button>
+            </div>
+          </div>
+
           {/* Do'kon tugmasi — ball va yuraklar oldida */}
-          <div style={{display:'flex',justifyContent:'center',marginBottom:'16px'}}>
-            <button type="button" className="primary-btn" style={{padding:'10px 24px',fontSize:'0.95rem'}} onClick={() => setMainSection('shop')}>
+          <div style={{display:'flex',justifyContent:'center',marginBottom:'12px'}}>
+            <button type="button" className="primary-btn" style={{padding:'8px 20px',fontSize:'0.85rem'}} onClick={() => setMainSection('shop')}>
               🏪 {t('heartsExchange')}
             </button>
           </div>
@@ -2627,37 +2756,30 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
               <button type="button" className="home-link-card" onClick={() => { setMainSection('topik'); setSelectedTopikLevel('I'); }}>
                 <span className="home-link-icon">📖</span>
                 <span className="home-link-title">TOPIK I</span>
-                <span className="home-link-desc">{t('homeTopik1Desc')}</span>
               </button>
               <button type="button" className="home-link-card" onClick={() => { setMainSection('topik'); setSelectedTopikLevel('II'); }}>
                 <span className="home-link-icon">📚</span>
                 <span className="home-link-title">TOPIK II</span>
-                <span className="home-link-desc">{t('homeTopik2Desc')}</span>
               </button>
               <button type="button" className="home-link-card" onClick={() => setMainSection('library')}>
                 <span className="home-link-icon">📕</span>
                 <span className="home-link-title">{t('library')}</span>
-                <span className="home-link-desc">{t('homeLibraryDesc')}</span>
               </button>
               <button type="button" className="home-link-card" onClick={() => setMainSection('ai')}>
                 <span className="home-link-icon">✨</span>
                 <span className="home-link-title">{t('homeAiTitle')}</span>
-                <span className="home-link-desc">{t('homeAiDesc')}</span>
               </button>
               <button type="button" className="home-link-card" onClick={() => setMainSection('messages')}>
                 <span className="home-link-icon">💬</span>
                 <span className="home-link-title">{t('chat')}</span>
-                <span className="home-link-desc">{t('homeChatDesc')}</span>
               </button>
               <button type="button" className="home-link-card" onClick={() => setMainSection('shows')}>
                 <span className="home-link-icon">🎬</span>
                 <span className="home-link-title">{t('homeShowsTitle')}</span>
-                <span className="home-link-desc">{t('homeShowsDesc')}</span>
               </button>
               <button type="button" className="home-link-card" onClick={() => setMainSection('profile')}>
                 <span className="home-link-icon">👤</span>
                 <span className="home-link-title">{t('profile')}</span>
-                <span className="home-link-desc">{t('settings')}</span>
               </button>
             </div>
           </div>

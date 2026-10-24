@@ -157,55 +157,226 @@ button:disabled {
   font-size: clamp(1.4rem, 4vw, 1.8rem);
 }
 
+/* ===== HOME SEARCH ===== */
+.home-search-wrapper {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.home-search-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  color: var(--text);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.home-search-input:focus {
+  border-color: var(--primary);
+}
+
+.home-search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  max-height: 250px;
+  overflow-y: auto;
+  background: rgba(20, 20, 40, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  z-index: 100;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.search-no-results {
+  padding: 12px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: left;
+  width: 100%;
+}
+
+.search-result-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.search-result-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.search-result-text {
+  flex: 1;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.search-result-category {
+  font-size: 0.65rem;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+/* ===== HOME MESSAGES COMPACT ===== */
+.home-messages-compact {
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.home-messages-compact:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--primary);
+}
+
+.home-messages-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.home-messages-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.home-messages-badge {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: pulse-badge 1.5s infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+
+.home-messages-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.home-msg-tab {
+  flex: 1;
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.home-msg-tab.active {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.home-msg-tab:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.home-msg-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 4px;
+  border-radius: 7px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.55rem;
+  font-weight: 700;
+}
+
+/* ===== HOME QUICK LINKS — LIQUID GLASS ===== */
 .home-quick-links {
-  margin-top: 24px;
+  margin-top: 16px;
 }
 
 .home-quick-links h2 {
-  margin: 0 0 16px;
-  font-size: 1.1rem;
+  margin: 0 0 10px;
+  font-size: 0.9rem;
   color: var(--muted);
 }
 
 .home-links-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
 }
 
 .home-link-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 20px 12px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: var(--panel);
+  gap: 4px;
+  padding: 12px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   color: var(--text);
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   text-align: center;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .home-link-card:hover {
-  background: var(--accent);
+  background: rgba(255, 255, 255, 0.1);
   border-color: var(--primary);
-  transform: translateY(-2px);
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .home-link-icon {
-  font-size: 2rem;
+  font-size: 1.5rem;
 }
 
 .home-link-title {
-  font-size: 0.95rem;
+  font-size: 0.7rem;
   font-weight: 600;
-}
-
-.home-link-desc {
-  font-size: 0.78rem;
-  color: var(--muted);
 }
 
 /* ===== NEWS SECTION ===== */
@@ -2887,24 +3058,34 @@ button:disabled {
   }
 
   .home-links-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
   }
 
   .home-link-card {
-    padding: 16px 10px;
+    padding: 10px 4px;
   }
 
   .home-link-icon {
-    font-size: 1.6rem;
+    font-size: 1.3rem;
   }
 
   .home-link-title {
-    font-size: 0.85rem;
+    font-size: 0.6rem;
   }
 
-  .home-link-desc {
-    font-size: 0.7rem;
+  .home-search-input {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+  }
+
+  .home-messages-compact {
+    padding: 8px;
+  }
+
+  .home-msg-tab {
+    font-size: 0.55rem;
+    padding: 4px 4px;
   }
 
   .auth-card {
@@ -4254,12 +4435,34 @@ button:disabled {
   }
 
   .home-links-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
   }
 
   .home-link-card {
-    padding: 12px 8px;
+    padding: 8px 3px;
+  }
+
+  .home-link-icon {
+    font-size: 1.1rem;
+  }
+
+  .home-link-title {
+    font-size: 0.55rem;
+  }
+
+  .home-search-input {
+    padding: 7px 8px;
+    font-size: 0.7rem;
+  }
+
+  .home-messages-compact {
+    padding: 6px;
+  }
+
+  .home-msg-tab {
+    font-size: 0.5rem;
+    padding: 3px 3px;
   }
 
   .home-link-icon {
