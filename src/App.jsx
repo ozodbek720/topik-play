@@ -3851,6 +3851,29 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
                               <strong>📖 Tarjima:</strong>
                               <p>{exercise.translation}</p>
                             </div>
+                            {exercise.vocabulary && exercise.vocabulary.length > 0 && (
+                              <div className="sigi-vocabulary">
+                                <strong>📚 Lug'at:</strong>
+                                <table className="sigi-vocab-table">
+                                  <thead>
+                                    <tr>
+                                      <th>Koreyscha</th>
+                                      <th>Tarjima</th>
+                                      <th>So'z turkumi</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {exercise.vocabulary.map((vocab, vi) => (
+                                      <tr key={vi}>
+                                        <td lang="ko">{vocab.word}</td>
+                                        <td>{vocab.meaning}</td>
+                                        <td><span className="sigi-vocab-type">{vocab.type}</span></td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
                             <div className="sigi-ai-analysis">
                               <strong>🧠 AI Tahlil:</strong>
                               <p>{exercise.analysis}</p>

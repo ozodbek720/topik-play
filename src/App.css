@@ -1073,6 +1073,68 @@ button:disabled {
   color: var(--text);
 }
 
+/* ===== Sigi Lug'at jadvali ===== */
+
+.sigi-vocabulary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sigi-vocabulary strong {
+  font-size: 0.9rem;
+  color: var(--primary);
+}
+
+.sigi-vocab-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.sigi-vocab-table thead {
+  background: rgba(99, 102, 241, 0.2);
+}
+
+.sigi-vocab-table th {
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 0.82rem;
+  border-bottom: 2px solid rgba(99, 102, 241, 0.3);
+}
+
+.sigi-vocab-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  vertical-align: top;
+}
+
+.sigi-vocab-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.sigi-vocab-table td[lang="ko"] {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: #e0e7ff;
+}
+
+.sigi-vocab-type {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary);
+}
+
 /* ===== TOPIK Ko'p uchraydigan so'zlar bo'limi ===== */
 
 .topik-two-topik-words {
