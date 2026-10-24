@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { generateAIResponse } from './aiChat.js'
+import sigiExercises from './sigiExercises.js'
 import advancedWords from './advancedWords.js'
 import topik2Lugat from './topik2Lugat.js'
 import topik1CommonWords from './topik1Words.js'
@@ -3782,9 +3783,92 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
                   )}
                 </section>
               )
+            : topikTwoSkill === 'sigi'
+            ? (
+                <section className="topik-two-sigi" aria-live="polite">
+                  <h2>✍️ Sigi — Yozish mashqlari</h2>
+                  <p className="settings-description">Bo'sh joyga to'g'ri javobni yozing. AI tahlil va tarjima bilan.</p>
+                  <div className="sigi-exercise-list">
+                    {sigiExercises.map((exercise, index) => (
+                      <div key={exercise.id} className="sigi-exercise-card glass-card">
+                        <div className="sigi-exercise-header">
+                          <span className="sigi-exercise-number">Mashq {index + 1}</span>
+                          <span className="sigi-exercise-grammar">{exercise.grammar}</span>
+                        </div>
+                        <p className="sigi-sentence" lang="ko">{exercise.sentence}</p>
+                        <div className="sigi-answer-section">
+                          <input
+                            type="text"
+                            className="sigi-answer-input"
+                            placeholder="Javobingizni yozing..."
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                const input = e.target
+                                const answer = input.value.trim()
+                                if (answer) {
+                                  input.dataset.checked = 'true'
+                                  input.dataset.userAnswer = answer
+                                  const isCorrect = answer === exercise.answer
+                                  input.dataset.correct = isCorrect ? 'true' : 'false'
+                                  input.nextElementSibling?.style.setProperty('display', 'block')
+                                }
+                              }
+                            }}
+                          />
+                          <div className="sigi-answer-result" style={{display:'none'}}>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className="sigi-check-btn primary-btn"
+                          onClick={() => {
+                            const input = document.querySelector(`.sigi-exercise-card:nth-child(${index + 1}) .sigi-answer-input`)
+                            if (!input) return
+                            const answer = input.value.trim()
+                            if (!answer) return
+                            input.dataset.checked = 'true'
+                            input.dataset.userAnswer = answer
+                            const isCorrect = answer === exercise.answer
+                            input.dataset.correct = isCorrect ? 'true' : 'false'
+                            const resultDiv = input.nextElementSibling
+                            if (resultDiv) {
+                              resultDiv.style.display = 'block'
+                              resultDiv.innerHTML = `
+                                <div class="sigi-result ${isCorrect ? 'correct' : 'incorrect'}">
+                                  <span>${isCorrect ? '✅ To\'g\'ri!' : '❌ Noto\'g\'ri'}</span>
+                                  <span>To\'g\'ri javob: <strong lang="ko">${exercise.answer}</strong></span>
+                                </div>
+                              `
+                            }
+                          }}
+                        >
+                          Tekshirish
+                        </button>
+                        <details className="sigi-details">
+                          <summary>🤖 AI Tahlil va tarjima</summary>
+                          <div className="sigi-analysis">
+                            <div className="sigi-translation">
+                              <strong>📖 Tarjima:</strong>
+                              <p>{exercise.translation}</p>
+                            </div>
+                            <div className="sigi-ai-analysis">
+                              <strong>🧠 AI Tahlil:</strong>
+                              <p>{exercise.analysis}</p>
+                            </div>
+                            <div className="sigi-grammar-rule">
+                              <strong>📐 Grammatika:</strong>
+                              <p>{exercise.grammar}</p>
+                            </div>
+                          </div>
+                        </details>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )
             : (
                 <section className="topik-two-placeholder" aria-live="polite">
-                  <h2>{topikTwoSkill === 'sigi' ? 'Sigi — yozish' : topikTwoSkill === 'ilgi' ? 'Ilgi — oqish' : 'Titki — eshitish'}</h2>
+                  <h2>{topikTwoSkill === 'ilgi' ? 'Ilgi — oqish' : 'Titki — eshitish'}</h2>
                   <p>Bu bo'limga qo'shiladigan materiallarni keyin belgilaymiz.</p>
                 </section>
               )}
