@@ -88,7 +88,7 @@ src/
 ### Architecture Diagram
 ```mermaid
 graph LR
-    A[🤖 AI navigatsiya] --> B[AI chat interfeysi]
+    A[ AI navigatsiya] --> B[AI chat interfeysi]
     B --> C[Tez buyruqlar]
     B --> D[Xabar input]
     D --> E[generateAIResponse]
