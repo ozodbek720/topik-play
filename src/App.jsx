@@ -855,16 +855,10 @@ function getSavedProfile() {
 }
 
 function App() {
-  const [authState, setAuthState] = useState({ loading: true, user: null, error: '' })
-  const [signInBusy, setSignInBusy] = useState(false)
   const [localMode, setLocalMode] = useState(() => localStorage.getItem(LOCAL_MODE_STORAGE_KEY) === '1')
   const [pendingProfile, setPendingProfile] = useState(null)
   const savedProfile = getSavedProfile()
   const skipProfile = savedProfile !== null
-
-  useEffect(() => {
-    setAuthState({ loading: false, user: null, error: '' })
-  }, [])
 
   const handleLocalContinue = () => {
     localStorage.setItem(LOCAL_MODE_STORAGE_KEY, '1')
@@ -884,15 +878,6 @@ function App() {
   const handleProfileReady = (profileData) => {
     setPendingProfile(profileData)
     localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileData))
-  }
-
-  if (authState.loading) {
-    return (
-      <main className="auth-shell">
-        <img className="auth-logo" src="/topik-play-logo.svg" alt="Topik Play" />
-        <p className="settings-description">{translate('loading', 'uz')}</p>
-      </main>
-    )
   }
 
   if (!localMode) {
