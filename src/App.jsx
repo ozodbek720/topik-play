@@ -5,7 +5,6 @@ import sigiFormulas from './sigiFormulas.js'
 import advancedWords from './advancedWords.js'
 import topik2Lugat from './topik2Lugat.js'
 import topik1CommonWords from './topik1Words.js'
-import { addFriend, getAllProfiles, getRedirectResultAuth, loadAccountData, loadProfile, listenToFriends, listenToMessages, listenToProfiles, observeAuth, removeFriend, saveAccountData, saveProfile, sendMessage, signInWithGooglePopup, signInWithGoogleRedirect, signOutUser, createUserWithEmail, signInWithEmail } from './supabase.js'
 import githubResources from './githubResources.js'
 import libraryBooks from './libraryBooks.js'
 import grammarPoints from './grammarPoints.js'
@@ -631,60 +630,7 @@ function makeGrammarChoices(correctPoint, allPoints) {
   return shuffleList([...wrongPatterns, correctPoint.pattern])
 }
 
-function getAuthErrorMessage(error) {
-  console.error('Auth error:', error.code, error.message)
-  if (error.code === 'auth/unauthorized-domain' || error.code === 'auth/unauthorized-display') {
-    return '⚠️ Bu sayt Supabase\'ning ruxsat etilgan domenlariga qo\'shilmagan.\n\n📋 Supabase Dashboard → Authentication → URL Config bo\'limiga kiring va topik-play.vercel.app domenni qo\'shing.'
-  }
-  if (error.code === 'auth/operation-not-allowed') {
-    return '⚠️ Supabase\'da Google orqali kirish yoqilmagan.\n\n📋 Supabase Dashboard → Authentication → Providers bo\'limiga kiring va Google ni yoqing.'
-  }
-  if (error.code === 'auth/popup-closed-by-user') return 'Kirish oynasi yopildi. Qayta urinib ko\'ring.'
-  if (error.code === 'auth/popup-blocked') return 'Brauzer kirish oynasini to\'sdi. Qalqib chiquvchi oynalarga ruxsat bering yoki qurilmada davom eting.'
-  if (error.code === 'auth/network-request-failed') {
-    return '⚠️ Internet aloqasi muammosi.\n\n📋 Internetni tekshiring va qayta urinib ko\'ring. Agar VPN ishlatayotgan bo\'lsangiz, o\'chirib ko\'ring.'
-  }
-  if (error.code === 'auth/account-exists-with-different-credential') {
-    return '⚠️ Bu email bilan boshqa akkaunt mavjud.\n\n📋 Avval o\'sha akkauntga kiring yoki qurilmada davom eting.'
-  }
-  if (error.code === 'auth/invalid-api-key') {
-    return '⚠️ Supabase sozlamalarida xatolik.\n\n📋 Supabase API kaliti noto\'g\'ri. Loyiha sozlamalarini tekshiring.'
-  }
-  if (error.code === 'auth/invalid-origin') {
-    return '⚠️ Bu sayt Supabase\'da ruxsat etilmagan.\n\n📋 Supabase Dashboard → Authentication → URL Config bo\'limiga kiring.'
-  }
-  if (error.code === 'auth/cancelled-popup-request') {
-    return 'Kirish so\'rovi bekor qilindi. Qayta urinib ko\'ring.'
-  }
-  if (error.code === 'auth/web-storage-unsupported') {
-    return 'Brauzer cookie yoki saqlashni qo\'llab-quvvatlamaydi. Cookie\'larni yoqing yoki boshqa brauzerda urinib ko\'ring.'
-  }
-  if (error.code === 'auth/timeout') {
-    return '⚠️ Vaqt tugadi. Internet aloqasi sekin bo\'lishi mumkin. Qayta urinib ko\'ring.'
-  }
-  if (error.code === 'auth/auth-domain-config-required') {
-    return '⚠️ Supabase sozlamalarida xatolik. Auth domain to\'g\'ri sozlanmagan.'
-  }
-  if (error.code === 'auth/redirect-action-needed') {
-    return 'Kirish uchun Google sahifasiga yo\'naltirilmoqda...'
-  }
-  if (error.code === 'app/invalid-credential') {
-    return '⚠️ Supabase sozlamalari noto\'g\'ri. API kalit yoki loyiha ID tekshiring.'
-  }
-  if (error.code === 'auth/email_not_confirmed') {
-    return '⚠️ Email tasdiqlanmagan. Pochtangizni tekshiring va tasdiqlang.'
-  }
-  if (error.code === 'auth/invalid_credentials') {
-    return '⚠️ Email yoki parol noto\'g\'ri. Qayta urinib ko\'ring.'
-  }
-  if (error.code === 'auth/user_already_exists') {
-    return '⚠️ Bu email bilan akkaunt allaqachon mavjud. Kirish tugmasini bosing.'
-  }
-  // Noma'lum xato — aniq xabar qaytarish
-  return `⚠️ Kirish xatosi: ${error.code || 'noma\'lum'}\n\n📋 Xabar: ${error.message || 'noma\'lum'}\n\nQurilmada davom etish tugmasini bosing.`
-}
-
-function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileReady, skipProfile, lang, onEmailSignUp, onEmailSignIn, deviceAccount }) {
+function LoginScreen({ onLocalContinue, onProfileReady, skipProfile, lang, deviceAccount }) {
   const [currentLang, setCurrentLang] = useState(lang || 'uz')
   const t = (key) => translate(key, currentLang)
   const handleLangChange = (newLang) => {
@@ -717,29 +663,7 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
     if (onProfileReady) onProfileReady(pf)
   }
 
-  // Email/Password handlers
-  const handleEmailAuth = async () => {
-    setAuthError('')
-    if (!authEmail || !authPassword) {
-      setAuthError(t('loginFillEmailPass'))
-      return
-    }
-    if (authPassword.length < 6) {
-      setAuthError(t('loginPasswordShort'))
-      return
-    }
-    try {
-      if (authMode === 'createAccount') {
-        await onEmailSignUp(authEmail, authPassword, pf)
-      } else if (authMode === 'emailSignIn') {
-        await onEmailSignIn(authEmail, authPassword)
-      }
-    } catch (e) {
-      setAuthError(getAuthErrorMessage(e))
-    }
-  }
-
-  // Device login handler — localStorage orqali (Supabase'dan alohida)
+  // Device login handler — localStorage orqali
   const handleDeviceLogin = () => {
     setAuthError('')
     if (!deviceUsername.trim()) {
@@ -807,20 +731,17 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
       const deviceUid = 'device-' + usernameLower
       localStorage.setItem('topik-play-device-uid', deviceUid)
       
-      // Profilni Supabase'ga ham saqlash — boshqa foydalanuvchilar ko'rishi uchun
-      try {
-        saveProfile(deviceUid, {
-          uid: deviceUid,
-          firstName: deviceUsername.trim(),
-          lastName: '',
-          bio: '',
-          avatar: '',
-          email: '',
-          displayName: deviceUsername.trim(),
-        }).catch((e) => console.error('Device profil saqlash xatosi:', e))
-      } catch(e) {
-        console.error('Device profil saqlash xatosi:', e)
+      // Profilni localStorage ga saqlash
+      const deviceProfile = {
+        uid: deviceUid,
+        firstName: deviceUsername.trim(),
+        lastName: '',
+        bio: '',
+        avatar: '',
+        email: '',
+        displayName: deviceUsername.trim(),
       }
+      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(deviceProfile))
       
       onLocalContinue()
     }
@@ -864,31 +785,7 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
               </div>
             )}
 
-            {/* ===== Create Account - Email only ===== */}
-            {authMode === 'createAccount' ? (
-              <>
-                <h1 style={{fontSize:'1.2rem',marginBottom:'4px'}}>{t('loginCreateAccount')}</h1>
-                {authError && <p className="auth-error" role="alert">{authError}</p>}
-                <input type="email" className="auth-input" placeholder={t('loginEmail')} value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} />
-                <input type="password" className="auth-input" placeholder={t('loginPassword')} value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} />
-                <button type="button" className="primary-btn" style={{marginTop:'8px'}} onClick={handleEmailAuth} disabled={busy}>
-                  {busy ? t('loginSigningIn') : t('loginCreateAccount')}
-                </button>
-                <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setAuthMode(''); setAuthError('') }}>{t('back')}</button>
-              </>
-            ) : authMode === 'emailSignIn' ? (
-              /* ===== Email Sign In (Menda hisob bor) ===== */
-              <>
-                <h1 style={{fontSize:'1.2rem',marginBottom:'4px'}}>{t('loginEmailSignIn')}</h1>
-                {authError && <p className="auth-error" role="alert">{authError}</p>}
-                <input type="email" className="auth-input" placeholder={t('loginEmail')} value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} />
-                <input type="password" className="auth-input" placeholder={t('loginPassword')} value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} />
-                <button type="button" className="primary-btn" style={{marginTop:'8px'}} onClick={handleEmailAuth} disabled={busy}>
-                  {busy ? t('loginSigningIn') : t('loginSignIn')}
-                </button>
-                <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setAuthMode(''); setAuthError('') }}>{t('back')}</button>
-              </>
-            ) : authMode === 'deviceLogin' ? (
+            {authMode === 'deviceLogin' ? (
               /* ===== Device Login (Qurilma orqali kirish) ===== */
               <>
                 <h1 style={{fontSize:'1.2rem',marginBottom:'4px'}}>{t('loginDevice')}</h1>
@@ -926,23 +823,6 @@ function LoginScreen({ error, busy, onGoogleSignIn, onLocalContinue, onProfileRe
               <>
                 <h1 style={{fontSize:'1.3rem',marginBottom:'4px'}}>{t('loginMethod')}</h1>
                 <p className="settings-description">{t('loginSyncHint')}</p>
-                {error && <p className="auth-error" role="alert">{error}</p>}
-
-                {/* Google */}
-                <button type="button" className="google-sign-in-btn" onClick={onGoogleSignIn} disabled={busy}>
-                  <span className="google-mark" aria-hidden="true">G</span>
-                  {busy ? t('loginSigningIn') : t('loginGoogle')}
-                </button>
-                <p className="auth-help-note" style={{fontSize:'0.75rem',color:'var(--muted)',marginTop:'8px',textAlign:'center',marginBottom:'0'}}>
-                  {t('loginGoogleHelp')}
-                </p>
-
-                <div className="auth-divider"><span>{t('loginOr')}</span></div>
-
-                {/* Hisob ochish - Email */}
-                <button type="button" className="email-sign-up-btn" onClick={() => setAuthMode('createAccount')} disabled={busy}>
-                  {t('loginCreateAccount')}
-                </button>
 
                 {/* Device Login */}
                 <button type="button" className="local-sign-in-btn" onClick={() => setAuthMode('deviceLogin')} disabled={busy}>
@@ -982,83 +862,9 @@ function App() {
   const savedProfile = getSavedProfile()
   const skipProfile = savedProfile !== null
 
-  useEffect(() => observeAuth(
-    (user) => {
-      if (user) {
-        localStorage.removeItem(LOCAL_MODE_STORAGE_KEY)
-        setLocalMode(false)
-        // Har doim profilni saqlash - agar profil saqlanmagan bo'lsa, Google'dan olingan ma'lumotlar bilan yaratish
-        const profileToSave = pendingProfile || savedProfile
-        const firstName = profileToSave?.firstName || user.displayName?.split(' ')[0] || ''
-        const lastName = profileToSave?.lastName || user.displayName?.split(' ').slice(1).join(' ') || ''
-        const bio = profileToSave?.bio || ''
-        const avatar = profileToSave?.avatar || user.photoURL || ''
-        saveProfile(user.uid, {
-          firstName,
-          lastName,
-          bio,
-          avatar,
-          email: user.email,
-        }).catch((e) => console.error('Saqlash xatosi:', e))
-        setPendingProfile(null)
-      }
-      setAuthState({ loading: false, user, error: '' })
-    },
-    (error) => {
-      console.error('Kirish holatini tekshirib bo\'lmadi:', error)
-      setAuthState({
-        loading: false,
-        user: null,
-        error: 'Supabase bilan bog\'lanib bo\'lmadi. Internet va Supabase sozlamalarini tekshiring.',
-      })
-    },
-  ), [])
-
-  // Redirect natijasini tekshirish
   useEffect(() => {
-    getRedirectResultAuth().then((result) => {
-      if (result && result.user) {
-        console.log('Redirect orqali kirdi:', result.user.email)
-      }
-    }).catch((error) => {
-      if (error.code !== 'auth/no-auth-event') {
-        console.error('Redirect xatosi:', error)
-        setAuthState((previous) => ({ ...previous, error: getAuthErrorMessage(error) }))
-      }
-    })
+    setAuthState({ loading: false, user: null, error: '' })
   }, [])
-
-  const handleGoogleSignIn = async () => {
-    setSignInBusy(true)
-    localStorage.removeItem(LOCAL_MODE_STORAGE_KEY)
-    setLocalMode(false)
-    setAuthState((previous) => ({ ...previous, error: '' }))
-    try {
-      // Avval popup usulini sinaymiz
-      console.log('Google Sign-In popup urinilmoqda...')
-      await signInWithGooglePopup()
-      console.log('Google Sign-In popup muvaffaqiyatli!')
-    } catch (error) {
-      console.error('Google Sign-In popup xatosi:', error.code, error.message)
-      // Agar popup ishlamasa, redirect usuliga o'tamiz
-      if (error.code === 'auth/popup-blocked' || error.code === 'auth/unauthorized-display' || error.code === 'auth/cancelled-popup-request') {
-        console.log('Popup ishlamadi, redirect ishlatilmoqda...')
-        try {
-          await signInWithGoogleRedirect()
-          // Redirect dan keyin sahifa qayta yuklanadi
-          setAuthState((previous) => ({ ...previous, error: '' }))
-        } catch (redirectError) {
-          console.error('Google Sign-In redirect xatosi:', redirectError.code, redirectError.message)
-          setAuthState((previous) => ({ ...previous, error: getAuthErrorMessage(redirectError) }))
-        }
-      } else {
-        // Boshqa xato — aniq xabar ko'rsatish
-        setAuthState((previous) => ({ ...previous, error: getAuthErrorMessage(error) }))
-      }
-    } finally {
-      setSignInBusy(false)
-    }
-  }
 
   const handleLocalContinue = () => {
     localStorage.setItem(LOCAL_MODE_STORAGE_KEY, '1')
@@ -1080,46 +886,6 @@ function App() {
     localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileData))
   }
 
-  // Email/Password orqali hisob ochish
-  const handleEmailSignUp = async (email, password, profileData) => {
-    setSignInBusy(true)
-    setAuthState((previous) => ({ ...previous, error: '' }))
-    try {
-      await createUserWithEmail(email, password)
-      // Parolni saqlash (sozlamalarda ko'rsatish uchun)
-      try { localStorage.setItem(SAVED_PASSWORD_KEY, password) } catch {}
-      // Profilni saqlash onAuthStateChanged orqali avtomatik bo'ladi
-      if (profileData && (profileData.firstName || profileData.lastName || profileData.bio)) {
-        setPendingProfile(profileData)
-        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileData))
-      }
-    } catch (error) {
-      console.error('Email orqali hisob ochish xatosi:', error)
-      setAuthState((previous) => ({ ...previous, error: getAuthErrorMessage(error) }))
-      throw error
-    } finally {
-      setSignInBusy(false)
-    }
-  }
-
-  // Email/Password orqali kirish
-  const handleEmailSignIn = async (email, password) => {
-    setSignInBusy(true)
-    setAuthState((previous) => ({ ...previous, error: '' }))
-    try {
-      await signInWithEmail(email, password)
-    } catch (error) {
-      console.error('Email orqali kirish xatosi:', error)
-      setAuthState((previous) => ({ ...previous, error: getAuthErrorMessage(error) }))
-      throw error
-    } finally {
-      setSignInBusy(false)
-    }
-  }
-
-
-  // Telefon raqami orqali SMS yuborish — LoginScreen ichida to'g'ridan-to'g'ri ishlaydi
-
   if (authState.loading) {
     return (
       <main className="auth-shell">
@@ -1129,28 +895,23 @@ function App() {
     )
   }
 
-  if (!authState.user && !localMode) {
+  if (!localMode) {
     return (
       <LoginScreen
-        error={authState.error}
-        busy={signInBusy}
-        onGoogleSignIn={handleGoogleSignIn}
         onLocalContinue={handleLocalContinue}
         onProfileReady={handleProfileReady}
         skipProfile={skipProfile}
         lang={localStorage.getItem('topik-play-lang') || 'uz'}
-        onEmailSignUp={handleEmailSignUp}
-        onEmailSignIn={handleEmailSignIn}
         deviceAccount={localStorage.getItem(DEVICE_USERNAME_KEY) ? { username: localStorage.getItem(DEVICE_USERNAME_KEY) } : null}
       />
     )
   }
 
-  return <LearningApp user={authState.user} localMode={localMode} onChooseLoginMode={handleChooseLoginMode} pendingProfile={pendingProfile || savedProfile} />
+  return <LearningApp localMode={localMode} onChooseLoginMode={handleChooseLoginMode} pendingProfile={pendingProfile || savedProfile} />
 }
 
-function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
-  const [cloudReady, setCloudReady] = useState(localMode)
+function LearningApp({ localMode, onChooseLoginMode, pendingProfile }) {
+  const [cloudReady] = useState(true)
   const [cloudError, setCloudError] = useState('')
   const [words, setWords] = useState(loadWords)
   const [customGrammar, setCustomGrammar] = useState(loadCustomGrammar)
@@ -1937,106 +1698,7 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
     }
   }, [selectedTopikLevel])
 
-  useEffect(() => {
-    if (!user) return undefined
-
-    let active = true
-
-    const syncInitialData = async () => {
-      try {
-        const saved = await loadAccountData(user.uid)
-        if (!active) return
-
-        if (saved) {
-          if (!Array.isArray(saved.words) || !Array.isArray(saved.customGrammar) || !Array.isArray(saved.mistakes)) {
-            throw new Error('Akkauntdagi o‘quv ma’lumotlari formati noto‘g‘ri.')
-          }
-          setWords(saved.words)
-          setCustomGrammar(saved.customGrammar)
-          setMistakes(saved.mistakes)
-          if (saved.learningProgress && typeof saved.learningProgress === 'object') setLearningProgress(saved.learningProgress)
-          if (saved.gameState && typeof saved.gameState === 'object') setGameState(saved.gameState)
-          if (themes.some((item) => item.id === saved.selectedTheme)) setSelectedTheme(saved.selectedTheme)
-          if (saved.colorMode === 'day' || saved.colorMode === 'night') setColorMode(saved.colorMode)
-          if (saved.settings && typeof saved.settings === 'object') setSettings(saved.settings)
-          localStorage.setItem(ACCOUNT_DATA_OWNER_KEY, user.uid)
-        } else {
-          const savedOwner = localStorage.getItem(ACCOUNT_DATA_OWNER_KEY)
-          const firstAccountData = !savedOwner || savedOwner === user.uid
-          const initialData = firstAccountData
-            ? localDataRef.current
-            : {
-                words: categorizedWords,
-                customGrammar: [],
-                mistakes: [],
-                learningProgress: createDefaultLearningProgress(),
-                gameState: { score: 0, hearts: MAX_HEARTS, nextHeartRefillAt: Date.now() + HEART_REFILL_INTERVAL },
-                selectedTheme: themes[0].id,
-                colorMode: 'night',
-                settings: { ...defaultSettings, dailyDate: getLocalDateKey() },
-              }
-          if (!firstAccountData) {
-            setWords(initialData.words)
-            setCustomGrammar(initialData.customGrammar)
-            setMistakes(initialData.mistakes)
-            setLearningProgress(initialData.learningProgress)
-            setGameState(initialData.gameState)
-            setSelectedTheme(initialData.selectedTheme)
-            setColorMode(initialData.colorMode)
-            setSettings(initialData.settings)
-          }
-          await saveAccountData(user.uid, initialData)
-          if (!active) return
-          localStorage.setItem(ACCOUNT_DATA_OWNER_KEY, user.uid)
-        }
-
-        setCloudReady(true)
-      } catch (error) {
-        console.error('Akkaunt ma’lumotlarini sinxronlab bo‘lmadi:', error.code, error.message)
-        if (active) {
-          let msg = 'Bulutli saqlash ulanmagan. '
-          if (error.code === 'PGRST301') {
-            msg += 'Supabase da ruxsat yo\'q. Row Level Security (RLS) qoidalarini sozlang.'
-          } else if (error.code === 'PGRST304') {
-            msg += 'Supabase jadval topilmadi. SQL jadvalni yarating.'
-          } else {
-            msg += `Xato: ${error.code || 'noma\'lum'}. Supabase Dashboard sozlamalarini tekshiring.`
-          }
-          setCloudError(msg)
-          setCloudReady(true)
-        }
-      }
-    }
-
-    syncInitialData()
-    return () => {
-      active = false
-    }
-  }, [user])
-
-  useEffect(() => {
-    if (!user || !cloudReady) return undefined
-
-    const timeout = window.setTimeout(() => {
-      saveAccountData(user.uid, {
-        words,
-        customGrammar,
-        mistakes,
-        learningProgress,
-        gameState,
-        selectedTheme,
-        colorMode,
-        settings,
-      }).then(() => {
-        setCloudError('')
-      }).catch((error) => {
-        console.error('Akkaunt ma’lumotlarini saqlab bo‘lmadi:', error)
-        setCloudError('Ma’lumotlarni akkauntingizga saqlab bo‘lmadi. Supabase sozlamalarini tekshiring.')
-      })
-    }, 700)
-
-    return () => window.clearTimeout(timeout)
-  }, [cloudReady, user, words, customGrammar, mistakes, learningProgress, gameState, selectedTheme, colorMode, settings])
+  // Ma'lumotlar localStorage da saqlanadi — Supabase o'chirildi
 
   useEffect(() => {
     const previousFontSize = document.documentElement.style.fontSize
@@ -2095,7 +1757,7 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
     }).catch(() => { /* ignore */ })
   }, [user, localMode, pendingProfile])
 
-  // Listen to chat users — Firebase profiles + localStorage device profiles
+  // Chat users — localStorage device profiles
   useEffect(() => {
     const loadDeviceProfiles = () => {
       const allAccounts = JSON.parse(localStorage.getItem('DEVICE_ALL_ACCOUNTS') || '[]')
@@ -2109,62 +1771,24 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
       }))
       return profiles
     }
-
-    if (localMode) {
-      // Local mode — localStorage + Firebase profiles ni birlashtirish
-      const unsubFirebase = listenToProfiles((firebaseProfiles) => {
-        const deviceProfiles = loadDeviceProfiles()
-        const existingIds = new Set(deviceProfiles.map((p) => p.id))
-        const newFirebase = firebaseProfiles.filter((p) => !existingIds.has(p.id))
-        setChatUsers([...deviceProfiles, ...newFirebase])
-      })
-      // Storage o'zgarganda yangilash
-      const handleStorage = (e) => {
-        if (e.key === 'DEVICE_ALL_ACCOUNTS') {
-          const deviceProfiles = loadDeviceProfiles()
-          listenToProfiles((firebaseProfiles) => {
-            const existingIds = new Set(deviceProfiles.map((p) => p.id))
-            const newFirebase = firebaseProfiles.filter((p) => !existingIds.has(p.id))
-            setChatUsers([...deviceProfiles, ...newFirebase])
-          })
-        }
-      }
-      window.addEventListener('storage', handleStorage)
-      return () => {
-        unsubFirebase()
-        window.removeEventListener('storage', handleStorage)
+    setChatUsers(loadDeviceProfiles())
+    const handleStorage = (e) => {
+      if (e.key === 'DEVICE_ALL_ACCOUNTS') {
+        setChatUsers(loadDeviceProfiles())
       }
     }
-    if (!user) return
-    // Firebase user — profiles + device profiles ni birlashtirish
-    const unsubProfiles = listenToProfiles((firebaseProfiles) => {
-      const deviceProfiles = loadDeviceProfiles()
-      const existingIds = new Set(firebaseProfiles.map((p) => p.id))
-      const newDevice = deviceProfiles.filter((p) => !existingIds.has(p.id))
-      setChatUsers([...firebaseProfiles, ...newDevice])
-    })
-    return () => unsubProfiles()
-  }, [user, localMode])
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
+  }, [])
 
-  // Listen to friends
-  useEffect(() => {
-    if (!user || localMode) return
-    const unsubscribe = listenToFriends(user.uid, (friendIds) => {
-      setFriends(friendIds)
-    })
-    return () => unsubscribe()
-  }, [user, localMode])
-
-  // Listen to chat messages
+  // Chat messages — localStorage
   useEffect(() => {
     if (!selectedChatUser) return
-    const myId = user?.uid || localStorage.getItem('topik-play-device-uid') || ''
+    const myId = localStorage.getItem('topik-play-device-uid') || ''
     const chatId = [myId, selectedChatUser.id].sort().join('-')
-    const unsubscribe = listenToMessages(chatId, (msgs) => {
-      setChatMessages(msgs)
-    })
-    return () => unsubscribe()
-  }, [selectedChatUser, user])
+    const saved = JSON.parse(localStorage.getItem(`chat-${chatId}`) || '[]')
+    setChatMessages(saved)
+  }, [selectedChatUser])
 
   // Auto-scroll chat
   useEffect(() => {
@@ -2263,11 +1887,14 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
   // Chat handlers
   const handleSendChatMessage = () => {
     if (!chatInput.trim() || !selectedChatUser) return
-    const myId = user?.uid || localStorage.getItem('topik-play-device-uid') || ''
+    const myId = localStorage.getItem('topik-play-device-uid') || ''
     const chatId = [myId, selectedChatUser.id].sort().join('-')
-    sendMessage(chatId, myId, myProfile?.firstName || myProfile?.username || 'Men', chatInput.trim())
-      .then(() => setChatInput(''))
-      .catch((e) => console.error('Send message error:', e))
+    const msg = { id: Date.now(), chatId, senderId: myId, senderName: myProfile?.firstName || 'Men', text: chatInput.trim(), timestamp: new Date().toISOString() }
+    const saved = JSON.parse(localStorage.getItem(`chat-${chatId}`) || '[]')
+    saved.push(msg)
+    localStorage.setItem(`chat-${chatId}`, JSON.stringify(saved))
+    setChatMessages(saved)
+    setChatInput('')
   }
 
   // AI Chat handler — Offline AI only
@@ -2313,17 +1940,22 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
     }
   }
 
-  // Friend handlers
+  // Friend handlers — localStorage
   const handleAddFriend = (profile) => {
-    if (!user || localMode) return
-    const isAlreadyFriend = friends.some((f) => f.id === profile.id)
-    if (isAlreadyFriend) return
-    addFriend(user.uid, profile.id).catch((e) => console.error('Add friend error:', e))
+    const myId = localStorage.getItem('topik-play-device-uid') || ''
+    const saved = JSON.parse(localStorage.getItem(`friends-${myId}`) || '[]')
+    if (saved.some((f) => f.id === profile.id)) return
+    saved.push({ id: profile.id, addedAt: new Date().toISOString() })
+    localStorage.setItem(`friends-${myId}`, JSON.stringify(saved))
+    setFriends(saved)
   }
 
   const handleRemoveFriend = (friendId) => {
-    if (!user || localMode) return
-    removeFriend(user.uid, friendId).catch((e) => console.error('Remove friend error:', e))
+    const myId = localStorage.getItem('topik-play-device-uid') || ''
+    const saved = JSON.parse(localStorage.getItem(`friends-${myId}`) || '[]')
+    const filtered = saved.filter((f) => f.id !== friendId)
+    localStorage.setItem(`friends-${myId}`, JSON.stringify(filtered))
+    setFriends(filtered)
   }
 
   const currentUserId = user?.uid || localStorage.getItem('topik-play-device-uid') || ''
@@ -4343,9 +3975,7 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
                       </div>
                     )}
                     <div className="setting-action-row">
-                      {user
-                        ? <button type="button" className="setting-action-btn" onClick={() => signOutUser().catch((e) => console.error('Chiqish xatosi:', e))}>{t('settingsSignOut')}</button>
-                        : <button type="button" className="setting-action-btn" onClick={onChooseLoginMode}>{t('settingsChangeLogin')}</button>}
+                      <button type="button" className="setting-action-btn" onClick={onChooseLoginMode}>{t('settingsChangeLogin')}</button>
                     </div>
                   </div>
 
