@@ -274,5 +274,268 @@ export default [
       { word: '기쁘다', meaning: 'xursand bo\'lmoq', type: 'sifat' },
       { word: '행복한', meaning: 'baxtli', type: 'sifat' }
     ]
+  },
+  {
+    id: 11,
+    sentence: '그저께 소나기가 오는 날 저녁에 __________. 감사합니다. 우산이 없으면 옷이 젖어서 감기에 걸릴 뻔했습니다. 내일 학교에 가서 우산을 돌려 드리겠습니다.',
+    answer: '우산을 빌려주셔서',
+    examples: [
+      '도움을 주셔서 감사합니다',
+      '기다려주셔서 감사합니다',
+      '알려주셔서 감사합니다',
+      '도와주셔서 감사합니다'
+    ],
+    translation: 'Kechagi yomg\'ir yog\'ayotgan kuni kechqurun soyabonni so\'raganingiz uchun rahmat. Soyabon bo\'lmasa kiyimlarim ho\'lab, sovuqqa tutilib qolardim. Ertaga maktabga borib soyabonni qaytaraman.',
+    analysis: '"~셔서 감사합니다" — hurmat bilan minnatdorchilik bildirmoq. "소나기" — yomg\'ir, chaqmoqli yomg\'ir. "뻔하다" — deyarli sodir bo\'lmoq, chekkada turmoq.',
+    grammar: '~셔서 감사합니다 — hurmat bilan rahmat aytmoq',
+    vocabulary: [
+      { word: '그저께', meaning: 'kechagi, kecha ertangi', type: 'zarb' },
+      { word: '소나기', meaning: 'yomg\'ir, chaqmoqli yomg\'ir', type: 'ot' },
+      { word: '저녁', meaning: 'kechqurun', type: 'ot' },
+      { word: '우산', meaning: 'soyabon', type: 'ot' },
+      { word: '빌리다', meaning: 'so\'ramoq, ijaraga olmoq', type: 'fe\'l' },
+      { word: '젖다', meaning: 'ho\'l bo\'lmoq', type: 'fe\'l' },
+      { word: '감기', meaning: 'sovuqqa tutish', type: 'ot' },
+      { word: '걸리다', meaning: 'tutilmoq, yopishmoq', type: 'fe\'l' },
+      { word: '뻔하다', meaning: 'deyarli, chekkada', type: 'sifat' },
+      { word: '돌리다', meaning: 'qaytarmoq', type: 'fe\'l' }
+    ]
+  },
+  {
+    id: 12,
+    sentence: '선배님, 우리가 제주도에서 있는 동안 친절하게 __________. 감사합니다. 선배님의 덕분에 이번에 기차에 늦는 줄이었어요 어땠습니다.',
+    answer: '대해 주셔서',
+    examples: [
+      '도와주셔서 감사합니다',
+      '기다려주셔서 감사합니다',
+      '알려주셔서 감사합니다',
+      '챙겨주셔서 감사합니다'
+    ],
+    translation: 'Katta aka/opa, biz Jejudo orolida bo\'lganimiz davomida mehribonlik ko\'rsatganingiz uchun rahmat. Sizning tufaylingiz bilan bu safar poyezdga kech qolishim mumkin edi.',
+    analysis: '"~해 주셔서 감사합니다" — biror ishni qilib berganingiz uchun rahmat. "제주도" — Jeju oroli. "친절하게" — mehribonlik bilan.',
+    grammar: '~해 주다 — biror ishni qilib bermoq',
+    vocabulary: [
+      { word: '선배님', meaning: 'katta aka/opa, senior', type: 'ot' },
+      { word: '제주도', meaning: 'Jeju oroli', type: 'ot' },
+      { word: '동안', meaning: 'davomida', type: 'ot' },
+      { word: '친절하게', meaning: 'mehribonlik bilan', type: 'zarb' },
+      { word: '대하다', meaning: 'muomala qilmoq', type: 'fe\'l' },
+      { word: '덕분에', meaning: 'tufayli', type: 'so\'z' },
+      { word: '기차', meaning: 'poyezd', type: 'ot' },
+      { word: '늦다', meaning: 'kech qolmoq', type: 'sifat' }
+    ]
+  },
+  {
+    id: 13,
+    sentence: '개인 사정으로 이번 달까지만 일할 수 있을 것 같습니다. 갑자기 __________. 그동안 가족처럼 돌봐 주셔서 감사합니다. 따뜻한 마음을 잊지 않겠습니다.',
+    answer: '사직서를 제출합니다',
+    examples: [
+      '퇴사서를 제출합니다',
+      '이직을 결정했습니다',
+      '직장을 옮기게 되었습니다',
+      '회사에서 나가게 되었습니다'
+    ],
+    translation: 'Shaxsiy sabablarga ko\'ra bu oygacha ishlay olaman deb o\'ylayman. Birdan ishdan ketish haqida xabar beraman. Uzoq vaqt davomida oila a\'zosi kabi parvarish qilganingiz uchun rahmat. Issiq yuringizni unutmayman.',
+    analysis: '"사직서" — ishdan ketish to\'g\'risidagi ariza. "~까지만" — faqat shu paytgacha. "갑자기" — birdan, kutilmagan holda.',
+    grammar: '~까지만 — faqat shu paytgacha',
+    vocabulary: [
+      { word: '개인', meaning: 'shaxsiy', type: 'sifat' },
+      { word: '사정', meaning: 'sabab, vaziyat', type: 'ot' },
+      { word: '이번', meaning: 'bu, joriy', type: 'sifat' },
+      { word: '달', meaning: 'oy', type: 'ot' },
+      { word: '일하다', meaning: 'ishlamoq', type: 'fe\'l' },
+      { word: '갑자기', meaning: 'birdan, kutilmagan holda', type: 'zarb' },
+      { word: '사직서', meaning: 'ishdan ketish arizasi', type: 'ot' },
+      { word: '제출하다', meaning: 'topshirmoq, taqdim etmoq', type: 'fe\'l' },
+      { word: '가족', meaning: 'oilа', type: 'ot' },
+      { word: '돌보다', meaning: 'parvarish qilmoq', type: 'fe\'l' },
+      { word: '따뜻한', meaning: 'issiq, iliq', type: 'sifat' },
+      { word: '잊다', meaning: 'unutmoq', type: 'fe\'l' }
+    ]
+  },
+  {
+    id: 14,
+    sentence: '그날 행사가 예정보다 늦게 시작했습니다. 저희 불꽃놀이 바쁘신 분들을 1시간이나 __________. 죄송합니다. 다음에는 제시간에 시작하도록 하겠습니다.',
+    answer: '기다리게 해서',
+    examples: [
+      '늦게 해서 죄송합니다',
+      '기다리게 해서 죄송합니다',
+      '불편하게 해서 죄송합니다',
+      '걱정시켜서 죄송합니다'
+    ],
+    translation: 'O\'sha kuni tadbir rejalangan vaqtdan kechroq boshlandi. Bizning foyavor o\'yinlar sizning vaqtingizni 1 soat davomida kutkazdik. Kechirasiz. Keyingi safar o\'z vaqtida boshlashga harakat qilamiz.',
+    analysis: '"~게 해서 죄송합니다" — biror holat yuzaga keltirgani uchun uzr so\'ramoq. "예정보다" — rejalangan vaqtdan. "불꽃놀이" — foyavor o\'yinlar.',
+    grammar: '~게 해서 죄송합니다 — uzr so\'ramoq',
+    vocabulary: [
+      { word: '행사', meaning: 'tadbir, chora-tadbir', type: 'ot' },
+      { word: '예정', meaning: 'reja, rejalangan', type: 'ot' },
+      { word: '늦게', meaning: 'kechroq', type: 'zarb' },
+      { word: '시작하다', meaning: 'boshlamoq', type: 'fe\'l' },
+      { word: '저희', meaning: 'biz (hurmat)', type: 'ot' },
+      { word: '불꽃놀이', meaning: 'foyavor o\'yinlari', type: 'ot' },
+      { word: '바쁘신', meaning: 'band, mashg\'ul', type: 'sifat' },
+      { word: '분', meaning: 'odam, shaxs', type: 'ot' },
+      { word: '시간', meaning: 'soat, vaqt', type: 'ot' },
+      { word: '기다리다', meaning: 'kutmoq', type: 'fe\'l' },
+      { word: '죄송합니다', meaning: 'kechirasiz', type: 'fe\'l' }
+    ]
+  },
+  {
+    id: 15,
+    sentence: '같은 일을 저희들에게 잘 만드시는 분이라고 식힌 만든 __________. 감사합니다. 제가 우습지도 않은 반사에서 어떻게 감사한 마음을 전해야 할지 모르겠습니다.',
+    answer: '도와주셔서',
+    examples: [
+      '기다려주셔서 감사합니다',
+      '알려주셔서 감사합니다',
+      '챙겨주셔서 감사합니다',
+      '이해해 주셔서 감사합니다'
+    ],
+    translation: 'Bir xil ishni bizga yaxshi qilib beradigan odam ekaningizni bildim. Rahmat. Men hazil emas, jiddiy holatda minnatdorchilikni qanday bildirishni bilmayapman.',
+    analysis: '"~다고 하다" — deyish, aytish. "만들다" — qilmoq, yaratmoq. "전하다" — yetkazmoq, bildirmoq.',
+    grammar: '~다고 하다 — deyish, aytish',
+    vocabulary: [
+      { word: '같은', meaning: 'bir xil, o\'xshash', type: 'sifat' },
+      { word: '일', meaning: 'ish, ish', type: 'ot' },
+      { word: '저희들', meaning: 'biz (hurmat)', type: 'ot' },
+      { word: '잘', meaning: 'yaxshi', type: 'zarb' },
+      { word: '만들다', meaning: 'qilmoq, yaratmoq', type: 'fe\'l' },
+      { word: '분', meaning: 'odam, shaxs', type: 'ot' },
+      { word: '우습다', meaning: 'kulgili bo\'lmoq', type: 'sifat' },
+      { word: '반사', meaning: 'refleks, holat', type: 'ot' },
+      { word: '어떻게', meaning: 'qanday', type: 'zarb' },
+      { word: '전하다', meaning: 'yetkazmoq, bildirmoq', type: 'fe\'l' }
+    ]
+  },
+  {
+    id: 16,
+    sentence: '선생님, 1년 동안 저희들에게 한국말을 __________. 정말 감사합니다. 처음에는 인사말도 몰랐는데 선생님 덕분에 점점 한국말을 __________. 감사합니다. 친절했던 덕분에 한국 생활에 빨리 적응할 수 있었습니다.',
+    answer: '가르쳐 주셔서',
+    examples: [
+      '도와주셔서 감사합니다',
+      '가르쳐 주셔서 감사합니다',
+      '알려주셔서 감사합니다',
+      '도와주셔서 감사합니다'
+    ],
+    translation: 'O\'qituvchi, 1 yil davomida bizga koreys tilini o\'rgatganingiz uchun rahmat. Dastlab salomlashishni ham bilmay edim, lekin sizning tufaylingiz bilan asta-sekin koreys tilini o\'rganib oldim.',
+    analysis: '"가르치다" — o\'rgatmoq, o\'qitmoq. "~해 주셔서 감사합니다" — qilib berganingiz uchun rahmat. "점점" — asta-sekin.',
+    grammar: '~해 주셔서 감사합니다 — qilib berganingiz uchun rahmat',
+    vocabulary: [
+      { word: '선생님', meaning: 'o\'qituvchi, ustoz', type: 'ot' },
+      { word: '1년', meaning: '1 yil', type: 'ot' },
+      { word: '동안', meaning: 'davomida', type: 'ot' },
+      { word: '한국말', meaning: 'koreys tili', type: 'ot' },
+      { word: '가르치다', meaning: 'o\'rgatmoq, o\'qitmoq', type: 'fe\'l' },
+      { word: '처음', meaning: 'birinchi, boshida', type: 'ot' },
+      { word: '인사말', meaning: 'salomlashish so\'zlari', type: 'ot' },
+      { word: '점점', meaning: 'asta-sekin', type: 'zarb' },
+      { word: '적응하다', meaning: 'moslashmoq', type: 'fe\'l' },
+      { word: '빨리', meaning: 'tez', type: 'zarb' }
+    ]
+  },
+  {
+    id: 17,
+    sentence: '한국 생활이 처음이라 모르는 것이 많습니다. 그래서 질문을 많이 했는데 그때마다 __________. 감사합니다. 친절했던 덕분에 한국 생활에 빨리 적응할 수 있었습니다.',
+    answer: '자세히 설명해 주셔서',
+    examples: [
+      '자세히 알려주셔서 감사합니다',
+      '인내심 있게 들어주셔서 감사합니다',
+      '자세히 가르쳐 주셔서 감사합니다',
+      '친절하게 도와주셔서 감사합니다'
+    ],
+    translation: 'Koreyada hayot birinchi marta, bilmaydigan narsalar ko\'p. Shuning uchun ko\'p savollar berdim, har safar batafsil tushuntirib berganingiz uchun rahmat.',
+    analysis: '"자세히" — batafsil, tafsilotli. "설명하다" — tushuntirmoq, izoh bermoq. "그때마다" — har safar, har bir marta.',
+    grammar: '~해 주셔서 감사합니다 — qilib berganingiz uchun rahmat',
+    vocabulary: [
+      { word: '한국', meaning: 'Koreya', type: 'ot' },
+      { word: '생활', meaning: 'hayot, turmush', type: 'ot' },
+      { word: '처음', meaning: 'birinchi marta', type: 'ot' },
+      { word: '모르다', meaning: 'bilmaymoq', type: 'fe\'l' },
+      { word: '질문', meaning: 'savol', type: 'ot' },
+      { word: '많이', meaning: 'ko\'p, ko\'p miqdorda', type: 'zarb' },
+      { word: '그때마다', meaning: 'har safar', type: 'so\'z' },
+      { word: '자세히', meaning: 'batafsil', type: 'zarb' },
+      { word: '설명하다', meaning: 'tushuntirmoq', type: 'fe\'l' },
+      { word: '친절했던', meaning: 'mehribon bo\'lgan', type: 'sifat' }
+    ]
+  },
+  {
+    id: 18,
+    sentence: '친수 씨가 거짓말 했다고 생각했는데 그 일은 거의 __________. 자세한 내용을 모르고 죄송합니다. 앞으로는 이런 일이 없도록 하겠습니다.',
+    answer: '오해였습니다',
+    examples: [
+      '오해가 있었습니다',
+      '잘못 이해했습니다',
+      '알아듣지 못했습니다',
+      '잘못된 정보가 있었습니다'
+    ],
+    translation: 'Chinsu yolg\'on gapirgan deb o\'yladim, lekin bu ish deyarli noto\'g\'ri tushunish edi. Batafsil ma\'lumotni bilmaganim uchun kechirasiz. Kelajakda bunday holat yuz bermasligiga harakat qilaman.',
+    analysis: '"오해" — noto\'g\'ri tushunish, xato tushunish. "거의" — deyarli, taxminan. "자세한" — batafsil, tafsilotli.',
+    grammar: '~다고 생각하다 — deb o\'ylamoq',
+    vocabulary: [
+      { word: '거짓말', meaning: 'yolg\'on', type: 'ot' },
+      { word: '했다', meaning: 'qilgan', type: 'fe\'l' },
+      { word: '생각하다', meaning: 'o\'ylamoq', type: 'fe\'l' },
+      { word: '거의', meaning: 'deyarli', type: 'zarb' },
+      { word: '오해', meaning: 'noto\'g\'ri tushunish', type: 'ot' },
+      { word: '자세한', meaning: 'batafsil', type: 'sifat' },
+      { word: '내용', meaning: 'mazmun, tarkib', type: 'ot' },
+      { word: '모르다', meaning: 'bilmaymoq', type: 'fe\'l' },
+      { word: '앞으로는', meaning: 'kelajakda', type: 'zarb' }
+    ]
+  },
+  {
+    id: 19,
+    sentence: '오늘 아침에 우체국에 가서 갑자기 고장 나는 __________. 죄송합니다. 수리가 끝나면 예약하겠습니다. 불편하시더라도 조금만 더 기다려 주십시오.',
+    answer: '컴퓨터가 있어서',
+    examples: [
+      '컴퓨터가 고장 나서',
+      '장비가 고장 나서',
+      '시스템이 고장 나서',
+      '장치가 고장 나서'
+    ],
+    translation: 'Bugun ertalab pochtaga borib, birdan kompyuter ishdan chiqqani uchun kechirasiz. Ta\'mirlash tugagandan so\'ng oldindan buyurtma qilaman. Noqulaylik bo\'lsa ham biroz ko\'proq kutishingizni so\'rayman.',
+    analysis: '"우체국" — pochta bo\'limi. "고장 나다" — ishdan chiqmoq, buzilmoq. "예약하다" — oldindan buyurtma qilmoq.',
+    grammar: '~아서/어서 — chunki, sabab bildirish',
+    vocabulary: [
+      { word: '오늘', meaning: 'bugun', type: 'zarb' },
+      { word: '아침', meaning: 'ertalab', type: 'ot' },
+      { word: '우체국', meaning: 'pochta bo\'limi', type: 'ot' },
+      { word: '갑자기', meaning: 'birdan', type: 'zarb' },
+      { word: '고장', meaning: 'buzilish, nosozlik', type: 'ot' },
+      { word: '나다', meaning: 'yuz berish', type: 'fe\'l' },
+      { word: '수리', meaning: 'ta\'mirlash', type: 'ot' },
+      { word: '끝나다', meaning: 'tugash', type: 'fe\'l' },
+      { word: '예약하다', meaning: 'oldindan buyurtma qilmoq', type: 'fe\'l' },
+      { word: '불편하다', meaning: 'noqulay bo\'lmoq', type: 'sifat' },
+      { word: '조금', meaning: 'biron oz', type: 'zarb' },
+      { word: '기다리다', meaning: 'kutmoq', type: 'fe\'l' }
+    ]
+  },
+  {
+    id: 20,
+    sentence: '잘못된 정보를 알려 드려서 죄송합니다. 박물관 문 닫는 시간이 6시간을 일곱을 더 다시 물어 보니 __________. 여쭤봐 답려 겨울에는 1시간 빨리 문을 닫는데 확인을 못했습니다. 다음에는 꼭 __________. 하겠습니다.',
+    answer: '확인하고',
+    examples: [
+      '확인하겠습니다',
+      '잘 확인하겠습니다',
+      '자세히 확인하겠습니다',
+      '반드시 확인하겠습니다'
+    ],
+    translation: 'Noto\'g\'ri ma\'lumot berganim uchun kechirasiz. Muzeyning yopilish vaqti 6 soat ekanligini yana so\'rab ko\'rdim. Qishda 1 soat erta yopiladi, lekin tekshirmadim. Keyingi safar albatta tekshiraman.',
+    analysis: '"잘못된" — noto\'g\'ri, xato. "일곱" — yetti. "여쭤보다" — so\'ramoq (hurmat). "확인하다" — tekshirmoq, tasdiqlamoq.',
+    grammar: '~고 — va, keyin',
+    vocabulary: [
+      { word: '잘못된', meaning: 'noto\'g\'ri, xato', type: 'sifat' },
+      { word: '정보', meaning: 'ma\'lumot', type: 'ot' },
+      { word: '알려 드리다', meaning: 'xabar bermoq (hurmat)', type: 'fe\'l' },
+      { word: '죄송합니다', meaning: 'kechirasiz', type: 'fe\'l' },
+      { word: '박물관', meaning: 'muzey', type: 'ot' },
+      { word: '닫다', meaning: 'yopmoq', type: 'fe\'l' },
+      { word: '시간', meaning: 'soat, vaqt', type: 'ot' },
+      { word: '일곱', meaning: 'yetti', type: 'ot' },
+      { word: '다시', meaning: 'qayta, yana', type: 'zarb' },
+      { word: '확인', meaning: 'tekshirish, tasdiqlash', type: 'ot' },
+      { word: '꼭', meaning: 'albatta, aniq', type: 'zarb' }
+    ]
   }
 ]

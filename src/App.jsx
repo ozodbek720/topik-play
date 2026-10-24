@@ -1253,6 +1253,13 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
   const [aiTyping, setAiTyping] = useState(false)
   const [aiShowChatList, setAiShowChatList] = useState(false) // Mobile: show chat list sidebar
   const aiEndRef = useRef(null)
+  // Sigi exercises answers state — persist across navigation
+  const [sigiAnswers, setSigiAnswers] = useState(() => {
+    try {
+      const saved = localStorage.getItem('topik-play-sigi-answers')
+      return saved ? JSON.parse(saved) : {}
+    } catch { return {} }
+  })
   // Messages tab: 'news', 'chat', or 'asiye'
   const [messagesTab, setMessagesTab] = useState('news')
 
@@ -3786,11 +3793,16 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
             : topikTwoSkill === 'sigi'
             ? (
                 <section className="topik-two-sigi" aria-live="polite">
-                  <h2>📝 51 Sigi — 10 ta mashq</h2>
+                  <h2>📝 51 Sigi — {sigiExercises.length} ta mashq</h2>
                   <p className="settings-description">Bo'sh joyga taxminiy javobni yozing. AI tahlil, tarjima va misollar bilan.</p>
                   <p className="settings-description" style={{color: '#f59e0b', fontWeight: 600}}>⚠️ Eslatma: Bular taxminiy javoblar. AI odam emas, xato qilishi mumkin. Yaxshilab tekshiring.</p>
                   <div className="sigi-exercise-list">
-                    {sigiExercises.map((exercise, index) => (
+                    {sigiExercises.map((exercise, index) => {
+                      const saved = sigiAnswers[exercise.id]
+                      const userAnswer = saved?.userAnswer || ''
+                      const isChecked = saved?.checked || false
+                      const isCorrect = saved?.correct
+                      return (
                       <div key={exercise.id} className="sigi-exercise-card glass-card">
                         <div className="sigi-exercise-header">
                           <span className="sigi-exercise-number">Mashq {index + 1}</span>
@@ -3802,46 +3814,50 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
                             type="text"
                             className="sigi-answer-input"
                             placeholder="Javobingizni yozing..."
+                            value={userAnswer}
+                            onChange={(e) => {
+                              const newVal = e.target.value
+                              setSigiAnswers(prev => {
+                                const next = { ...prev, [exercise.id]: { ...prev[exercise.id], userAnswer: newVal, checked: false, correct: null } }
+                                localStorage.setItem('topik-play-sigi-answers', JSON.stringify(next))
+                                return next
+                              })
+                            }}
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                const input = e.target
-                                const answer = input.value.trim()
-                                if (answer) {
-                                  input.dataset.checked = 'true'
-                                  input.dataset.userAnswer = answer
-                                  const isCorrect = answer === exercise.answer
-                                  input.dataset.correct = isCorrect ? 'true' : 'false'
-                                  input.nextElementSibling?.style.setProperty('display', 'block')
-                                }
+                              if (e.key === 'Enter' && userAnswer.trim()) {
+                                const ans = userAnswer.trim()
+                                const correct = ans === exercise.answer
+                                setSigiAnswers(prev => {
+                                  const next = { ...prev, [exercise.id]: { userAnswer: ans, checked: true, correct: correct } }
+                                  localStorage.setItem('topik-play-sigi-answers', JSON.stringify(next))
+                                  return next
+                                })
                               }
                             }}
                           />
-                          <div className="sigi-answer-result" style={{display:'none'}}>
-                          </div>
+                          {isChecked && (
+                            <div className="sigi-answer-result">
+                              <div className={`sigi-result ${isCorrect ? 'correct' : 'incorrect'}`}>
+                                <span>{isCorrect ? '✅ To\'g\'ri!' : '❌ Noto\'g\'ri'}</span>
+                                <span>Taxminiy javob: <strong lang="ko">{exercise.answer}</strong></span>
+                              </div>
+                            </div>
+                          )}
                         </div>
                         <p style={{fontSize: '0.65rem', color: '#f59e0b', margin: '4px 0', textAlign: 'center'}}>⚠️ Yaxshilab tekshiring — AI odam emas, xato qiladi</p>
                         <button
                           type="button"
                           className="sigi-check-btn primary-btn"
+                          disabled={!userAnswer.trim()}
                           onClick={() => {
-                            const input = document.querySelector(`.sigi-exercise-card:nth-child(${index + 1}) .sigi-answer-input`)
-                            if (!input) return
-                            const answer = input.value.trim()
-                            if (!answer) return
-                            input.dataset.checked = 'true'
-                            input.dataset.userAnswer = answer
-                            const isCorrect = answer === exercise.answer
-                            input.dataset.correct = isCorrect ? 'true' : 'false'
-                            const resultDiv = input.nextElementSibling
-                            if (resultDiv) {
-                              resultDiv.style.display = 'block'
-                              resultDiv.innerHTML = `
-                                <div class="sigi-result ${isCorrect ? 'correct' : 'incorrect'}">
-                                  <span>${isCorrect ? '✅ To\'g\'ri!' : '❌ Noto\'g\'ri'}</span>
-                                  <span>Taxminiy javob: <strong lang="ko">${exercise.answer}</strong></span>
-                                </div>
-                              `
-                            }
+                            const ans = userAnswer.trim()
+                            if (!ans) return
+                            const correct = ans === exercise.answer
+                            setSigiAnswers(prev => {
+                              const next = { ...prev, [exercise.id]: { userAnswer: ans, checked: true, correct: correct } }
+                              localStorage.setItem('topik-play-sigi-answers', JSON.stringify(next))
+                              return next
+                            })
                           }}
                         >
                           Tekshirish
@@ -3897,7 +3913,8 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
                           </div>
                         </details>
                       </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </section>
               )
