@@ -285,7 +285,7 @@ const translationDict = {
   'olti': '여섯/육 (yeoseot/yuk)',
   'yetti': '일곱/칠 (ilgop/chil)',
   'sakkiz': '여덟/팔 (yeodeol/pal)',
-  'to\'qqiz': '아홉/구 (ahop/gu)',
+  'to\'rt to\'qiz': '아홉/구 (ahop/gu)',
   'o\'n': '열/십 (yeol/sip)',
   'yuz': '백 (baek)',
   'ming': '천 (cheon)',
@@ -293,8 +293,6 @@ const translationDict = {
   'o\'ttiz': '서른 (seoreun)',
   'qirq': '마흔 (maheun)',
   'ellik': '쉰 (shin)',
-  'yuz': '백 (baek)',
-  'ming': '천 (cheon)',
   'yuz ming': '십만 (simman)',
   'million': '백만 (baekman)',
   // Korean → Uzbek
@@ -477,7 +475,7 @@ function generateTranslationResponse(message) {
   const msg = message.trim()
 
   // Remove common prefixes
-  let query = msg.replace(/^(tarjima|nima degani|nima degan|ma\'no|tarjimasi|translate|번역|뜻)\s*(qil|qilish|qiling|qilingan|ber|bering|qilish|qiladigan)\s*(bering|qil|qiling|qilish|qiladigan)?\s*:?\s*/i, '').trim()
+  let query = msg.replace(/^(tarjima|nima degani|nima degan|ma'no|tarjimasi|translate|번역|뜻)\s*(qil|qilish|qiling|qilingan|ber|bering|qilish|qiladigan)\s*(bering|qil|qiling|qilish|qiladigan)?\s*:?\s*/i, '').trim()
 
   // If query is too short, try the whole message
   if (query.length < 2) query = msg
@@ -621,7 +619,7 @@ function generateGeneralResponse(message) {
 // ========================
 // Auto Translation (detect and translate without prefix)
 // ========================
-function tryAutoTranslate(message) {
+function _tryAutoTranslate(message) {
   const msg = message.trim()
 
   // If it contains Korean, try to translate
@@ -765,7 +763,7 @@ function generateConversationReply(message) {
 // ========================
 // Main AI Response Generator
 // ========================
-function generateAIResponse(message, chatHistory = []) {
+function generateAIResponse(message, _chatHistory = []) {
   if (!message || !message.trim()) return null
 
   const intent = detectIntent(message)
