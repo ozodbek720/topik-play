@@ -1135,6 +1135,33 @@ button:disabled {
   color: var(--primary);
 }
 
+/* Sigi misollar */
+.sigi-examples {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sigi-examples strong {
+  font-size: 0.75rem;
+  color: var(--primary);
+}
+
+.sigi-examples-list {
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sigi-examples-list li {
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: #e0e7ff;
+  font-weight: 500;
+}
+
 /* ===== TOPIK Ko'p uchraydigan so'zlar bo'limi ===== */
 
 .topik-two-topik-words {

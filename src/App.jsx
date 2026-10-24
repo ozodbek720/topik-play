@@ -3787,7 +3787,8 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
             ? (
                 <section className="topik-two-sigi" aria-live="polite">
                   <h2>📝 51 Sigi — 10 ta mashq</h2>
-                  <p className="settings-description">Bo'sh joyga to'g'ri javobni yozing. AI tahlil va tarjima bilan.</p>
+                  <p className="settings-description">Bo'sh joyga taxminiy javobni yozing. AI tahlil, tarjima va misollar bilan.</p>
+                  <p className="settings-description" style={{color: '#f59e0b', fontWeight: 600}}>⚠️ Eslatma: Bular taxminiy javoblar. AI odam emas, xato qilishi mumkin. Yaxshilab tekshiring.</p>
                   <div className="sigi-exercise-list">
                     {sigiExercises.map((exercise, index) => (
                       <div key={exercise.id} className="sigi-exercise-card glass-card">
@@ -3818,6 +3819,7 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
                           <div className="sigi-answer-result" style={{display:'none'}}>
                           </div>
                         </div>
+                        <p style={{fontSize: '0.65rem', color: '#f59e0b', margin: '4px 0', textAlign: 'center'}}>⚠️ Yaxshilab tekshiring — AI odam emas, xato qiladi</p>
                         <button
                           type="button"
                           className="sigi-check-btn primary-btn"
@@ -3836,7 +3838,7 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
                               resultDiv.innerHTML = `
                                 <div class="sigi-result ${isCorrect ? 'correct' : 'incorrect'}">
                                   <span>${isCorrect ? '✅ To\'g\'ri!' : '❌ Noto\'g\'ri'}</span>
-                                  <span>To\'g\'ri javob: <strong lang="ko">${exercise.answer}</strong></span>
+                                  <span>Taxminiy javob: <strong lang="ko">${exercise.answer}</strong></span>
                                 </div>
                               `
                             }
@@ -3882,6 +3884,16 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
                               <strong>📐 Grammatika:</strong>
                               <p>{exercise.grammar}</p>
                             </div>
+                            {exercise.examples && exercise.examples.length > 0 && (
+                              <div className="sigi-examples">
+                                <strong>💡 Misollar:</strong>
+                                <ul className="sigi-examples-list">
+                                  {exercise.examples.map((ex, ei) => (
+                                    <li key={ei} lang="ko">{ex}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
                           </div>
                         </details>
                       </div>
