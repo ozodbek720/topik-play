@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { generateAIResponse } from './aiChat.js'
 import sigiExercises from './sigiExercises.js'
+import sigiFormulas from './sigiFormulas.js'
 import advancedWords from './advancedWords.js'
 import topik2Lugat from './topik2Lugat.js'
 import topik1CommonWords from './topik1Words.js'
@@ -1260,6 +1261,10 @@ function LearningApp({ user, localMode, onChooseLoginMode, pendingProfile }) {
       return saved ? JSON.parse(saved) : {}
     } catch { return {} }
   })
+  // Sigi tab: 'exercises' or 'formulas'
+  const [sigiTab, setSigiTab] = useState('exercises')
+  // Sigi exercises group: 1 (1-10) or 2 (11-20)
+  const [sigiGroup, setSigiGroup] = useState(1)
   // Messages tab: 'news', 'chat', or 'asiye'
   const [messagesTab, setMessagesTab] = useState('news')
 
@@ -3793,129 +3798,236 @@ Har bir bo'limni aniq sarlavha bilan ajrating.`
             : topikTwoSkill === 'sigi'
             ? (
                 <section className="topik-two-sigi" aria-live="polite">
-                  <h2>📝 51 Sigi — {sigiExercises.length} ta mashq</h2>
-                  <p className="settings-description">Bo'sh joyga taxminiy javobni yozing. AI tahlil, tarjima va misollar bilan.</p>
-                  <p className="settings-description" style={{color: '#f59e0b', fontWeight: 600}}>⚠️ Eslatma: Bular taxminiy javoblar. AI odam emas, xato qilishi mumkin. Yaxshilab tekshiring.</p>
-                  <div className="sigi-exercise-list">
-                    {sigiExercises.map((exercise, index) => {
-                      const saved = sigiAnswers[exercise.id]
-                      const userAnswer = saved?.userAnswer || ''
-                      const isChecked = saved?.checked || false
-                      const isCorrect = saved?.correct
-                      return (
-                      <div key={exercise.id} className="sigi-exercise-card glass-card">
-                        <div className="sigi-exercise-header">
-                          <span className="sigi-exercise-number">Mashq {index + 1}</span>
-                          <span className="sigi-exercise-grammar">{exercise.grammar}</span>
-                        </div>
-                        <p className="sigi-sentence" lang="ko">{exercise.sentence}</p>
-                        <div className="sigi-answer-section">
-                          <input
-                            type="text"
-                            className="sigi-answer-input"
-                            placeholder="Javobingizni yozing..."
-                            value={userAnswer}
-                            onChange={(e) => {
-                              const newVal = e.target.value
-                              setSigiAnswers(prev => {
-                                const next = { ...prev, [exercise.id]: { ...prev[exercise.id], userAnswer: newVal, checked: false, correct: null } }
-                                localStorage.setItem('topik-play-sigi-answers', JSON.stringify(next))
-                                return next
-                              })
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && userAnswer.trim()) {
-                                const ans = userAnswer.trim()
-                                const correct = ans === exercise.answer
-                                setSigiAnswers(prev => {
-                                  const next = { ...prev, [exercise.id]: { userAnswer: ans, checked: true, correct: correct } }
-                                  localStorage.setItem('topik-play-sigi-answers', JSON.stringify(next))
-                                  return next
-                                })
-                              }
-                            }}
-                          />
-                          {isChecked && (
-                            <div className="sigi-answer-result">
-                              <div className={`sigi-result ${isCorrect ? 'correct' : 'incorrect'}`}>
-                                <span>{isCorrect ? '✅ To\'g\'ri!' : '❌ Noto\'g\'ri'}</span>
-                                <span>Taxminiy javob: <strong lang="ko">{exercise.answer}</strong></span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        <p style={{fontSize: '0.65rem', color: '#f59e0b', margin: '4px 0', textAlign: 'center'}}>⚠️ Yaxshilab tekshiring — AI odam emas, xato qiladi</p>
+                  <h2>📝 51-54 Sigi — Yozish</h2>
+                  <div className="sigi-tabs" role="tablist">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={sigiTab === 'exercises'}
+                      className={`sigi-tab-btn ${sigiTab === 'exercises' ? 'active' : ''}`}
+                      onClick={() => setSigiTab('exercises')}
+                    >
+                      📝 Mashqlar
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={sigiTab === 'formulas'}
+                      className={`sigi-tab-btn ${sigiTab === 'formulas' ? 'active' : ''}`}
+                      onClick={() => setSigiTab('formulas')}
+                    >
+                      📐 51-54 Sigi formulalari
+                    </button>
+                  </div>
+
+                  {sigiTab === 'exercises' && (
+                    <div className="sigi-exercises-section">
+                      <p className="settings-description">Bo'sh joyga taxminiy javobni yozing. AI tahlil, tarjima va misollar bilan.</p>
+                      <p className="settings-description" style={{color: '#f59e0b', fontWeight: 600}}>⚠️ Eslatma: Bular taxminiy javoblar. AI odam emas, xato qilishi mumkin. Yaxshilab tekshiring.</p>
+
+                      <div className="sigi-group-tabs">
                         <button
                           type="button"
-                          className="sigi-check-btn primary-btn"
-                          disabled={!userAnswer.trim()}
-                          onClick={() => {
-                            const ans = userAnswer.trim()
-                            if (!ans) return
-                            const correct = ans === exercise.answer
-                            setSigiAnswers(prev => {
-                              const next = { ...prev, [exercise.id]: { userAnswer: ans, checked: true, correct: correct } }
-                              localStorage.setItem('topik-play-sigi-answers', JSON.stringify(next))
-                              return next
-                            })
-                          }}
+                          className={`sigi-group-btn ${sigiGroup === 1 ? 'active' : ''}`}
+                          onClick={() => setSigiGroup(1)}
                         >
-                          Tekshirish
+                          1-guruh (1-10)
                         </button>
-                        <details className="sigi-details">
-                          <summary>🤖 AI Tahlil va tarjima</summary>
-                          <div className="sigi-analysis">
-                            <div className="sigi-translation">
-                              <strong>📖 Tarjima:</strong>
-                              <p>{exercise.translation}</p>
-                            </div>
-                            {exercise.vocabulary && exercise.vocabulary.length > 0 && (
-                              <div className="sigi-vocabulary">
-                                <strong>📚 Lug'at:</strong>
-                                <table className="sigi-vocab-table">
-                                  <thead>
-                                    <tr>
-                                      <th>Koreyscha</th>
-                                      <th>Tarjima</th>
-                                      <th>So'z turkumi</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {exercise.vocabulary.map((vocab, vi) => (
-                                      <tr key={vi}>
-                                        <td lang="ko">{vocab.word}</td>
-                                        <td>{vocab.meaning}</td>
-                                        <td><span className="sigi-vocab-type">{vocab.type}</span></td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            )}
-                            <div className="sigi-ai-analysis">
-                              <strong>🧠 AI Tahlil:</strong>
-                              <p>{exercise.analysis}</p>
-                            </div>
-                            <div className="sigi-grammar-rule">
-                              <strong>📐 Grammatika:</strong>
-                              <p>{exercise.grammar}</p>
-                            </div>
-                            {exercise.examples && exercise.examples.length > 0 && (
-                              <div className="sigi-examples">
-                                <strong>💡 Misollar:</strong>
-                                <ul className="sigi-examples-list">
-                                  {exercise.examples.map((ex, ei) => (
-                                    <li key={ei} lang="ko">{ex}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        </details>
+                        <button
+                          type="button"
+                          className={`sigi-group-btn ${sigiGroup === 2 ? 'active' : ''}`}
+                          onClick={() => setSigiGroup(2)}
+                        >
+                          2-guruh (11-20)
+                        </button>
                       </div>
-                      )
-                    })}
-                  </div>
+
+                      <div className="sigi-exercise-list">
+                        {sigiExercises
+                          .filter(ex => sigiGroup === 1 ? ex.id <= 10 : ex.id > 10)
+                          .map((exercise, index) => {
+                            const saved = sigiAnswers[exercise.id]
+                            const userAnswer = saved?.userAnswer || ''
+                            const isChecked = saved?.checked || false
+                            const isCorrect = saved?.correct
+                            return (
+                            <div key={exercise.id} className="sigi-exercise-card glass-card">
+                              <div className="sigi-exercise-header">
+                                <span className="sigi-exercise-number">Mashq {exercise.id}</span>
+                                <span className="sigi-exercise-grammar">{exercise.grammar}</span>
+                              </div>
+                              <p className="sigi-sentence" lang="ko">{exercise.sentence}</p>
+                              <div className="sigi-answer-section">
+                                <input
+                                  type="text"
+                                  className="sigi-answer-input"
+                                  placeholder="Javobingizni yozing..."
+                                  value={userAnswer}
+                                  onChange={(e) => {
+                                    const newVal = e.target.value
+                                    setSigiAnswers(prev => {
+                                      const next = { ...prev, [exercise.id]: { ...prev[exercise.id], userAnswer: newVal, checked: false, correct: null } }
+                                      localStorage.setItem('topik-play-sigi-answers', JSON.stringify(next))
+                                      return next
+                                    })
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && userAnswer.trim()) {
+                                      const ans = userAnswer.trim()
+                                      const correct = ans === exercise.answer
+                                      setSigiAnswers(prev => {
+                                        const next = { ...prev, [exercise.id]: { userAnswer: ans, checked: true, correct: correct } }
+                                        localStorage.setItem('topik-play-sigi-answers', JSON.stringify(next))
+                                        return next
+                                      })
+                                    }
+                                  }}
+                                />
+                                {isChecked && (
+                                  <div className="sigi-answer-result">
+                                    <div className={`sigi-result ${isCorrect ? 'correct' : 'incorrect'}`}>
+                                      <span>{isCorrect ? '✅ To\'g\'ri!' : '❌ Noto\'g\'ri'}</span>
+                                      <span>Taxminiy javob: <strong lang="ko">{exercise.answer}</strong></span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                              <p style={{fontSize: '0.65rem', color: '#f59e0b', margin: '4px 0', textAlign: 'center'}}>⚠️ Yaxshilab tekshiring — AI odam emas, xato qiladi</p>
+                              <button
+                                type="button"
+                                className="sigi-check-btn primary-btn"
+                                disabled={!userAnswer.trim()}
+                                onClick={() => {
+                                  const ans = userAnswer.trim()
+                                  if (!ans) return
+                                  const correct = ans === exercise.answer
+                                  setSigiAnswers(prev => {
+                                    const next = { ...prev, [exercise.id]: { userAnswer: ans, checked: true, correct: correct } }
+                                    localStorage.setItem('topik-play-sigi-answers', JSON.stringify(next))
+                                    return next
+                                  })
+                                }}
+                              >
+                                Tekshirish
+                              </button>
+                              <details className="sigi-details">
+                                <summary>🤖 AI Tahlil va tarjima</summary>
+                                <div className="sigi-analysis">
+                                  <div className="sigi-translation">
+                                    <strong>📖 Tarjima:</strong>
+                                    <p>{exercise.translation}</p>
+                                  </div>
+                                  {exercise.vocabulary && exercise.vocabulary.length > 0 && (
+                                    <div className="sigi-vocabulary">
+                                      <strong>📚 Lug'at:</strong>
+                                      <table className="sigi-vocab-table">
+                                        <thead>
+                                          <tr>
+                                            <th>Koreyscha</th>
+                                            <th>Tarjima</th>
+                                            <th>So'z turkumi</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {exercise.vocabulary.map((vocab, vi) => (
+                                            <tr key={vi}>
+                                              <td lang="ko">{vocab.word}</td>
+                                              <td>{vocab.meaning}</td>
+                                              <td><span className="sigi-vocab-type">{vocab.type}</span></td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  )}
+                                  <div className="sigi-ai-analysis">
+                                    <strong>🧠 AI Tahlil:</strong>
+                                    <p>{exercise.analysis}</p>
+                                  </div>
+                                  <div className="sigi-grammar-rule">
+                                    <strong>📐 Grammatika:</strong>
+                                    <p>{exercise.grammar}</p>
+                                  </div>
+                                  {exercise.examples && exercise.examples.length > 0 && (
+                                    <div className="sigi-examples">
+                                      <strong>💡 Misollar:</strong>
+                                      <ul className="sigi-examples-list">
+                                        {exercise.examples.map((ex, ei) => (
+                                          <li key={ei} lang="ko">{ex}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+                              </details>
+                            </div>
+                            )
+                          })}
+                      </div>
+                    </div>
+                  )}
+
+                  {sigiTab === 'formulas' && (
+                    <div className="sigi-formulas-section">
+                      {sigiFormulas.map((formula) => (
+                        <div key={formula.id} className="sigi-formula-card glass-card">
+                          <div className="sigi-formula-header">
+                            <h3>{formula.title}</h3>
+                            <p lang="ko" className="sigi-formula-korean">{formula.koreanTitle}</p>
+                          </div>
+                          <p className="sigi-formula-desc">{formula.description}</p>
+
+                          <div className="sigi-formula-box">
+                            <strong>📐 Formula:</strong>
+                            <p lang="ko" className="sigi-formula-text">{formula.formula}</p>
+                            <p lang="ko" className="sigi-formula-text-sub">{formula.formulaKorean}</p>
+                          </div>
+
+                          <div className="sigi-formula-explanation">
+                            <strong>📖 Tushuntirish:</strong>
+                            <p>{formula.explanation}</p>
+                          </div>
+
+                          <div className="sigi-formula-keypoints">
+                            <strong>⚡ E'tibor berish kerak:</strong>
+                            <ul>
+                              {formula.keyPoints.map((point, i) => (
+                                <li key={i}>{point}</li>
+                              ))}
+                            </ul>
+                          </div>
+
+                          <div className="sigi-formula-structure">
+                            <strong>📋 Tuzilma:</strong>
+                            <ol>
+                              {formula.structure.map((step, i) => (
+                                <li key={i}>{step}</li>
+                              ))}
+                            </ol>
+                          </div>
+
+                          <div className="sigi-formula-examples">
+                            <strong>💡 Misollar:</strong>
+                            {formula.examples.map((ex, i) => (
+                              <div key={i} className="sigi-formula-example-item">
+                                <p lang="ko">{ex.korean}</p>
+                                <p className="sigi-formula-example-translation">{ex.translation}</p>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="sigi-formula-tips">
+                            <strong>💡 Maslahatlar:</strong>
+                            <ul>
+                              {formula.tips.map((tip, i) => (
+                                <li key={i}>{tip}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </section>
               )
             : (

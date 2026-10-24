@@ -897,6 +897,72 @@ button:disabled {
   gap: 10px;
 }
 
+/* Sigi asosiy tablar */
+.sigi-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.sigi-tab-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.sigi-tab-btn.active {
+  border-color: var(--primary-strong);
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  color: #06131d;
+}
+
+.sigi-tab-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Sigi guruh tablar */
+.sigi-group-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.sigi-group-btn {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.sigi-group-btn.active {
+  border-color: var(--primary);
+  background: rgba(99, 102, 241, 0.2);
+  color: var(--primary);
+}
+
+.sigi-group-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sigi-exercises-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .sigi-exercise-list {
   display: flex;
   flex-direction: column;
@@ -1160,6 +1226,159 @@ button:disabled {
   line-height: 1.5;
   color: #e0e7ff;
   font-weight: 500;
+}
+
+/* ===== Sigi Formulalar bo'limi ===== */
+
+.sigi-formulas-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sigi-formula-card {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.sigi-formula-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.sigi-formula-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sigi-formula-header h3 {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.sigi-formula-korean {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.sigi-formula-desc {
+  margin: 0 0 8px 0;
+  font-size: 0.72rem;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.sigi-formula-box {
+  padding: 8px;
+  background: rgba(99, 102, 241, 0.15);
+  border-radius: 8px;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sigi-formula-box strong {
+  font-size: 0.75rem;
+  color: var(--primary);
+}
+
+.sigi-formula-text {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #e0e7ff;
+  text-align: center;
+}
+
+.sigi-formula-text-sub {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.sigi-formula-explanation,
+.sigi-formula-keypoints,
+.sigi-formula-structure,
+.sigi-formula-examples,
+.sigi-formula-tips {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.sigi-formula-explanation strong,
+.sigi-formula-keypoints strong,
+.sigi-formula-structure strong,
+.sigi-formula-examples strong,
+.sigi-formula-tips strong {
+  font-size: 0.75rem;
+  color: var(--primary);
+}
+
+.sigi-formula-explanation p {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.sigi-formula-keypoints ul,
+.sigi-formula-structure ol,
+.sigi-formula-tips ul {
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sigi-formula-keypoints li,
+.sigi-formula-structure li,
+.sigi-formula-tips li {
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.sigi-formula-example-item {
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  border-left: 2px solid var(--primary);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sigi-formula-example-item p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #e0e7ff;
+  font-weight: 500;
+}
+
+.sigi-formula-example-translation {
+  font-size: 0.68rem !important;
+  color: var(--muted) !important;
+  font-weight: 400 !important;
+  font-style: italic;
 }
 
 /* ===== TOPIK Ko'p uchraydigan so'zlar bo'limi ===== */
