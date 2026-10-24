@@ -269,10 +269,10 @@ function loadTheme() {
 
 function loadColorMode() {
   try {
-    return localStorage.getItem(COLOR_MODE_STORAGE_KEY) === 'day' ? 'day' : 'night'
+    return localStorage.getItem(COLOR_MODE_STORAGE_KEY) === 'night' ? 'night' : 'day'
   } catch (error) {
     console.error('Rang rejimini o‘qib bo‘lmadi:', error)
-    return 'night'
+    return 'day'
   }
 }
 
