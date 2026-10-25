@@ -12,20 +12,27 @@
   "dependencies": {
     "@capacitor/android": "^8.5.3",
     "@capacitor/core": "^8.5.3",
+    "firebase": "^13.1.0",
     "pdfjs-dist": "^6.4.299",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.3",
+    "@eslint/js": "^10.0.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
     "canvas": "^3.2.3",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "oxlint": "^1.81.0",
     "pdf-lib": "^1.17.1",
     "pdf2pic": "^3.2.0",
     "sharp": "^0.35.5",
+    "stylelint": "^17.16.0",
+    "stylelint-config-standard": "^40.0.0",
     "vite": "^8.3.0"
   },
   "overrides": {

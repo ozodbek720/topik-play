@@ -9,6 +9,17 @@ import githubResources from './githubResources.js'
 import libraryBooks from './libraryBooks.js'
 import grammarPoints from './grammarPoints.js'
 import { t as translate } from './translations.js'
+import {
+  auth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  firebaseSignOut,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  onAuthStateChanged,
+} from './firebase.js'
 import * as pdfjsLib from 'pdfjs-dist'
 import './App.css'
 
@@ -32,7 +43,7 @@ const PROGRESS_STORAGE_KEY = 'topik-play-learning-progress'
 const SETTINGS_STORAGE_KEY = 'topik-play-settings'
 const CUSTOM_GRAMMAR_STORAGE_KEY = 'topik-play-custom-grammar'
 const MISTAKES_STORAGE_KEY = 'topik-play-mistakes'
-const ACCOUNT_DATA_OWNER_KEY = 'topik-play-account-data-owner'
+const _ACCOUNT_DATA_OWNER_KEY = 'topik-play-account-data-owner'
 const LOCAL_MODE_STORAGE_KEY = 'topik-play-local-mode'
 const SAVED_PASSWORD_KEY = 'topik-play-saved-password'
 const DEVICE_USERNAME_KEY = 'topik-play-device-username'
@@ -640,16 +651,24 @@ function LoginScreen({ onLocalContinue, onProfileReady, skipProfile, lang, devic
   const [step, setStep] = useState(skipProfile ? 2 : 1)
   const [pf, setPf] = useState({ firstName: '', lastName: '', bio: '', avatar: '' })
   const [av, setAv] = useState('')
-  // Kirish rejimi: '' = asosiy, 'createAccount' = hisob ochish (email tanlash), 'emailSignUp' = email hisob ochish, 'emailSignIn' = kirish, 'deviceLogin' = qurilma orqali kirish
+  // Kirish rejimi: '' = asosiy, 'emailSignUp' = email hisob ochish, 'emailSignIn' = email kirish, 'phoneSignIn' = telefon kirish, 'deviceLogin' = qurilma orqali kirish
   const [authMode, setAuthMode] = useState('')
   const [authEmail, setAuthEmail] = useState('')
   const [authPassword, setAuthPassword] = useState('')
   const [authError, setAuthError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  // Phone auth
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [phoneCode, setPhoneCode] = useState('')
+  const [phoneVerificationId, setPhoneVerificationId] = useState(null)
+  const [phoneStep, setPhoneStep] = useState('input') // 'input' | 'code'
+  const recaptchaVerifierRef = useRef(null)
   // Device login forms
   const [deviceUsername, setDeviceUsername] = useState(() => localStorage.getItem(DEVICE_USERNAME_KEY) || '')
   const [devicePassword, setDevicePassword] = useState('')
   const [deviceSignInMode, setDeviceSignInMode] = useState(false)
-  const hasSavedDeviceAccount = deviceAccount !== null
+  const _hasSavedDeviceAccount = deviceAccount !== null
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0]
@@ -661,6 +680,152 @@ function LoginScreen({ onLocalContinue, onProfileReady, skipProfile, lang, devic
   const handleSubmit = () => {
     setStep(2)
     if (onProfileReady) onProfileReady(pf)
+  }
+
+  // === Firebase Email/Password handlers ===
+  const handleEmailSignUp = async () => {
+    setAuthError('')
+    if (!authEmail.trim() || !authPassword.trim()) {
+      setAuthError(t('loginFillEmailPass'))
+      return
+    }
+    if (authPassword.length < 6) {
+      setAuthError(t('loginPasswordShort'))
+      return
+    }
+    setBusy(true)
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, authEmail.trim(), authPassword)
+      await sendEmailVerification(userCredential.user)
+      const profile = {
+        uid: userCredential.user.uid,
+        firstName: pf.firstName || authEmail.split('@')[0],
+        lastName: pf.lastName || '',
+        bio: pf.bio || '',
+        avatar: av || '',
+        email: authEmail.trim(),
+        displayName: pf.firstName || authEmail.split('@')[0],
+      }
+      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile))
+      localStorage.removeItem(LOCAL_MODE_STORAGE_KEY)
+      onLocalContinue()
+    } catch (err) {
+      const code = err.code || ''
+      if (code === 'auth/email-already-in-use') {
+        setAuthError(t('loginEmailUsed'))
+      } else if (code === 'auth/weak-password') {
+        setAuthError(t('loginPasswordShort'))
+      } else {
+        setAuthError(t('loginError') + ': ' + err.message)
+      }
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleEmailSignIn = async () => {
+    setAuthError('')
+    if (!authEmail.trim() || !authPassword.trim()) {
+      setAuthError(t('loginFillEmailPass'))
+      return
+    }
+    setBusy(true)
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, authEmail.trim(), authPassword)
+      const profile = {
+        uid: userCredential.user.uid,
+        firstName: pf.firstName || userCredential.user.displayName || authEmail.split('@')[0],
+        lastName: pf.lastName || '',
+        bio: pf.bio || '',
+        avatar: av || userCredential.user.photoURL || '',
+        email: authEmail.trim(),
+        displayName: pf.firstName || userCredential.user.displayName || authEmail.split('@')[0],
+      }
+      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile))
+      localStorage.removeItem(LOCAL_MODE_STORAGE_KEY)
+      onLocalContinue()
+    } catch (err) {
+      const code = err.code || ''
+      if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+        setAuthError(t('loginWrongEmailPass'))
+      } else {
+        setAuthError(t('loginError') + ': ' + err.message)
+      }
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // === Firebase Phone handlers ===
+  const handlePhoneSendCode = async () => {
+    setAuthError('')
+    if (!phoneNumber.trim()) {
+      setAuthError(t('loginFillPhone'))
+      return
+    }
+    setBusy(true)
+    try {
+      let verifier = recaptchaVerifierRef.current
+      if (!verifier) {
+        verifier = new RecaptchaVerifier(auth, 'phone-recaptcha-container', {
+          size: 'normal',
+          callback: () => {},
+          'expired-callback': () => {},
+        })
+        recaptchaVerifierRef.current = verifier
+      }
+      const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : '+998' + phoneNumber.replace(/^0+/, '')
+      const confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, verifier)
+      setPhoneVerificationId(confirmationResult)
+      setPhoneStep('code')
+    } catch (err) {
+      const code = err.code || ''
+      if (code === 'auth/invalid-phone-number') {
+        setAuthError(t('loginPhoneInvalid'))
+      } else if (code === 'auth/too-many-requests') {
+        setAuthError(t('loginTooManyRequests'))
+      } else {
+        setAuthError(t('loginError') + ': ' + err.message)
+      }
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handlePhoneVerifyCode = async () => {
+    setAuthError('')
+    if (!phoneCode.trim()) {
+      setAuthError(t('loginFillCode'))
+      return
+    }
+    if (!phoneVerificationId) {
+      setAuthError(t('loginError'))
+      return
+    }
+    setBusy(true)
+    try {
+      const userCredential = await phoneVerificationId.confirm(phoneCode.trim())
+      const profile = {
+        uid: userCredential.user.uid,
+        firstName: pf.firstName || phoneNumber.replace(/\D/g, '').slice(-4),
+        lastName: pf.lastName || '',
+        bio: pf.bio || '',
+        avatar: av || '',
+        email: '',
+        displayName: pf.firstName || phoneNumber.replace(/\D/g, '').slice(-4),
+      }
+      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile))
+      localStorage.removeItem(LOCAL_MODE_STORAGE_KEY)
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear()
+        recaptchaVerifierRef.current = null
+      }
+      onLocalContinue()
+    } catch (err) {
+      setAuthError(t('loginWrongCode'))
+    } finally {
+      setBusy(false)
+    }
   }
 
   // Device login handler — localStorage orqali
@@ -818,11 +983,87 @@ function LoginScreen({ onLocalContinue, onProfileReady, skipProfile, lang, devic
                 )}
                 <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setAuthMode(''); setAuthError(''); setDeviceSignInMode(false) }}>{t('back')}</button>
               </>
+            ) : authMode === 'emailSignIn' ? (
+              /* ===== Email Sign In ===== */
+              <>
+                <h1 style={{fontSize:'1.2rem',marginBottom:'4px'}}>{t('loginEmailSignIn')}</h1>
+                {authError && <p className="auth-error" role="alert">{authError}</p>}
+                <input type="email" className="auth-input" placeholder={t('loginEmail')} value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} />
+                <input type="password" className="auth-input" placeholder={t('loginPassword')} value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} />
+                <button type="button" className="primary-btn" style={{marginTop:'8px'}} onClick={handleEmailSignIn} disabled={busy}>
+                  {busy ? t('loading') : t('loginSignIn')}
+                </button>
+                <button type="button" className="ghost-btn" style={{fontSize:'0.85rem'}} onClick={() => { setAuthMode('emailSignUp'); setAuthError('') }}>
+                  {t('loginNoAccount')}
+                </button>
+                <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setAuthMode(''); setAuthError(''); setAuthEmail(''); setAuthPassword('') }}>{t('back')}</button>
+              </>
+            ) : authMode === 'emailSignUp' ? (
+              /* ===== Email Sign Up ===== */
+              <>
+                <h1 style={{fontSize:'1.2rem',marginBottom:'4px'}}>{t('loginCreateAccount')}</h1>
+                <p className="settings-description">{t('loginCreateAccountHint')}</p>
+                {authError && <p className="auth-error" role="alert">{authError}</p>}
+                <input type="email" className="auth-input" placeholder={t('loginEmail')} value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} />
+                <input type="password" className="auth-input" placeholder={t('loginPassword')} value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} />
+                <button type="button" className="primary-btn" style={{marginTop:'8px'}} onClick={handleEmailSignUp} disabled={busy}>
+                  {busy ? t('loading') : t('loginCreateAccount')}
+                </button>
+                <button type="button" className="ghost-btn" style={{fontSize:'0.85rem'}} onClick={() => { setAuthMode('emailSignIn'); setAuthError('') }}>
+                  {t('loginHaveAccount')}
+                </button>
+                <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setAuthMode(''); setAuthError(''); setAuthEmail(''); setAuthPassword('') }}>{t('back')}</button>
+              </>
+            ) : authMode === 'phoneSignIn' ? (
+              /* ===== Phone Sign In ===== */
+              <>
+                <h1 style={{fontSize:'1.2rem',marginBottom:'4px'}}>{t('loginPhone')}</h1>
+                <p className="settings-description">{t('loginPhoneHint')}</p>
+                {authError && <p className="auth-error" role="alert">{authError}</p>}
+                {phoneStep === 'input' ? (
+                  <>
+                    <input type="tel" className="auth-input" placeholder={t('loginPhonePlaceholder')} value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
+                    <button type="button" className="primary-btn" style={{marginTop:'8px'}} onClick={handlePhoneSendCode} disabled={busy}>
+                      {busy ? t('loading') : t('loginSendCode')}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="settings-description">{t('loginCodeSent')}</p>
+                    <input type="text" className="auth-input" placeholder={t('loginCode')} value={phoneCode} onChange={(e) => setPhoneCode(e.target.value)} maxLength={6} />
+                    <button type="button" className="primary-btn" style={{marginTop:'8px'}} onClick={handlePhoneVerifyCode} disabled={busy}>
+                      {busy ? t('loading') : t('loginVerifyCode')}
+                    </button>
+                    <button type="button" className="ghost-btn" style={{fontSize:'0.85rem'}} onClick={() => { setPhoneStep('input'); setPhoneCode(''); setAuthError('') }}>
+                      {t('loginChangeNumber')}
+                    </button>
+                  </>
+                )}
+                <div id="phone-recaptcha-container"></div>
+                <button type="button" className="ghost-btn auth-back-btn" onClick={() => { setAuthMode(''); setAuthError(''); setPhoneStep('input'); setPhoneNumber(''); setPhoneCode(''); setPhoneVerificationId(null); if(recaptchaVerifierRef.current){recaptchaVerifierRef.current.clear(); recaptchaVerifierRef.current=null} }}>{t('back')}</button>
+              </>
             ) : (
               /* ===== Main Login Methods ===== */
               <>
                 <h1 style={{fontSize:'1.3rem',marginBottom:'4px'}}>{t('loginMethod')}</h1>
                 <p className="settings-description">{t('loginSyncHint')}</p>
+
+                {/* Email Sign In */}
+                <button type="button" className="local-sign-in-btn" onClick={() => { setAuthMode('emailSignIn'); setAuthError('') }} disabled={busy}>
+                  {t('loginEmailSignIn')}
+                </button>
+
+                {/* Email Sign Up */}
+                <button type="button" className="local-sign-in-btn" onClick={() => { setAuthMode('emailSignUp'); setAuthError('') }} disabled={busy}>
+                  {t('loginCreateAccount')}
+                </button>
+
+                {/* Phone Sign In */}
+                <button type="button" className="local-sign-in-btn" onClick={() => { setAuthMode('phoneSignIn'); setAuthError(''); setPhoneStep('input') }} disabled={busy}>
+                  {t('loginPhone')}
+                </button>
+
+                <p className="auth-or-divider">{t('loginOr')}</p>
 
                 {/* Device Login */}
                 <button type="button" className="local-sign-in-btn" onClick={() => setAuthMode('deviceLogin')} disabled={busy}>
@@ -896,6 +1137,10 @@ function App() {
 }
 
 function LearningApp({ localMode, onChooseLoginMode, pendingProfile }) {
+  const user = null // Local mode only, no Google auth
+  const signOutUser = async () => { /* No-op for local mode */ }
+  const loadProfile = async () => null // No cloud profile for local mode
+  const saveProfile = async () => { /* No-op for local mode */ }
   const [cloudReady] = useState(true)
   const [cloudError, setCloudError] = useState('')
   const [words, setWords] = useState(loadWords)
@@ -1363,7 +1608,7 @@ function LearningApp({ localMode, onChooseLoginMode, pendingProfile }) {
   }
 
   // Rename chat
-  const handleRenameAiChat = (chatId, newTitle) => {
+  const _handleRenameAiChat = (chatId, newTitle) => {
     setAiChats(prev => prev.map(c => c.id === chatId ? { ...c, title: newTitle } : c))
   }
 
@@ -1395,7 +1640,7 @@ function LearningApp({ localMode, onChooseLoginMode, pendingProfile }) {
   })
   const lang = appLang
   const t = (key) => translate(key, lang)
-  const localDataRef = useRef({
+  const _localDataRef = useRef({
     words,
     customGrammar,
     mistakes,

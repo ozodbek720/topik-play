@@ -4,14 +4,28 @@ Koreys tilini o‘zbek tilida o‘rgatuvchi React, Vite va Capacitor ilovasi.
 
 ## Firebase sozlamalari
 
-Web Firebase sozlamalari `src/firebase.js` faylida. Firebase web ilovasi sozlamasidagi API kaliti brauzerda ko‘rinishi tabiiy; Firestore qoidalari foydalanuvchi ma’lumotlarini himoya qiladi.
+Web Firebase sozlamalari `src/firebase.js` faylida. O‘z Firebase loyihangiz ma’lumotlarini qo‘ying.
 
-Google orqali kirish va qurilmalararo saqlash uchun Firebase Console’da:
+Firebase Console’da (`console.firebase.google.com`):
 
-1. **Authentication → Kirish usuli → Google** provayderini yoqing va qo‘llab-quvvatlash elektron pochtasini tanlang.
-2. **Authentication → Settings → Authorized domains** qismiga `localhost`, `127.0.0.1` va `topik-play.vercel.app` domenlarini qo‘shing.
-3. **Firestore Database** bo‘limidan standart ma’lumotlar bazasini yarating.
-4. Firestore **Rules** bo‘limiga `firestore.rules` faylining mazmunini ko‘chirib, **Publish** tugmasini bosing. Bu qoida har bir foydalanuvchiga faqat o‘zining `users/{uid}` ma’lumotlarini o‘qish va yozish huquqini beradi.
+1. **Yangi loyiha yarating** yoki mavjud loyihangizni oching.
+2. **Web ilovasini qo‘shing** (`</>` belgisi) va konfiguratsiya ma’lumotlarini oling.
+3. `src/firebase.js` faylida `firebaseConfig` obyektiga o‘z qiymatlaringizni qo‘ying:
+   - `apiKey`, `authDomain`, `projectId`, `storageBucket`, `messagingSenderId`, `appId`
+4. **Authentication → Sign-in method** bo‘limida:
+   - **Email/Password** provayderini yoqing
+   - **Phone** provayderini yoqing
+5. **Authentication → Settings → Authorized domains** qismiga `localhost`, `127.0.0.1` va `topik-play.vercel.app` domenlarini qo‘shing.
+6. **Firestore Database** bo‘limidan standart ma’lumotlar bazasini yarating.
+7. Firestore **Rules** bo‘limiga `firestore.rules` faylining mazmunini ko‘chirib, **Publish** tugmasini bosing.
+
+### Kirish usullari
+
+Ilovada 3 ta kirish usuli mavjud:
+
+- **Email orqali kirish** — email va parol bilan hisob ochish va kirish
+- **Telefon orqali kirish** — telefon raqam va SMS kod bilan kirish
+- **Qurilmada davom etish** — faqat qurilmada saqlash (localStorage)
 
 Google orqali ilk kirishda qurilmada saqlangan o‘quv ma’lumotlari akkauntning Firestore ma’lumotlariga ko‘chiriladi. Akkauntda avvaldan bulutli ma’lumot bo‘lsa, qurilmadagi ma’lumotlar o‘rniga o‘sha ma’lumot yuklanadi.
 
