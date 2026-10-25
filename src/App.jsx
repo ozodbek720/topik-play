@@ -13,12 +13,9 @@ import {
   auth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  firebaseSignOut,
   sendEmailVerification,
-  sendPasswordResetEmail,
   RecaptchaVerifier,
   signInWithPhoneNumber,
-  onAuthStateChanged,
 } from './firebase.js'
 import * as pdfjsLib from 'pdfjs-dist'
 import './App.css'
@@ -657,7 +654,6 @@ function LoginScreen({ onLocalContinue, onProfileReady, skipProfile, lang, devic
   const [authPassword, setAuthPassword] = useState('')
   const [authError, setAuthError] = useState('')
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
   // Phone auth
   const [phoneNumber, setPhoneNumber] = useState('')
   const [phoneCode, setPhoneCode] = useState('')
@@ -1045,6 +1041,28 @@ function LoginScreen({ onLocalContinue, onProfileReady, skipProfile, lang, devic
             ) : (
               /* ===== Main Login Methods ===== */
               <>
+                {/* Maintenance Banner */}
+                <div style={{
+                  background: 'linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%)',
+                  border: '1px solid #ffc107',
+                  borderRadius: '12px',
+                  padding: '14px 16px',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px'
+                }}>
+                  <span style={{fontSize: '1.4rem', flexShrink: 0}}>🔧</span>
+                  <div>
+                    <p style={{margin: '0 0 4px', fontWeight: '600', fontSize: '0.9rem', color: '#856404'}}>
+                      {currentLang === 'uz' ? 'Tamirlash ishlari olib borilmoqda' : currentLang === 'ru' ? 'Выполняются технические работы' : 'Maintenance in progress'}
+                    </p>
+                    <p style={{margin: 0, fontSize: '0.8rem', color: '#856404', lineHeight: '1.4'}}>
+                      {currentLang === 'uz' ? 'Ba'zi noqulayliklar uchun uzr so'raymiz.' : currentLang === 'ru' ? 'Приносим извинения за неудобства.' : 'We apologize for any inconvenience.'}
+                    </p>
+                  </div>
+                </div>
+
                 <h1 style={{fontSize:'1.3rem',marginBottom:'4px'}}>{t('loginMethod')}</h1>
                 <p className="settings-description">{t('loginSyncHint')}</p>
 
@@ -1142,7 +1160,7 @@ function LearningApp({ localMode, onChooseLoginMode, pendingProfile }) {
   const loadProfile = async () => null // No cloud profile for local mode
   const saveProfile = async () => { /* No-op for local mode */ }
   const [cloudReady] = useState(true)
-  const [cloudError, setCloudError] = useState('')
+  const [cloudError, _setCloudError] = useState('')
   const [words, setWords] = useState(loadWords)
   const [customGrammar, setCustomGrammar] = useState(loadCustomGrammar)
   const [mistakes, setMistakes] = useState(loadMistakes)
@@ -1209,7 +1227,7 @@ function LearningApp({ localMode, onChooseLoginMode, pendingProfile }) {
   const [profileEditing, setProfileEditing] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '', bio: '', avatar: '' })
-  const [savedPassword, setSavedPassword] = useState(() => localStorage.getItem(SAVED_PASSWORD_KEY) || '')
+  const [savedPassword, _setSavedPassword] = useState(() => localStorage.getItem(SAVED_PASSWORD_KEY) || '')
   const [showPassword, setShowPassword] = useState(false)
   // Chat state
   const [chatUsers, setChatUsers] = useState([])
@@ -1491,6 +1509,17 @@ function LearningApp({ localMode, onChooseLoginMode, pendingProfile }) {
 
   // Sample news data (translated per language)
   const homeNews = [
+    {
+      id: 6,
+      title: { uz: '🔧 Tamirlash ishlari olib borilmoqda', en: '🔧 Maintenance in progress', ru: '🔧 Выполняются технические работы' },
+      date: '25-oktyabr 2026',
+      image: 'https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=600&h=400&fit=crop',
+      text: {
+        uz: 'Ilovamizda tamirlash ishlari olib borilmoqda. Ba'zi noqulayliklar uchun uzr so\'raymiz. Tez orada hamma narsa qayta ishga tushiriladi!',
+        en: 'We are currently performing maintenance on our app. We apologize for any inconvenience. Everything will be back online soon!',
+        ru: 'В настоящее время в нашем приложении проводятся технические работы. Приносим извинения за неудобства. Всё скоро будет восстановлено!'
+      }
+    },
     {
       id: 5,
       title: { uz: '🚀 Ilovaga yangi funksiyalar qo\'shildi!', en: '🚀 New features added!', ru: '🚀 Добавлены новые функции!' },

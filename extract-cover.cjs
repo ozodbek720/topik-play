@@ -25,12 +25,7 @@ async function extractCover() {
     // Kitob qopqog'i rasmini yaratish
     const coverWidth = 600;
     const coverHeight = Math.round((height / width) * coverWidth);
-    
-    const gradient = [
-      { offset: 0, color: '#667eea' },
-      { offset: 1, color: '#764ba2' }
-    ];
-    
+
     await sharp({
       create: {
         width: coverWidth,
