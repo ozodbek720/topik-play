@@ -40,7 +40,6 @@ const PROGRESS_STORAGE_KEY = 'topik-play-learning-progress'
 const SETTINGS_STORAGE_KEY = 'topik-play-settings'
 const CUSTOM_GRAMMAR_STORAGE_KEY = 'topik-play-custom-grammar'
 const MISTAKES_STORAGE_KEY = 'topik-play-mistakes'
-const _ACCOUNT_DATA_OWNER_KEY = 'topik-play-account-data-owner'
 const LOCAL_MODE_STORAGE_KEY = 'topik-play-local-mode'
 const SAVED_PASSWORD_KEY = 'topik-play-saved-password'
 const DEVICE_USERNAME_KEY = 'topik-play-device-username'
@@ -1058,7 +1057,7 @@ function LoginScreen({ onLocalContinue, onProfileReady, skipProfile, lang, devic
                       {currentLang === 'uz' ? 'Tamirlash ishlari olib borilmoqda' : currentLang === 'ru' ? 'Выполняются технические работы' : 'Maintenance in progress'}
                     </p>
                     <p style={{margin: 0, fontSize: '0.8rem', color: '#856404', lineHeight: '1.4'}}>
-                      {currentLang === 'uz' ? 'Ba'zi noqulayliklar uchun uzr so'raymiz.' : currentLang === 'ru' ? 'Приносим извинения за неудобства.' : 'We apologize for any inconvenience.'}
+                      {currentLang === 'uz' ? "Ba'zi noqulayliklar uchun uzr so'raymiz." : currentLang === 'ru' ? 'Приносим извинения за неудобства.' : 'We apologize for any inconvenience.'}
                     </p>
                   </div>
                 </div>
@@ -1160,7 +1159,7 @@ function LearningApp({ localMode, onChooseLoginMode, pendingProfile }) {
   const loadProfile = async () => null // No cloud profile for local mode
   const saveProfile = async () => { /* No-op for local mode */ }
   const [cloudReady] = useState(true)
-  const [cloudError, _setCloudError] = useState('')
+  const [cloudError] = useState('')
   const [words, setWords] = useState(loadWords)
   const [customGrammar, setCustomGrammar] = useState(loadCustomGrammar)
   const [mistakes, setMistakes] = useState(loadMistakes)
@@ -1227,7 +1226,7 @@ function LearningApp({ localMode, onChooseLoginMode, pendingProfile }) {
   const [profileEditing, setProfileEditing] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '', bio: '', avatar: '' })
-  const [savedPassword, _setSavedPassword] = useState(() => localStorage.getItem(SAVED_PASSWORD_KEY) || '')
+  const [savedPassword] = useState(() => localStorage.getItem(SAVED_PASSWORD_KEY) || '')
   const [showPassword, setShowPassword] = useState(false)
   // Chat state
   const [chatUsers, setChatUsers] = useState([])
@@ -1515,7 +1514,7 @@ function LearningApp({ localMode, onChooseLoginMode, pendingProfile }) {
       date: '25-oktyabr 2026',
       image: 'https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=600&h=400&fit=crop',
       text: {
-        uz: 'Ilovamizda tamirlash ishlari olib borilmoqda. Ba'zi noqulayliklar uchun uzr so\'raymiz. Tez orada hamma narsa qayta ishga tushiriladi!',
+        uz: "Ilovamizda tamirlash ishlari olib borilmoqda. Ba'zi noqulayliklar uchun uzr so'raymiz. Tez orada hamma narsa qayta ishga tushiriladi!",
         en: 'We are currently performing maintenance on our app. We apologize for any inconvenience. Everything will be back online soon!',
         ru: 'В настоящее время в нашем приложении проводятся технические работы. Приносим извинения за неудобства. Всё скоро будет восстановлено!'
       }
